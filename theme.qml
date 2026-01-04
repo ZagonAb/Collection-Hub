@@ -663,7 +663,7 @@ FocusScope {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         if (root.currentGameForMenu) {
-                            root.currentGameForMenu.launch();
+                            Utils.launchGameFromCollection(root.currentGameForMenu.title);
                             root.showGameMenu = false;
                         }
                     }

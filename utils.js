@@ -134,3 +134,40 @@ function isGameInCollection(collectionId, gameTitle) {
     }
     return false;
 }
+
+function launchGameFromCollection(gameTitle) {
+    for (var i = 0; i < api.allGames.count; i++) {
+        var game = api.allGames.get(i);
+        if (game.title === gameTitle) {
+            game.launch();
+            return true;
+        }
+    }
+
+    for (var i = 0; i < api.collections.count; i++) {
+        var collection = api.collections.get(i);
+        for (var j = 0; j < collection.games.count; j++) {
+            var game = collection.games.get(j);
+            if (game.title === gameTitle) {
+                game.launch();
+                return true;
+            }
+        }
+    }
+
+    console.log("No se pudo encontrar el juego para lanzar:", gameTitle);
+    return false;
+}
+
+function getNameCollecForGame(game) {
+    if (game && game.collections && game.collections.count > 0) {
+        var firstCollection = game.collections.get(0);
+        for (var i = 0; i < api.collections.count; ++i) {
+            var collection = api.collections.get(i);
+            if (collection.name === firstCollection.name) {
+                return collection.name;
+            }
+        }
+    }
+    return "default";
+}

@@ -171,7 +171,7 @@ Rectangle {
             if (mouse.button === Qt.RightButton) {
                 tile.rightClicked(gameData, mouse.x, mouse.y);
             } else if (mouse.button === Qt.LeftButton) {
-                gameData.launch();
+                Utils.launchGameFromCollection(gameData.title);
             }
         }
 
