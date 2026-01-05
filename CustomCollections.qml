@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 Rectangle {
@@ -11,14 +12,15 @@ Rectangle {
     signal collectionSelected(int collectionId, string collectionName, var gameTitles)
     signal createNewCollection()
     signal deleteCollection(int collectionId, string collectionName)
+    radius: 10
 
     Column {
         anchors.fill: parent
-        anchors.margins: vpx(15)
+        anchors.margins: vpx(10)
         spacing: vpx(10)
 
         Text {
-            text: "Mis Colecciones"
+            text: "My Collections"
             font.bold: true
             font.pixelSize: vpx(18)
             color: "white"
@@ -28,23 +30,23 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: vpx(2)
-            color: "#555"
+            color: "#444"
             radius: vpx(1)
         }
 
         ListView {
             id: customCollectionsList
             width: parent.width
-            height: parent.height - vpx(150)
+            height: parent.height - vpx(110)
             model: customCollectionsContainer.customCollections
             spacing: vpx(8)
             clip: true
 
             delegate: Rectangle {
                 width: parent.width
-                height: vpx(50)
+                height: vpx(43)
                 color: customCollectionsContainer.selectedCollectionId === modelData.id ? "#3a6ea5" : "#444"
-                radius: vpx(8)
+                radius: vpx(5)
                 border.color: customCollectionsContainer.selectedCollectionId === modelData.id ? "#5a8ec5" : "#555"
                 border.width: vpx(2)
 
@@ -77,9 +79,9 @@ Rectangle {
                         }
 
                         Text {
-                            text: "(" + modelData.games.length + " juegos)"
+                            text: "(" + modelData.games.length + " games)"
                             color: "#AAA"
-                            font.pixelSize: vpx(11)
+                            font.pixelSize: vpx(10)
                         }
                     }
                 }
@@ -127,15 +129,15 @@ Rectangle {
         Rectangle {
             id: createCollectionBtn
             width: parent.width
-            height: vpx(50)
+            height: vpx(30)
             color: mouseCreate.containsMouse ? "#4CAF50" : "#2E7D32"
-            radius: vpx(8)
+            radius: vpx(5)
             border.color: "#66BB6A"
             border.width: vpx(2)
 
             Text {
                 anchors.centerIn: parent
-                text: "+ Nueva Colección"
+                text: "+ New Collection"
                 color: "white"
                 font.pixelSize: vpx(15)
                 font.bold: true

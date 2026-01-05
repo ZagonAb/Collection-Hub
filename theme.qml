@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import SortFilterProxyModel 0.2
+import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 FocusScope {
@@ -46,21 +47,29 @@ FocusScope {
     Rectangle {
         id: leftPanel
         width: parent.width * 0.22
-        height: parent.height
+        height: parent.height * 0.90
+        anchors {
+            left: parent.left
+            leftMargin: vpx(10)
+            top: parent.top
+            topMargin: vpx(10)
+            bottom: parent.bottom
+            bottomMargin: vpx(60)
+        }
         color: "#2c2c2c"
-        border.color: "#444"
-        border.width: vpx(2)
+        radius: 10
 
         Column {
             anchors.fill: parent
-            spacing: 0
+            spacing: 15
 
             Rectangle {
                 width: parent.width
-                height: vpx(60)
+                height: vpx(45)
                 color: root.selectedCollectionId === -1 && root.selectedSystemCollection === null ? "#3a6ea5" : "#2c2c2c"
-                border.color: "#444"
+                border.color: "#3a6ea5"
                 border.width: vpx(1)
+                radius: 10
 
                 Row {
                     anchors.centerIn: parent
@@ -104,16 +113,10 @@ FocusScope {
                 }
             }
 
-            Rectangle {
-                width: parent.width
-                height: vpx(2)
-                color: "#444"
-            }
-
             SystemCollections {
                 id: systemCollections
                 width: parent.width
-                height: (parent.height - vpx(62)) / 2
+                height: (parent.height - vpx(50)) / 2
 
                 onCollectionSelected: function(collection) {
                     root.selectedSystemCollection = collection;
@@ -123,20 +126,13 @@ FocusScope {
                     customCollectionsView.selectedCollectionId = -1;
                     searchBar.clear();
                     gamesGrid.searchFilter = "";
-                    console.log("Seleccionada colección del sistema:", collection.name);
                 }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: vpx(2)
-                color: "#444"
             }
 
             CustomCollections {
                 id: customCollectionsView
                 width: parent.width
-                height: (parent.height - vpx(62)) / 2
+                height: parent.height / 2 //(parent.height - vpx(62)) / 2
                 customCollections: root.customCollections
                 selectedCollectionId: root.selectedCollectionId
 
@@ -148,7 +144,6 @@ FocusScope {
                     systemCollections.selectedCollectionIndex = -1;
                     searchBar.clear();
                     gamesGrid.searchFilter = "";
-                    console.log("Seleccionada colección personalizada:", collectionName);
                 }
 
                 onCreateNewCollection: {
@@ -172,7 +167,7 @@ FocusScope {
             right: parent.right
             top: parent.top
         }
-        height: vpx(70)
+        height: vpx(80)
         color: "#1a1a1a"
 
         SearchBar {
@@ -235,7 +230,7 @@ FocusScope {
             width: parent.width * 0.85
 
             Text {
-                text: "Nueva Colección"
+                text: "New Collection"
                 font.bold: true
                 font.pixelSize: vpx(20)
                 color: "white"
@@ -282,7 +277,7 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Crear"
+                        text: "Create"
                         color: "white"
                         font.bold: true
                         font.pixelSize: vpx(15)
@@ -313,7 +308,7 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Cancelar"
+                        text: "Cancel"
                         color: "white"
                         font.bold: true
                         font.pixelSize: vpx(15)
@@ -337,387 +332,60 @@ FocusScope {
         }
     }
 
-    Rectangle {
+    // GameMenu independiente
+    GameMenu {
         id: gameMenu
-        width: parent.width * 0.25
-        height: menuColumn.height + vpx(20)
-        x: Math.min(root.menuX, parent.width - width - vpx(10))
-        y: Math.min(root.menuY, parent.height - height - vpx(10))
-        color: "#2c2c2c"
-        border.color: "#3a6ea5"
-        border.width: vpx(3)
-        radius: vpx(12)
         visible: root.showGameMenu
         z: 10
+        currentGame: root.currentGameForMenu
+        selectedCollectionId: root.selectedCollectionId
+        selectedCollectionName: root.selectedCollectionName
+        selectedSystemCollection: root.selectedSystemCollection
+        customCollections: root.customCollections
+        menuX: root.menuX
+        menuY: root.menuY
 
-        property string gameTitle: root.currentGameForMenu ? root.currentGameForMenu.title : ""
-        property bool isInCurrentCollection: {
-            if (root.selectedCollectionId === -1) return false;
-            return Utils.isGameInCollection(root.selectedCollectionId, gameTitle);
+        onGameAddedToCollection: function(collectionId) {
+            root.customCollections = Utils.loadCustomCollections();
+            if (root.selectedCollectionId === collectionId) {
+                // Actualizar la lista de títulos si estamos en esa colección
+                for (var i = 0; i < root.customCollections.length; i++) {
+                    if (root.customCollections[i].id === collectionId) {
+                        var titles = [];
+                        for (var j = 0; j < root.customCollections[i].games.length; j++) {
+                            titles.push(root.customCollections[i].games[j].title);
+                        }
+                        root.currentCollectionGameTitles = titles;
+                        break;
+                    }
+                }
+            }
         }
 
-        Column {
-            id: menuColumn
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: vpx(12)
-            spacing: vpx(6)
-
-            Rectangle {
-                width: parent.width
-                height: vpx(50)
-                color: "transparent"
-
-                Text {
-                    anchors.fill: parent
-                    text: gameMenu.gameTitle
-                    color: "white"
-                    font.bold: true
-                    font.pixelSize: vpx(15)
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideRight
-                    maximumLineCount: 2
-                    verticalAlignment: Text.AlignVCenter
+        onGameRemovedFromCollection: function() {
+            root.customCollections = Utils.loadCustomCollections();
+            // Actualizar la lista de títulos de la colección actual
+            for (var i = 0; i < root.customCollections.length; i++) {
+                if (root.customCollections[i].id === root.selectedCollectionId) {
+                    var titles = [];
+                    for (var j = 0; j < root.customCollections[i].games.length; j++) {
+                        titles.push(root.customCollections[i].games[j].title);
+                    }
+                    root.currentCollectionGameTitles = titles;
+                    break;
                 }
             }
+        }
 
-            Rectangle {
-                height: vpx(2)
-                width: parent.width
-                color: "#555"
-                radius: vpx(1)
+        onLaunchGame: function() {
+            if (root.currentGameForMenu) {
+                Utils.launchGameFromCollection(root.currentGameForMenu.title);
+                root.showGameMenu = false;
             }
+        }
 
-            Column {
-                width: parent.width
-                spacing: vpx(6)
-                visible: (root.selectedCollectionId === -1 || root.selectedSystemCollection !== null) && root.customCollections.length > 0
-
-                Text {
-                    text: "Añadir a colección:"
-                    color: "#AAA"
-                    font.pixelSize: vpx(12)
-                    font.italic: true
-                }
-
-                Repeater {
-                    model: root.customCollections
-
-                    Rectangle {
-                        width: parent.width
-                        height: vpx(40)
-                        color: mouseAddTo.containsMouse ? "#3a6ea5" : "transparent"
-                        radius: vpx(6)
-
-                        property bool alreadyInCollection: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
-
-                        Row {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: parent.left
-                            anchors.leftMargin: vpx(10)
-                            spacing: vpx(10)
-
-                            Text {
-                                text: parent.parent.alreadyInCollection ? "✓" : "+"
-                                color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                                font.pixelSize: vpx(16)
-                                font.bold: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                text: modelData.name
-                                color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                                font.pixelSize: vpx(13)
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        MouseArea {
-                            id: mouseAddTo
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: parent.alreadyInCollection ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                            enabled: !parent.alreadyInCollection
-                            onClicked: {
-                                if (root.currentGameForMenu) {
-                                    var success = Utils.addGameToCollection(
-                                        modelData.id,
-                                        root.currentGameForMenu
-                                    );
-
-                                    if (success) {
-                                        root.customCollections = Utils.loadCustomCollections();
-                                    }
-                                }
-                            }
-                            onEntered: if (enabled) parent.scale = 1.03
-                            onExited: parent.scale = 1.0
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation { duration: 150 }
-                        }
-                    }
-                }
-            }
-
-            Text {
-                width: parent.width
-                height: vpx(40)
-                text: "Crea una colección primero"
-                color: "#888"
-                font.pixelSize: vpx(13)
-                font.italic: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                visible: (root.selectedCollectionId === -1 || root.selectedSystemCollection !== null) && root.customCollections.length === 0
-            }
-
-            Column {
-                width: parent.width
-                spacing: vpx(6)
-                visible: root.selectedCollectionId !== -1 && root.selectedSystemCollection === null
-
-                Rectangle {
-                    width: parent.width
-                    height: vpx(45)
-                    color: mouseRemove.containsMouse ? "#f44336" : "transparent"
-                    radius: vpx(6)
-                    visible: gameMenu.isInCurrentCollection
-                    border.color: mouseRemove.containsMouse ? "#ef5350" : "transparent"
-                    border.width: vpx(2)
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(10)
-                        spacing: vpx(10)
-
-                        Text {
-                            text: "✕"
-                            color: "white"
-                            font.pixelSize: vpx(16)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: "Quitar de: " + root.selectedCollectionName
-                            color: "white"
-                            font.pixelSize: vpx(13)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseRemove
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (root.currentGameForMenu && root.selectedCollectionId !== -1) {
-                                var success = Utils.removeGameFromCollection(
-                                    root.selectedCollectionId,
-                                    root.currentGameForMenu.title
-                                );
-
-                                if (success) {
-                                    root.customCollections = Utils.loadCustomCollections();
-                                    for (var i = 0; i < root.customCollections.length; i++) {
-                                        if (root.customCollections[i].id === root.selectedCollectionId) {
-                                            var titles = [];
-                                            for (var j = 0; j < root.customCollections[i].games.length; j++) {
-                                                titles.push(root.customCollections[i].games[j].title);
-                                            }
-                                            root.currentCollectionGameTitles = titles;
-                                            break;
-                                        }
-                                    }
-                                }
-                                root.showGameMenu = false;
-                            }
-                        }
-                        onEntered: parent.scale = 1.03
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation { duration: 150 }
-                    }
-                }
-
-                Text {
-                    text: "Añadir a otra colección:"
-                    color: "#AAA"
-                    font.pixelSize: vpx(12)
-                    font.italic: true
-                    visible: root.customCollections.length > 1
-                }
-
-                Repeater {
-                    model: root.customCollections
-
-                    Rectangle {
-                        width: parent.width
-                        height: vpx(40)
-                        color: mouseAddOther.containsMouse ? "#3a6ea5" : "transparent"
-                        radius: vpx(6)
-                        visible: modelData.id !== root.selectedCollectionId
-
-                        property bool alreadyInCollection: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
-
-                        Row {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: parent.left
-                            anchors.leftMargin: vpx(10)
-                            spacing: vpx(10)
-
-                            Text {
-                                text: parent.parent.alreadyInCollection ? "✓" : "+"
-                                color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                                font.pixelSize: vpx(16)
-                                font.bold: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            Text {
-                                text: modelData.name
-                                color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                                font.pixelSize: vpx(13)
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        MouseArea {
-                            id: mouseAddOther
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: parent.alreadyInCollection ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                            enabled: !parent.alreadyInCollection
-                            onClicked: {
-                                if (root.currentGameForMenu) {
-                                    var success = Utils.addGameToCollection(
-                                        modelData.id,
-                                        root.currentGameForMenu
-                                    );
-
-                                    if (success) {
-                                        root.customCollections = Utils.loadCustomCollections();
-                                    }
-                                }
-                            }
-                            onEntered: if (enabled) parent.scale = 1.03
-                            onExited: parent.scale = 1.0
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation { duration: 150 }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                height: vpx(2)
-                width: parent.width
-                color: "#555"
-                radius: vpx(1)
-            }
-
-            Rectangle {
-                width: parent.width
-                height: vpx(45)
-                color: mouseLaunch.containsMouse ? "#4CAF50" : "transparent"
-                radius: vpx(6)
-                border.color: mouseLaunch.containsMouse ? "#66BB6A" : "transparent"
-                border.width: vpx(2)
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: vpx(10)
-                    spacing: vpx(10)
-
-                    Text {
-                        text: "▶"
-                        color: "white"
-                        font.pixelSize: vpx(16)
-                        font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: "Lanzar juego"
-                        color: "white"
-                        font.pixelSize: vpx(13)
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                MouseArea {
-                    id: mouseLaunch
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.currentGameForMenu) {
-                            Utils.launchGameFromCollection(root.currentGameForMenu.title);
-                            root.showGameMenu = false;
-                        }
-                    }
-                    onEntered: parent.scale = 1.03
-                    onExited: parent.scale = 1.0
-                }
-
-                Behavior on scale {
-                    NumberAnimation { duration: 150 }
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: vpx(45)
-                color: mouseClose.containsMouse ? "#666" : "transparent"
-                radius: vpx(6)
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: vpx(10)
-                    spacing: vpx(10)
-
-                    Text {
-                        text: "✕"
-                        color: "white"
-                        font.pixelSize: vpx(16)
-                        font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: "Cerrar"
-                        color: "white"
-                        font.pixelSize: vpx(13)
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                MouseArea {
-                    id: mouseClose
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.showGameMenu = false
-                    onEntered: parent.scale = 1.03
-                    onExited: parent.scale = 1.0
-                }
-
-                Behavior on scale {
-                    NumberAnimation { duration: 150 }
-                }
-            }
+        onCloseMenu: function() {
+            root.showGameMenu = false;
         }
     }
 

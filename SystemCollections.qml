@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtGraphicalEffects 1.12
 
 Rectangle {
     id: systemCollectionsContainer
@@ -8,13 +9,15 @@ Rectangle {
 
     property int selectedCollectionIndex: -1
 
+
+
     Column {
         anchors.fill: parent
-        anchors.margins: vpx(15)
+        anchors.margins: vpx(10)
         spacing: vpx(10)
 
         Text {
-            text: "Colecciones del Sistema"
+            text: "System Collections"
             font.bold: true
             font.pixelSize: vpx(18)
             color: "white"
@@ -24,23 +27,24 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: vpx(2)
-            color: "#555"
+            color: "#444"
             radius: vpx(1)
+            clip: true
         }
 
         ListView {
             id: systemCollectionsList
             width: parent.width
-            height: parent.height - vpx(80)
+            height: parent.height - vpx(10)
             model: api.collections
-            spacing: vpx(8)
+            spacing: vpx(5)
             clip: true
 
             delegate: Rectangle {
                 width: parent.width
-                height: vpx(50)
+                height: vpx(43)
                 color: systemCollectionsContainer.selectedCollectionIndex === index ? "#3a6ea5" : "#444"
-                radius: vpx(8)
+                radius: vpx(5)
                 border.color: systemCollectionsContainer.selectedCollectionIndex === index ? "#5a8ec5" : "#555"
                 border.width: vpx(2)
 
@@ -53,7 +57,7 @@ Rectangle {
                     spacing: vpx(8)
 
                     Text {
-                        text: "🎮"
+                        text: "🎮" //cambiar a icono de la coleccion o un solo icono para todos como ahora.! pero imagen.
                         font.pixelSize: vpx(20)
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -64,7 +68,7 @@ Rectangle {
                         width: parent.width - vpx(40)
 
                         Text {
-                            text: modelData.shortName || modelData.name
+                            text: modelData.name || modelData.shortName
                             color: "white"
                             font.pixelSize: vpx(13)
                             font.bold: systemCollectionsContainer.selectedCollectionIndex === index
@@ -73,9 +77,9 @@ Rectangle {
                         }
 
                         Text {
-                            text: "(" + modelData.games.count + " juegos)"
+                            text: "(" + modelData.games.count + " games)"
                             color: "#AAA"
-                            font.pixelSize: vpx(11)
+                            font.pixelSize: vpx(10)
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtGraphicalEffects 1.12
 
 Rectangle {
     id: tile

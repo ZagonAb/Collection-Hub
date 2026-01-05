@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtGraphicalEffects 1.12
 
 Rectangle {
     id: searchBar
@@ -71,8 +72,8 @@ Rectangle {
         }
 
         Rectangle {
-            width: vpx(46)
-            height: vpx(46)
+            width: vpx(36)
+            height: vpx(36)
             color: clearMouseArea.containsMouse ? "#f44336" : "#444"
             radius: vpx(6)
             visible: searchInput.text !== ""

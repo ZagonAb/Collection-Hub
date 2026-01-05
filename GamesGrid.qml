@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import SortFilterProxyModel 0.2
+import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 Rectangle {
