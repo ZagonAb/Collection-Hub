@@ -1,18 +1,18 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 Rectangle {
     id: gameMenu
-    width: parent.width * 0.25
-    height: menuColumn.height + vpx(20)
-    color: "#2c2c2c"
-    border.color: "#3a6ea5"
-    border.width: vpx(3)
-    radius: vpx(12)
-    z: 10
 
-    // Propiedades públicas
+    // 40% más delgado: de parent.width * 0.25 a parent.width * 0.15
+    width: parent.width * 0.15
+    height: Math.min(menuColumn.height + vpx(25), parent.height * 0.8)
+
+    property var themeColors: ({})
+    property bool isDarkTheme: true
+
+    // Public properties
     property var currentGame: null
     property string gameTitle: currentGame ? currentGame.title : ""
     property int selectedCollectionId: -1
@@ -22,28 +22,42 @@ Rectangle {
     property int menuX: 0
     property int menuY: 0
 
-    // Señales
+    // Signals
     signal gameAddedToCollection(int collectionId)
     signal gameRemovedFromCollection()
     signal launchGame()
     signal closeMenu()
 
-    // Propiedad calculada
+    // Computed property
     property bool isInCurrentCollection: {
         if (selectedCollectionId === -1) return false;
         return Utils.isGameInCollection(selectedCollectionId, gameTitle);
     }
 
-    // Actualizar posición cuando cambian las coordenadas
+    // Theme styling - usando menucolor en lugar de panel
+    color: root ? root.colors.menucolor || root.colors.panel || "#2c2c2c" : "#2c2c2c"
+    border.color: themeColors.primary || "#3a6ea5"
+    border.width: vpx(3)
+    radius: vpx(12)
+    z: 10
+
+    // Update position when coordinates change
     onMenuXChanged: updatePosition()
     onMenuYChanged: updatePosition()
 
     function updatePosition() {
-        // Asegurar que el menú no se salga de la pantalla
         if (parent) {
             x = Math.min(menuX, parent.width - width - vpx(10));
             y = Math.min(menuY, parent.height - height - vpx(10));
         }
+    }
+
+    // Radial gradient overlay
+    RadialGradientOverlay {
+        anchors.fill: parent
+        isDarkTheme: gameMenu.isDarkTheme
+        opacityMultiplier: 0.5
+        radius: gameMenu.radius
     }
 
     Column {
@@ -51,21 +65,22 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: vpx(12)
+        anchors.margins: vpx(10)  // Menos margen para ser más compacto
         spacing: vpx(6)
 
-        // Título del juego
+        // Game title (más compacto)
         Rectangle {
             width: parent.width
-            height: vpx(50)
+            height: vpx(35)
             color: "transparent"
 
             Text {
                 anchors.fill: parent
+                anchors.leftMargin: vpx(5)
                 text: gameMenu.gameTitle
-                color: "white"
+                color: themeColors.text || "white"
                 font.bold: true
-                font.pixelSize: vpx(15)
+                font.pixelSize: vpx(13)  // Texto más pequeño
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -74,270 +89,42 @@ Rectangle {
         }
 
         Rectangle {
-            height: vpx(2)
+            height: vpx(1)
             width: parent.width
-            color: "#555"
+            color: themeColors.separator || "#555"
             radius: vpx(1)
         }
 
-        // Sección: Añadir a colección (para All Games o colecciones del sistema)
-        Column {
-            width: parent.width
-            spacing: vpx(6)
-            visible: (selectedCollectionId === -1 || selectedSystemCollection !== null) && customCollections.length > 0
-
-            Text {
-                text: "Añadir a colección:"
-                color: "#AAA"
-                font.pixelSize: vpx(12)
-                font.italic: true
-            }
-
-            Repeater {
-                model: customCollections
-
-                Rectangle {
-                    width: parent.width
-                    height: vpx(40)
-                    color: mouseAddTo.containsMouse ? "#3a6ea5" : "transparent"
-                    radius: vpx(6)
-
-                    property bool alreadyInCollection: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(10)
-                        spacing: vpx(10)
-
-                        Text {
-                            text: parent.parent.alreadyInCollection ? "✓" : "+"
-                            color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                            font.pixelSize: vpx(16)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: modelData.name
-                            color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                            font.pixelSize: vpx(13)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseAddTo
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: parent.alreadyInCollection ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                        enabled: !parent.alreadyInCollection
-                        onClicked: {
-                            if (currentGame) {
-                                var success = Utils.addGameToCollection(
-                                    modelData.id,
-                                    currentGame
-                                );
-
-                                if (success) {
-                                    gameMenu.gameAddedToCollection(modelData.id);
-                                }
-                            }
-                        }
-                        onEntered: if (enabled) parent.scale = 1.03
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation { duration: 150 }
-                    }
-                }
-            }
-        }
-
-        // Mensaje cuando no hay colecciones creadas
-        Text {
-            width: parent.width
-            height: vpx(40)
-            text: "Crea una colección primero"
-            color: "#888"
-            font.pixelSize: vpx(13)
-            font.italic: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            visible: (selectedCollectionId === -1 || selectedSystemCollection !== null) && customCollections.length === 0
-        }
-
-        // Sección: Para colecciones personalizadas
-        Column {
-            width: parent.width
-            spacing: vpx(6)
-            visible: selectedCollectionId !== -1 && selectedSystemCollection === null
-
-            // Quitar de colección actual
-            Rectangle {
-                width: parent.width
-                height: vpx(45)
-                color: mouseRemove.containsMouse ? "#f44336" : "transparent"
-                radius: vpx(6)
-                visible: isInCurrentCollection
-                border.color: mouseRemove.containsMouse ? "#ef5350" : "transparent"
-                border.width: vpx(2)
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: vpx(10)
-                    spacing: vpx(10)
-
-                    Text {
-                        text: "✕"
-                        color: "white"
-                        font.pixelSize: vpx(16)
-                        font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: "Quitar de: " + selectedCollectionName
-                        color: "white"
-                        font.pixelSize: vpx(13)
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                MouseArea {
-                    id: mouseRemove
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (currentGame && selectedCollectionId !== -1) {
-                            var success = Utils.removeGameFromCollection(
-                                selectedCollectionId,
-                                currentGame.title
-                            );
-
-                            if (success) {
-                                gameMenu.gameRemovedFromCollection();
-                            }
-                        }
-                    }
-                    onEntered: parent.scale = 1.03
-                    onExited: parent.scale = 1.0
-                }
-
-                Behavior on scale {
-                    NumberAnimation { duration: 150 }
-                }
-            }
-
-            // Añadir a otras colecciones
-            Text {
-                text: "Añadir a otra colección:"
-                color: "#AAA"
-                font.pixelSize: vpx(12)
-                font.italic: true
-                visible: customCollections.length > 1
-            }
-
-            Repeater {
-                model: customCollections
-
-                Rectangle {
-                    width: parent.width
-                    height: vpx(40)
-                    color: mouseAddOther.containsMouse ? "#3a6ea5" : "transparent"
-                    radius: vpx(6)
-                    visible: modelData.id !== selectedCollectionId
-
-                    property bool alreadyInCollection: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(10)
-                        spacing: vpx(10)
-
-                        Text {
-                            text: parent.parent.alreadyInCollection ? "✓" : "+"
-                            color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                            font.pixelSize: vpx(16)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: modelData.name
-                            color: parent.parent.alreadyInCollection ? "#4CAF50" : "white"
-                            font.pixelSize: vpx(13)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseAddOther
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: parent.alreadyInCollection ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                        enabled: !parent.alreadyInCollection
-                        onClicked: {
-                            if (currentGame) {
-                                var success = Utils.addGameToCollection(
-                                    modelData.id,
-                                    currentGame
-                                );
-
-                                if (success) {
-                                    gameMenu.gameAddedToCollection(modelData.id);
-                                }
-                            }
-                        }
-                        onEntered: if (enabled) parent.scale = 1.03
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation { duration: 150 }
-                    }
-                }
-            }
-        }
-
-        Rectangle {
-            height: vpx(2)
-            width: parent.width
-            color: "#555"
-            radius: vpx(1)
-        }
-
-        // Lanzar juego
+        // Launch game (always visible)
         Rectangle {
             width: parent.width
-            height: vpx(45)
-            color: mouseLaunch.containsMouse ? "#4CAF50" : "transparent"
-            radius: vpx(6)
-            border.color: mouseLaunch.containsMouse ? "#66BB6A" : "transparent"
-            border.width: vpx(2)
+            height: vpx(35)  // Más compacto
+            color: mouseLaunch.containsMouse ?
+            themeColors.success || "#4CAF50" :
+            "transparent"
+            radius: vpx(5)
+            border.color: mouseLaunch.containsMouse ?
+            themeColors.successLight || "#66BB6A" :
+            "transparent"
+            border.width: vpx(1)
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: vpx(10)
-                spacing: vpx(10)
+                anchors.leftMargin: vpx(8)
+                spacing: vpx(8)
 
                 Text {
                     text: "▶"
                     color: "white"
-                    font.pixelSize: vpx(16)
-                    font.bold: true
+                    font.pixelSize: vpx(14)  // Más pequeño
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
-                    text: "Lanzar juego"
+                    text: "Launch Game"
                     color: "white"
-                    font.pixelSize: vpx(13)
+                    font.pixelSize: vpx(12)  // Más pequeño
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -350,7 +137,7 @@ Rectangle {
                 onClicked: {
                     gameMenu.launchGame();
                 }
-                onEntered: parent.scale = 1.03
+                onEntered: parent.scale = 1.02  // Menos escala
                 onExited: parent.scale = 1.0
             }
 
@@ -359,31 +146,230 @@ Rectangle {
             }
         }
 
-        // Cerrar menú
+        // Section: Collections management
+        Column {
+            width: parent.width
+            spacing: vpx(4)
+            visible: customCollections.length > 0
+
+            Text {
+                text: {
+                    if (selectedCollectionId !== -1 && selectedSystemCollection === null) {
+                        return "Collections:";
+                    } else {
+                        return "Add to Collection:";
+                    }
+                }
+                color: themeColors.textSecondary || "#AAA"
+                font.pixelSize: vpx(10)  // Más pequeño
+                font.bold: true
+                anchors.left: parent.left
+                anchors.leftMargin: vpx(5)
+            }
+
+            // ListView for collections (more compact)
+            Rectangle {
+                width: parent.width
+                height: Math.min(customCollections.length * vpx(30), vpx(150)) // Más compacto (30px por item)
+                color: "transparent"
+
+                ListView {
+                    id: collectionsListView
+                    anchors.fill: parent
+                    model: customCollections
+                    clip: true
+                    spacing: vpx(3)
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: vpx(28)  // Más compacto
+                        color: collectionMouse.containsMouse ?
+                        themeColors.primary || "#3a6ea5" :
+                        "transparent"
+                        radius: vpx(4)
+
+                        property bool isCurrentCollection: selectedCollectionId === modelData.id
+                        property bool hasGame: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
+
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: vpx(8)
+                            spacing: vpx(6)
+                            width: parent.width - vpx(16)
+
+                            // Status icon (más pequeño)
+                            Rectangle {
+                                width: vpx(16)
+                                height: vpx(16)
+                                radius: vpx(8)
+                                color: {
+                                    if (hasGame) return themeColors.success || "#4CAF50";
+                                    if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
+                                    return "transparent";
+                                }
+                                border.color: themeColors.inputBorder || "#555"
+                                border.width: vpx(1)
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: {
+                                        if (hasGame) return "✓";
+                                        if (isCurrentCollection) return "−";
+                                        return "+";
+                                    }
+                                    color: {
+                                        if (hasGame) return "white";
+                                        if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
+                                        return themeColors.text || "white";
+                                    }
+                                    font.pixelSize: vpx(10)  // Más pequeño
+                                    font.bold: true
+                                }
+                            }
+
+                            // Collection name with count (más compacto)
+                            Column {
+                                width: parent.width - vpx(22)
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: vpx(0)
+
+                                Text {
+                                    width: parent.width
+                                    text: modelData.name
+                                    color: {
+                                        if (hasGame) return themeColors.success || "#4CAF50";
+                                        if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
+                                        return themeColors.text || "white";
+                                    }
+                                    font.pixelSize: vpx(11)  // Más pequeño
+                                    font.bold: hasGame || isCurrentCollection
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    text: modelData.games.length + " games"
+                                    color: themeColors.text || "#888"
+                                    font.pixelSize: vpx(8)  // Más pequeño
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: collectionMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: {
+                                if (isCurrentCollection && hasGame) return Qt.PointingHandCursor;
+                                if (hasGame) return Qt.ForbiddenCursor;
+                                return Qt.PointingHandCursor;
+                            }
+
+                            enabled: {
+                                if (hasGame) {
+                                    return isCurrentCollection;
+                                }
+                                return true;
+                            }
+
+                            onClicked: {
+                                if (hasGame && isCurrentCollection) {
+                                    var success = Utils.removeGameFromCollection(
+                                        selectedCollectionId,
+                                        currentGame.title
+                                    );
+                                    if (success) {
+                                        gameMenu.gameRemovedFromCollection();
+                                    }
+                                } else if (!hasGame) {
+                                    var success = Utils.addGameToCollection(
+                                        modelData.id,
+                                        currentGame
+                                    );
+                                    if (success) {
+                                        gameMenu.gameAddedToCollection(modelData.id);
+                                    }
+                                }
+                            }
+                            onEntered: if (enabled) parent.scale = 1.02  // Menos escala
+                            onExited: parent.scale = 1.0
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation { duration: 150 }
+                        }
+                    }
+                }
+
+                // Scroll indicator (más delgado)
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: vpx(3)
+                    color: themeColors.inputBorder || "#555"
+                    radius: vpx(1)
+                    visible: collectionsListView.contentHeight > collectionsListView.height
+                    opacity: 0.5
+                }
+            }
+
+            // Message when no collections exist
+            Text {
+                width: parent.width
+                height: vpx(30)
+                text: "Create a collection first"
+                color: themeColors.textTertiary || "#888"
+                font.pixelSize: vpx(11)  // Más pequeño
+                font.italic: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                visible: customCollections.length === 0
+            }
+        }
+
+        Rectangle {
+            height: vpx(1)
+            width: parent.width
+            color: themeColors.separator || "#555"
+            radius: vpx(1)
+            visible: customCollections.length > 0
+        }
+
+        // Close menu - EN ROJO como solicitaste
         Rectangle {
             width: parent.width
-            height: vpx(45)
-            color: mouseClose.containsMouse ? "#666" : "transparent"
-            radius: vpx(6)
+            height: vpx(35)  // Más compacto
+            color: mouseClose.containsMouse ?
+            themeColors.error || "#f44336" :  // Rojo al hacer hover
+            "transparent"
+            radius: vpx(5)
+            border.color: mouseClose.containsMouse ?
+            themeColors.errorLight || "#ef5350" :  // Borde rojo claro al hover
+            themeColors.error || "#f44336"  // Borde rojo siempre
+            border.width: vpx(1)
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
-                anchors.leftMargin: vpx(10)
-                spacing: vpx(10)
+                anchors.leftMargin: vpx(8)
+                spacing: vpx(8)
 
                 Text {
                     text: "✕"
-                    color: "white"
-                    font.pixelSize: vpx(16)
+                    color: themeColors.error || "#f44336"  // ROJO
+                    font.pixelSize: vpx(14)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
-                    text: "Cerrar"
-                    color: "white"
-                    font.pixelSize: vpx(13)
+                    text: "Close"
+                    color: themeColors.error || "#f44336"  // ROJO
+                    font.pixelSize: vpx(12)
+                    font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -394,8 +380,36 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: gameMenu.closeMenu()
-                onEntered: parent.scale = 1.03
-                onExited: parent.scale = 1.0
+                onEntered: {
+                    parent.scale = 1.02;
+                    // Cambiar color del texto a blanco cuando se hace hover
+                    for (var i = 0; i < parent.children.length; i++) {
+                        var row = parent.children[i];
+                        if (row.objectName === "row" || row instanceof Row) {
+                            for (var j = 0; j < row.children.length; j++) {
+                                var textItem = row.children[j];
+                                if (textItem instanceof Text) {
+                                    textItem.color = "white";
+                                }
+                            }
+                        }
+                    }
+                }
+                onExited: {
+                    parent.scale = 1.0;
+                    // Restaurar color rojo del texto
+                    for (var i = 0; i < parent.children.length; i++) {
+                        var row = parent.children[i];
+                        if (row.objectName === "row" || row instanceof Row) {
+                            for (var j = 0; j < row.children.length; j++) {
+                                var textItem = row.children[j];
+                                if (textItem instanceof Text) {
+                                    textItem.color = themeColors.error || "#f44336";
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Behavior on scale {

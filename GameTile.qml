@@ -1,36 +1,59 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtGraphicalEffects 1.12
 
 Rectangle {
     id: tile
-    color: "#2c2c2c"
+    color: tileColors.tileBg
     radius: vpx(10)
-    border.color: inCollection ? "#4CAF50" : "#444"
-    border.width: vpx(2)
 
     property var gameData
     property bool showCollectionsInfo: false
     property bool isGameInUserCollection: false
+    property var tileColors: ({})
+    property bool isDarkMode: true
 
     signal rightClicked(var gameData, real x, real y)
 
     property bool isHovered: false
 
+    // Gradiente radial base
+    RadialGradient {
+        anchors.fill: parent
+        horizontalOffset: parent.width * 0.5
+        verticalOffset: parent.height * 0.5
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: isDarkMode ? "#20ffffff" : "#15ffffff" }
+            GradientStop { position: 0.5; color: isDarkMode ? "#08ffffff" : "#05ffffff" }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+        z: 0
+
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: tile.width
+                height: tile.height
+                radius: vpx(10)
+            }
+        }
+    }
+
     Column {
         anchors.fill: parent
         anchors.margins: vpx(12)
         spacing: vpx(8)
+        z: 2
 
         Rectangle {
+            id: imageContainer
             width: parent.width
             height: parent.height * 0.65
-            color: "#1a1a1a"
+            color: tileColors.tileImageBg
             radius: vpx(8)
             clip: true
-            border.color: "#555"
-            border.width: vpx(1)
 
             Image {
+                id: gameImage
                 anchors.fill: parent
                 anchors.margins: vpx(3)
                 source: gameData.assets.boxFront || ""
@@ -40,7 +63,7 @@ Rectangle {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#333"
+                    color: tileColors.tileImageBg
                     visible: parent.status !== Image.Ready
                     radius: vpx(5)
 
@@ -48,44 +71,69 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "🎮"
                         font.pixelSize: vpx(50)
-                        color: "#555"
+                        color: tileColors.inputBorder
                     }
                 }
             }
 
+            // Rectángulo para la máscara del efecto vidrio
             Rectangle {
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.margins: vpx(8)
-                width: vpx(35)
-                height: vpx(35)
-                radius: vpx(18)
-                color: gameData.favorite ? "#FFD700" : "transparent"
-                border.color: "#FFD700"
-                border.width: vpx(2)
-                visible: gameData.favorite
+                id: glassMask
+                anchors.fill: parent
+                radius: vpx(8)
+                visible: false // Solo se usa como máscara, no se muestra
+            }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "★"
-                    color: "#000"
-                    font.bold: true
-                    font.pixelSize: vpx(18)
+            // Efecto vidrio con reflejo DIAGONAL - CON MÁSCARA
+            Item {
+                id: glassEffect
+                anchors.fill: parent
+                visible: tile.isHovered
+
+                // REFLEJO DIAGONAL (esquina superior izquierda a inferior derecha)
+                LinearGradient {
+                    id: diagonalReflection
+                    anchors.fill: parent
+                    start: Qt.point(0, 0)
+                    end: Qt.point(parent.width, parent.height)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#60ffffff" }
+                        GradientStop { position: 0.4; color: "#25ffffff" }
+                        GradientStop { position: 0.7; color: "#08ffffff" }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+
+                    // Aplicar máscara para respetar el radio
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: glassMask
+                    }
+                }
+
+                // Brillo sutil en los bordes
+                Rectangle {
+                    anchors.fill: parent
+                    radius: vpx(8)
+                    color: "transparent"
+                    border.color: "#40ffffff"
+                    border.width: vpx(1.5)
+                    opacity: 0.6
                 }
             }
 
-            Rectangle {
+            // Overlay para el icono de play (también con máscara)
+            Item {
                 anchors.fill: parent
-                color: "#40FFFFFF"
-                radius: vpx(8)
                 visible: tile.isHovered
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "▶"
-                    font.pixelSize: vpx(50)
-                    color: "white"
-                    font.bold: true
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#50000000" // Oscurecimiento sutil
+
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: glassMask
+                    }
                 }
             }
         }
@@ -93,7 +141,7 @@ Rectangle {
         Text {
             width: parent.width
             text: gameData.title
-            color: "white"
+            color: tileColors.text
             font.pixelSize: vpx(13)
             font.bold: true
             wrapMode: Text.Wrap
@@ -141,7 +189,7 @@ Rectangle {
                         return collectionNames.join(", ");
                     }
                 }
-                color: "#AAA"
+                color: tileColors.textSecondary
                 font.pixelSize: vpx(11)
                 wrapMode: Text.Wrap
                 maximumLineCount: 1
@@ -157,6 +205,7 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        z: 3
 
         onEntered: {
             tile.isHovered = true;

@@ -1,43 +1,48 @@
-import QtQuick 2.0
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
 import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 Rectangle {
     id: customCollectionsContainer
-    color: "#2c2c2c"
 
     property var customCollections: []
     property int selectedCollectionId: -1
+    property var themeColors: ({})
+    property bool isDarkTheme: true
 
     signal collectionSelected(int collectionId, string collectionName, var gameTitles)
     signal createNewCollection()
     signal deleteCollection(int collectionId, string collectionName)
-    radius: 10
 
-    Column {
+    radius: 10
+    color: themeColors.panel || "#2c2c2c"
+    border.color: themeColors.panelBorder || "#444"
+    border.width: vpx(1)
+
+    ColumnLayout {
         anchors.fill: parent
         anchors.margins: vpx(10)
-        spacing: vpx(10)
+        spacing: vpx(15)
 
         Text {
             text: "My Collections"
             font.bold: true
             font.pixelSize: vpx(18)
-            color: "white"
-            anchors.horizontalCenter: parent.horizontalCenter
+            color: themeColors.text || "white"
         }
 
         Rectangle {
-            width: parent.width
+            Layout.fillWidth: true
             height: vpx(2)
-            color: "#444"
+            color: themeColors.separator || "#444"
             radius: vpx(1)
         }
 
         ListView {
             id: customCollectionsList
-            width: parent.width
-            height: parent.height - vpx(110)
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             model: customCollectionsContainer.customCollections
             spacing: vpx(8)
             clip: true
@@ -45,9 +50,13 @@ Rectangle {
             delegate: Rectangle {
                 width: parent.width
                 height: vpx(43)
-                color: customCollectionsContainer.selectedCollectionId === modelData.id ? "#3a6ea5" : "#444"
+                color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                themeColors.primary || "#3a6ea5" :
+                "transparent"
                 radius: vpx(5)
-                border.color: customCollectionsContainer.selectedCollectionId === modelData.id ? "#5a8ec5" : "#555"
+                border.color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                themeColors.primaryHover || "#5a8ec5" :
+                themeColors.panelBorder || "#555"
                 border.width: vpx(2)
 
                 Row {
@@ -71,7 +80,8 @@ Rectangle {
 
                         Text {
                             text: modelData.name
-                            color: "white"
+                            color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                            "white" : themeColors.text || "white"
                             font.pixelSize: vpx(13)
                             font.bold: customCollectionsContainer.selectedCollectionId === modelData.id
                             elide: Text.ElideRight
@@ -80,7 +90,8 @@ Rectangle {
 
                         Text {
                             text: "(" + modelData.games.length + " games)"
-                            color: "#AAA"
+                            color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                            "white" : themeColors.textSecondary || "#AAA"
                             font.pixelSize: vpx(10)
                         }
                     }
@@ -128,11 +139,13 @@ Rectangle {
 
         Rectangle {
             id: createCollectionBtn
-            width: parent.width
+            Layout.fillWidth: true
             height: vpx(30)
-            color: mouseCreate.containsMouse ? "#4CAF50" : "#2E7D32"
+            color: mouseCreate.containsMouse ?
+            themeColors.successLight || "#4CAF50" :
+            themeColors.successDark || "#2E7D32"
             radius: vpx(5)
-            border.color: "#66BB6A"
+            border.color: themeColors.successLight || "#66BB6A"
             border.width: vpx(2)
 
             Text {

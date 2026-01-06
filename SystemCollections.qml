@@ -1,17 +1,21 @@
-import QtQuick 2.0
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
 import QtGraphicalEffects 1.12
 
 Rectangle {
     id: systemCollectionsContainer
-    color: "#2c2c2c"
 
     signal collectionSelected(var collection)
-
     property int selectedCollectionIndex: -1
+    property var themeColors: ({})
+    property bool isDarkTheme: true
 
+    radius: 10
+    color: themeColors.panel || "#2c2c2c"
+    border.color: themeColors.panelBorder || "#444"
+    border.width: vpx(1)
 
-
-    Column {
+    ColumnLayout {
         anchors.fill: parent
         anchors.margins: vpx(10)
         spacing: vpx(10)
@@ -20,22 +24,21 @@ Rectangle {
             text: "System Collections"
             font.bold: true
             font.pixelSize: vpx(18)
-            color: "white"
-            anchors.horizontalCenter: parent.horizontalCenter
+            color: themeColors.text || "white"
         }
 
         Rectangle {
-            width: parent.width
+            Layout.fillWidth: true
             height: vpx(2)
-            color: "#444"
+            color: themeColors.separator || "#444"
             radius: vpx(1)
             clip: true
         }
 
         ListView {
             id: systemCollectionsList
-            width: parent.width
-            height: parent.height - vpx(10)
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             model: api.collections
             spacing: vpx(5)
             clip: true
@@ -43,9 +46,13 @@ Rectangle {
             delegate: Rectangle {
                 width: parent.width
                 height: vpx(43)
-                color: systemCollectionsContainer.selectedCollectionIndex === index ? "#3a6ea5" : "#444"
+                color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                themeColors.primary || "#3a6ea5" :
+                "transparent"
                 radius: vpx(5)
-                border.color: systemCollectionsContainer.selectedCollectionIndex === index ? "#5a8ec5" : "#555"
+                border.color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                themeColors.primaryHover || "#5a8ec5" :
+                themeColors.panelBorder || "#555"
                 border.width: vpx(2)
 
                 Row {
@@ -57,7 +64,7 @@ Rectangle {
                     spacing: vpx(8)
 
                     Text {
-                        text: "🎮" //cambiar a icono de la coleccion o un solo icono para todos como ahora.! pero imagen.
+                        text: "🎮"
                         font.pixelSize: vpx(20)
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -69,7 +76,8 @@ Rectangle {
 
                         Text {
                             text: modelData.name || modelData.shortName
-                            color: "white"
+                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                            "white" : themeColors.text || "white"
                             font.pixelSize: vpx(13)
                             font.bold: systemCollectionsContainer.selectedCollectionIndex === index
                             elide: Text.ElideRight
@@ -78,7 +86,8 @@ Rectangle {
 
                         Text {
                             text: "(" + modelData.games.count + " games)"
-                            color: "#AAA"
+                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                            "white" : themeColors.textSecondary || "#AAA"
                             font.pixelSize: vpx(10)
                         }
                     }

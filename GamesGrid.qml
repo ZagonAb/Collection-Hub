@@ -1,11 +1,11 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import SortFilterProxyModel 0.2
 import QtGraphicalEffects 1.12
 import "utils.js" as Utils
 
 Rectangle {
     id: gridContainer
-    color: "#1a1a1a"
+    color: "transparent"
 
     property int selectedCollectionId: -1
     property string selectedCollectionName: ""
@@ -13,6 +13,8 @@ Rectangle {
     property var systemCollection: null
     property string searchFilter: ""
     property bool isAllGamesSelected: false
+    property var themeColors: ({})
+    property bool isDarkTheme: true
 
     signal gameRightClicked(var game, int x, int y)
 
@@ -147,7 +149,9 @@ Rectangle {
                     if (gridContainer.selectedCollectionId === -1) return false;
                     return Utils.isGameInCollection(gridContainer.selectedCollectionId, model.title);
                 }
-                border.color: isGameInUserCollection ? "#4CAF50" : "#444"
+
+                tileColors: gridContainer.themeColors
+                isDarkMode: gridContainer.isDarkTheme
 
                 onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(gridContainer, x, y);
@@ -159,10 +163,8 @@ Rectangle {
                 anchors.centerIn: parent
                 width: parent.width * 0.4
                 height: vpx(100)
-                color: "#2c2c2c"
+                color: gridContainer.themeColors.panel
                 radius: vpx(10)
-                border.color: "#444"
-                border.width: vpx(2)
                 visible: gamesGrid.count === 0
 
                 Column {
@@ -188,7 +190,7 @@ Rectangle {
                                 return "No hay juegos en esta colección";
                             }
                         }
-                        color: "#AAA"
+                        color: gridContainer.themeColors.textSecondary
                         font.pixelSize: vpx(16)
                         horizontalAlignment: Text.AlignHCenter
                     }

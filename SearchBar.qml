@@ -1,14 +1,16 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtGraphicalEffects 1.12
 
 Rectangle {
     id: searchBar
-    color: "#2c2c2c"
-    border.color: "#444"
+    color: searchColors.panel
+    border.color: searchColors.panelBorder
     border.width: vpx(2)
     radius: vpx(8)
 
     property string searchText: ""
+    property var searchColors: ({})
+
     signal searchChanged(string text)
 
     Row {
@@ -25,9 +27,9 @@ Rectangle {
         Rectangle {
             width: parent.width - vpx(100)
             height: parent.height
-            color: "#1a1a1a"
+            color: searchColors.inputBg
             radius: vpx(6)
-            border.color: searchInput.activeFocus ? "#3a6ea5" : "#555"
+            border.color: searchInput.activeFocus ? searchColors.primary : searchColors.inputBorder
             border.width: vpx(2)
 
             TextInput {
@@ -35,7 +37,7 @@ Rectangle {
                 anchors.fill: parent
                 anchors.leftMargin: vpx(12)
                 anchors.rightMargin: vpx(12)
-                color: "white"
+                color: searchColors.text
                 font.pixelSize: vpx(16)
                 selectByMouse: true
                 verticalAlignment: TextInput.AlignVCenter
@@ -44,7 +46,7 @@ Rectangle {
                 Text {
                     anchors.fill: parent
                     text: "Search and press Enter..."
-                    color: "#888"
+                    color: searchColors.textTertiary
                     font.pixelSize: vpx(16)
                     verticalAlignment: Text.AlignVCenter
                     visible: parent.text === ""
@@ -74,11 +76,11 @@ Rectangle {
         Rectangle {
             width: vpx(36)
             height: vpx(36)
-            color: clearMouseArea.containsMouse ? "#f44336" : "#444"
+            color: clearMouseArea.containsMouse ? searchColors.error : searchColors.panelBorder
             radius: vpx(6)
             visible: searchInput.text !== ""
             anchors.verticalCenter: parent.verticalCenter
-            border.color: clearMouseArea.containsMouse ? "#ef5350" : "#666"
+            border.color: clearMouseArea.containsMouse ? searchColors.errorLight : searchColors.inputBorder
             border.width: vpx(2)
 
             Text {
