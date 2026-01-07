@@ -153,8 +153,13 @@ Rectangle {
                 tileColors: gridContainer.themeColors
                 isDarkMode: gridContainer.isDarkTheme
 
-                onRightClicked: function(game, x, y) {
+                /*onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(gridContainer, x, y);
+                    gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
+                }*/
+
+                onRightClicked: function(game, x, y) {
+                    var globalPos = mapToItem(null, x, y);
                     gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
                 }
             }

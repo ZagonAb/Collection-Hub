@@ -40,8 +40,11 @@ Rectangle {
 
     function updatePosition() {
         if (parent) {
-            x = Math.min(menuX, parent.width - width - vpx(10));
-            y = Math.min(menuY, parent.height - height - vpx(10));
+            var targetX = menuX - width - vpx(2);
+            var targetY = menuY + vpx(15);
+
+            x = Math.max(vpx(10), Math.min(targetX, parent.width - width - vpx(10)));
+            y = Math.max(vpx(10), Math.min(targetY, parent.height - height - vpx(10)));
         }
     }
 

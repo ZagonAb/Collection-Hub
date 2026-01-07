@@ -364,10 +364,14 @@ FocusScope {
                 isDarkTheme: root.isDarkTheme
 
                 onGameRightClicked: function(game, x, y) {
-                    root.currentGameForMenu = game;
-                    root.menuX = x;
-                    root.menuY = y;
-                    root.showGameMenu = true;
+                    if (root.showGameMenu) {
+                        root.showGameMenu = false;
+                    } else {
+                        root.currentGameForMenu = game;
+                        root.menuX = x;
+                        root.menuY = y;
+                        root.showGameMenu = true;
+                    }
                 }
             }
         }
