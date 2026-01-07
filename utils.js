@@ -155,7 +155,7 @@ function launchGameFromCollection(gameTitle) {
         }
     }
 
-    console.log("No se pudo encontrar el juego para lanzar:", gameTitle);
+    //console.log("No se pudo encontrar el juego para lanzar:", gameTitle);
     return false;
 }
 

@@ -18,11 +18,15 @@ Rectangle {
     property var customCollections: []
     property int menuX: 0
     property int menuY: 0
+    property bool isCollectionContext: false
+    property int contextCollectionId: -1
+    property string contextCollectionName: ""
 
     signal gameAddedToCollection(int collectionId)
     signal gameRemovedFromCollection()
     signal launchGame()
     signal closeMenu()
+    signal deleteCollection(int collectionId, string collectionName)
 
     property bool isInCurrentCollection: {
         if (selectedCollectionId === -1) return false;
@@ -72,7 +76,7 @@ Rectangle {
             Text {
                 anchors.fill: parent
                 anchors.leftMargin: vpx(5)
-                text: gameMenu.gameTitle
+                text: isCollectionContext ? contextCollectionName : gameMenu.gameTitle
                 color: themeColors.text || "white"
                 font.bold: true
                 font.pixelSize: vpx(13)
@@ -93,6 +97,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: vpx(35)
+            visible: !isCollectionContext
             color: mouseLaunch.containsMouse ?
             themeColors.success || "#4CAF50" :
             "transparent"
@@ -143,7 +148,7 @@ Rectangle {
         Column {
             width: parent.width
             spacing: vpx(4)
-            visible: customCollections.length > 0
+            visible: customCollections.length > 0 && !isCollectionContext
 
             Text {
                 text: {
@@ -323,7 +328,141 @@ Rectangle {
             width: parent.width
             color: themeColors.separator || "#555"
             radius: vpx(1)
-            visible: customCollections.length > 0
+            visible: (!isCollectionContext && customCollections.length > 0) ||
+            (!isCollectionContext && selectedCollectionId !== -1 && selectedSystemCollection === null)
+        }
+
+        Rectangle {
+            width: parent.width
+            height: vpx(35)
+            visible: !isCollectionContext &&
+            selectedCollectionId !== -1 &&
+            selectedSystemCollection === null &&
+            isInCurrentCollection
+            color: mouseRemoveFromCollection.containsMouse ?
+            themeColors.error || "#f44336" :
+            "transparent"
+            radius: vpx(5)
+            border.color: mouseRemoveFromCollection.containsMouse ?
+            themeColors.errorLight || "#ef5350" :
+            themeColors.error || "#f44336"
+            border.width: vpx(1)
+
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: vpx(8)
+                spacing: vpx(8)
+
+                Text {
+                    text: "−"
+                    color: mouseRemoveFromCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    font.pixelSize: vpx(16)
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: "Remove from Collection"
+                    color: mouseRemoveFromCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    font.pixelSize: vpx(12)
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            MouseArea {
+                id: mouseRemoveFromCollection
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    var success = Utils.removeGameFromCollection(
+                        selectedCollectionId,
+                        currentGame.title
+                    );
+                    if (success) {
+                        gameMenu.gameRemovedFromCollection();
+                        gameMenu.closeMenu();
+                    }
+                }
+                onEntered: parent.scale = 1.02
+                onExited: parent.scale = 1.0
+            }
+
+            Behavior on scale {
+                NumberAnimation { duration: 150 }
+            }
+        }
+
+        Rectangle {
+            height: vpx(1)
+            width: parent.width
+            color: themeColors.separator || "#555"
+            radius: vpx(1)
+            visible: isCollectionContext ||
+            (!isCollectionContext && selectedCollectionId !== -1 && selectedSystemCollection === null && isInCurrentCollection)
+        }
+
+        Rectangle {
+            width: parent.width
+            height: vpx(35)
+            visible: isCollectionContext
+            color: mouseDeleteCollection.containsMouse ?
+            themeColors.error || "#f44336" :
+            "transparent"
+            radius: vpx(5)
+            border.color: mouseDeleteCollection.containsMouse ?
+            themeColors.errorLight || "#ef5350" :
+            themeColors.error || "#f44336"
+            border.width: vpx(1)
+
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: vpx(8)
+                spacing: vpx(8)
+
+                Text {
+                    text: "🗑"
+                    color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    font.pixelSize: vpx(14)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    text: "Delete Collection"
+                    color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    font.pixelSize: vpx(12)
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            MouseArea {
+                id: mouseDeleteCollection
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    gameMenu.deleteCollection(contextCollectionId, contextCollectionName);
+                    gameMenu.closeMenu();
+                }
+                onEntered: parent.scale = 1.02
+                onExited: parent.scale = 1.0
+            }
+
+            Behavior on scale {
+                NumberAnimation { duration: 150 }
+            }
+        }
+
+        Rectangle {
+            height: vpx(1)
+            width: parent.width
+            color: themeColors.separator || "#555"
+            radius: vpx(1)
+            visible: isCollectionContext
         }
 
         Rectangle {

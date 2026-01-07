@@ -23,7 +23,7 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        console.log("GamesGrid: Inicializando, total juegos:", api.allGames.count);
+        //console.log("GamesGrid: Inicializando, total juegos:", api.allGames.count);
         updateFilteredModel();
     }
 
@@ -84,7 +84,7 @@ Rectangle {
             filteredModel.append(sourceGames[i]);
         }
 
-        console.log("GamesGrid: Mostrando", filteredModel.count, "juegos filtrados (sin duplicados)");
+        //console.log("GamesGrid: Mostrando", filteredModel.count, "juegos filtrados (sin duplicados)");
     }
 
     onSystemCollectionChanged: {
@@ -153,11 +153,6 @@ Rectangle {
                 tileColors: gridContainer.themeColors
                 isDarkMode: gridContainer.isDarkTheme
 
-                /*onRightClicked: function(game, x, y) {
-                    var globalPos = mapToItem(gridContainer, x, y);
-                    gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
-                }*/
-
                 onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(null, x, y);
                     gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
@@ -186,13 +181,13 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: {
                             if (gridContainer.searchFilter !== "") {
-                                return "No se encontraron juegos";
+                                return "No games were found";
                             } else if (gridContainer.systemCollection !== null) {
-                                return "No hay juegos en esta colección";
+                                return "There are no games in this collection.";
                             } else if (gridContainer.selectedCollectionId === -1) {
-                                return "Cargando juegos...";
+                                return "Loading games...";
                             } else {
-                                return "No hay juegos en esta colección";
+                                return "There are no games in this collection.";
                             }
                         }
                         color: gridContainer.themeColors.textSecondary

@@ -14,6 +14,7 @@ Rectangle {
     signal collectionSelected(int collectionId, string collectionName, var gameTitles)
     signal createNewCollection()
     signal deleteCollection(int collectionId, string collectionName)
+    signal collectionRightClicked(int collectionId, string collectionName, int x, int y)
 
     radius: 10
     color: themeColors.panel || "#2c2c2c"
@@ -121,6 +122,14 @@ Rectangle {
                                 modelData.name,
                                 titles
                             );
+                        } else if (mouse.button === Qt.RightButton) {
+                            var globalPos = mapToItem(customCollectionsContainer.parent.parent, mouse.x, mouse.y);
+                            customCollectionsContainer.collectionRightClicked(
+                                modelData.id,
+                                modelData.name,
+                                globalPos.x,
+                                globalPos.y
+                            );
                         }
                     }
 
@@ -138,6 +147,16 @@ Rectangle {
                 Behavior on scale {
                     NumberAnimation { duration: 150 }
                 }
+            }
+
+            // Mensaje cuando no hay colecciones
+            Text {
+                anchors.centerIn: parent
+                text: "No collections yet"
+                color: themeColors.textTertiary || "#707070"
+                font.pixelSize: vpx(14)
+                font.italic: true
+                visible: customCollectionsContainer.customCollections.length === 0
             }
         }
 

@@ -79,7 +79,7 @@ FocusScope {
             var newId = Utils.createCollection(collectionNameInput.text.trim());
             customCollections = Utils.loadCustomCollections();
             showCollectionEditor = false;
-            console.log("Colección creada:", collectionNameInput.text.trim());
+            //console.log("Colección creada:", collectionNameInput.text.trim());
         }
     }
 
@@ -99,7 +99,7 @@ FocusScope {
             isDarkTheme = api.memory.get("theme") === "dark";
         }
 
-        console.log("Theme iniciado con All Games");
+        //console.log("Theme iniciado con All Games");
     }
 
     Rectangle {
@@ -321,6 +321,20 @@ FocusScope {
                         root.collectionToDeleteName = collectionName;
                         root.showDeleteConfirm = true;
                     }
+
+                    onCollectionRightClicked: function(collectionId, collectionName, x, y) {
+                        if (root.showGameMenu) {
+                            root.showGameMenu = false;
+                        } else {
+                            gameMenu.isCollectionContext = true;
+                            gameMenu.contextCollectionId = collectionId;
+                            gameMenu.contextCollectionName = collectionName;
+                            root.currentGameForMenu = null;
+                            root.menuX = x;
+                            root.menuY = y;
+                            root.showGameMenu = true;
+                        }
+                    }
                 }
             }
         }
@@ -367,6 +381,9 @@ FocusScope {
                     if (root.showGameMenu) {
                         root.showGameMenu = false;
                     } else {
+                        gameMenu.isCollectionContext = false;
+                        gameMenu.contextCollectionId = -1;
+                        gameMenu.contextCollectionName = "";
                         root.currentGameForMenu = game;
                         root.menuX = x;
                         root.menuY = y;
@@ -379,8 +396,8 @@ FocusScope {
 
     Rectangle {
         id: collectionEditor
-        width: parent.width * 0.35
-        height: parent.height * 0.28
+        width: parent.width * 0.25
+        height: parent.height * 0.20
         anchors.centerIn: parent
         color: colors.panel
         border.color: colors.primary
@@ -398,20 +415,20 @@ FocusScope {
 
         Column {
             anchors.centerIn: parent
-            spacing: vpx(20)
+            spacing: Math.max(vpx(15), collectionEditor.height * 0.06)
             width: parent.width * 0.85
 
             Text {
                 text: "New Collection"
                 font.bold: true
-                font.pixelSize: vpx(20)
+                font.pixelSize: Math.max(vpx(16), collectionEditor.height * 0.08)
                 color: colors.text
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
             Rectangle {
                 width: parent.width
-                height: vpx(45)
+                height: Math.max(vpx(40), collectionEditor.height * 0.18)
                 color: colors.inputBg
                 border.color: colors.inputBorder
                 border.width: vpx(2)
@@ -422,7 +439,7 @@ FocusScope {
                     anchors.fill: parent
                     anchors.margins: vpx(10)
                     color: colors.text
-                    font.pixelSize: vpx(16)
+                    font.pixelSize: Math.max(vpx(14), parent.height * 0.35)
                     selectByMouse: true
                     focus: true
                     verticalAlignment: TextInput.AlignVCenter
@@ -436,12 +453,12 @@ FocusScope {
             }
 
             Row {
-                spacing: vpx(15)
+                spacing: Math.max(vpx(12), collectionEditor.width * 0.04)
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Rectangle {
-                    width: vpx(120)
-                    height: vpx(45)
+                    width: Math.max(vpx(100), collectionEditor.width * 0.35)
+                    height: Math.max(vpx(40), collectionEditor.height * 0.16)
                     color: mouseCreateBtn.containsMouse ? colors.success : colors.successDark
                     radius: vpx(8)
                     border.color: colors.successLight
@@ -452,7 +469,7 @@ FocusScope {
                         text: "Create"
                         color: "white"
                         font.bold: true
-                        font.pixelSize: vpx(15)
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
                     }
 
                     MouseArea {
@@ -471,8 +488,8 @@ FocusScope {
                 }
 
                 Rectangle {
-                    width: vpx(120)
-                    height: vpx(45)
+                    width: Math.max(vpx(100), collectionEditor.width * 0.35)
+                    height: Math.max(vpx(40), collectionEditor.height * 0.16)
                     color: mouseCancelBtn.containsMouse ? colors.error : colors.errorDark
                     radius: vpx(8)
                     border.color: colors.errorLight
@@ -483,7 +500,7 @@ FocusScope {
                         text: "Cancel"
                         color: "white"
                         font.bold: true
-                        font.pixelSize: vpx(15)
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
                     }
 
                     MouseArea {
@@ -557,13 +574,22 @@ FocusScope {
 
         onCloseMenu: function() {
             root.showGameMenu = false;
+            gameMenu.isCollectionContext = false;
+            gameMenu.contextCollectionId = -1;
+            gameMenu.contextCollectionName = "";
+        }
+
+        onDeleteCollection: function(collectionId, collectionName) {
+            root.collectionToDelete = collectionId;
+            root.collectionToDeleteName = collectionName;
+            root.showDeleteConfirm = true;
         }
     }
 
     Rectangle {
         id: deleteConfirm
-        width: parent.width * 0.35
-        height: parent.height * 0.22
+        width: parent.width * 0.25
+        height: parent.height * 0.20
         anchors.centerIn: parent
         color: colors.panel
         border.color: colors.error
@@ -574,26 +600,26 @@ FocusScope {
 
         Column {
             anchors.centerIn: parent
-            spacing: vpx(20)
+            spacing: Math.max(vpx(15), deleteConfirm.height * 0.08)
             width: parent.width * 0.85
 
             Text {
                 width: parent.width
-                text: "¿Eliminar colección:\n\"" + root.collectionToDeleteName + "\"?"
+                text: "Delete collection:\n\"" + root.collectionToDeleteName + "\"?"
                 color: colors.text
-                font.pixelSize: vpx(17)
+                font.pixelSize: Math.max(vpx(14), deleteConfirm.height * 0.08)
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
             }
 
             Row {
-                spacing: vpx(15)
+                spacing: Math.max(vpx(12), deleteConfirm.width * 0.04)
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Rectangle {
-                    width: vpx(120)
-                    height: vpx(45)
+                    width: Math.max(vpx(100), deleteConfirm.width * 0.35)
+                    height: Math.max(vpx(40), deleteConfirm.height * 0.2)
                     color: mouseDeleteYes.containsMouse ? colors.error : colors.errorDark
                     radius: vpx(8)
                     border.color: colors.errorLight
@@ -601,10 +627,10 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Sí"
+                        text: "Yes"
                         color: "white"
                         font.bold: true
-                        font.pixelSize: vpx(15)
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
                     }
 
                     MouseArea {
@@ -637,8 +663,8 @@ FocusScope {
                 }
 
                 Rectangle {
-                    width: vpx(120)
-                    height: vpx(45)
+                    width: Math.max(vpx(100), deleteConfirm.width * 0.35)
+                    height: Math.max(vpx(40), deleteConfirm.height * 0.2)
                     color: mouseDeleteNo.containsMouse ? colors.inputBorder : colors.panelBorder
                     radius: vpx(8)
                     border.color: colors.inputBorder
@@ -649,7 +675,7 @@ FocusScope {
                         text: "No"
                         color: colors.text
                         font.bold: true
-                        font.pixelSize: vpx(15)
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
                     }
 
                     MouseArea {
