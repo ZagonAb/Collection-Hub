@@ -5,22 +5,23 @@ Rectangle {
     id: tile
     color: tileColors.tileBg
     radius: vpx(10)
+    border.color: isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0"
+    border.width: isDarkMode ? 0 : vpx(2)
 
     property var gameData
     property bool showCollectionsInfo: false
     property bool isGameInUserCollection: false
     property var tileColors: ({})
     property bool isDarkMode: true
+    property bool isHovered: false
 
     signal rightClicked(var gameData, real x, real y)
 
-    property bool isHovered: false
-
-    // Gradiente radial base
     RadialGradient {
         anchors.fill: parent
         horizontalOffset: parent.width * 0.5
         verticalOffset: parent.height * 0.5
+        visible: isDarkMode
         gradient: Gradient {
             GradientStop { position: 0.0; color: isDarkMode ? "#20ffffff" : "#15ffffff" }
             GradientStop { position: 0.5; color: isDarkMode ? "#08ffffff" : "#05ffffff" }
@@ -76,21 +77,18 @@ Rectangle {
                 }
             }
 
-            // Rectángulo para la máscara del efecto vidrio
             Rectangle {
                 id: glassMask
                 anchors.fill: parent
                 radius: vpx(8)
-                visible: false // Solo se usa como máscara, no se muestra
+                visible: false
             }
 
-            // Efecto vidrio con reflejo DIAGONAL - CON MÁSCARA
             Item {
                 id: glassEffect
                 anchors.fill: parent
                 visible: tile.isHovered
 
-                // REFLEJO DIAGONAL (esquina superior izquierda a inferior derecha)
                 LinearGradient {
                     id: diagonalReflection
                     anchors.fill: parent
@@ -103,14 +101,12 @@ Rectangle {
                         GradientStop { position: 1.0; color: "transparent" }
                     }
 
-                    // Aplicar máscara para respetar el radio
                     layer.enabled: true
                     layer.effect: OpacityMask {
                         maskSource: glassMask
                     }
                 }
 
-                // Brillo sutil en los bordes
                 Rectangle {
                     anchors.fill: parent
                     radius: vpx(8)
@@ -121,14 +117,13 @@ Rectangle {
                 }
             }
 
-            // Overlay para el icono de play (también con máscara)
             Item {
                 anchors.fill: parent
                 visible: tile.isHovered
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#50000000" // Oscurecimiento sutil
+                    color: "#50000000"
 
                     layer.enabled: true
                     layer.effect: OpacityMask {

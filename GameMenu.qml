@@ -5,14 +5,11 @@ import "utils.js" as Utils
 Rectangle {
     id: gameMenu
 
-    // 40% más delgado: de parent.width * 0.25 a parent.width * 0.15
     width: parent.width * 0.15
     height: Math.min(menuColumn.height + vpx(25), parent.height * 0.8)
 
     property var themeColors: ({})
     property bool isDarkTheme: true
-
-    // Public properties
     property var currentGame: null
     property string gameTitle: currentGame ? currentGame.title : ""
     property int selectedCollectionId: -1
@@ -22,26 +19,22 @@ Rectangle {
     property int menuX: 0
     property int menuY: 0
 
-    // Signals
     signal gameAddedToCollection(int collectionId)
     signal gameRemovedFromCollection()
     signal launchGame()
     signal closeMenu()
 
-    // Computed property
     property bool isInCurrentCollection: {
         if (selectedCollectionId === -1) return false;
         return Utils.isGameInCollection(selectedCollectionId, gameTitle);
     }
 
-    // Theme styling - usando menucolor en lugar de panel
     color: root ? root.colors.menucolor || root.colors.panel || "#2c2c2c" : "#2c2c2c"
     border.color: themeColors.primary || "#3a6ea5"
     border.width: vpx(3)
     radius: vpx(12)
     z: 10
 
-    // Update position when coordinates change
     onMenuXChanged: updatePosition()
     onMenuYChanged: updatePosition()
 
@@ -52,12 +45,12 @@ Rectangle {
         }
     }
 
-    // Radial gradient overlay
     RadialGradientOverlay {
         anchors.fill: parent
         isDarkTheme: gameMenu.isDarkTheme
         opacityMultiplier: 0.5
         radius: gameMenu.radius
+        visible: gameMenu.isDarkTheme
     }
 
     Column {
@@ -65,10 +58,9 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: vpx(10)  // Menos margen para ser más compacto
+        anchors.margins: vpx(10)
         spacing: vpx(6)
 
-        // Game title (más compacto)
         Rectangle {
             width: parent.width
             height: vpx(35)
@@ -80,7 +72,7 @@ Rectangle {
                 text: gameMenu.gameTitle
                 color: themeColors.text || "white"
                 font.bold: true
-                font.pixelSize: vpx(13)  // Texto más pequeño
+                font.pixelSize: vpx(13)
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -95,10 +87,9 @@ Rectangle {
             radius: vpx(1)
         }
 
-        // Launch game (always visible)
         Rectangle {
             width: parent.width
-            height: vpx(35)  // Más compacto
+            height: vpx(35)
             color: mouseLaunch.containsMouse ?
             themeColors.success || "#4CAF50" :
             "transparent"
@@ -116,15 +107,15 @@ Rectangle {
 
                 Text {
                     text: "▶"
-                    color: "white"
-                    font.pixelSize: vpx(14)  // Más pequeño
+                    color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
+                    font.pixelSize: vpx(14)
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
                     text: "Launch Game"
-                    color: "white"
-                    font.pixelSize: vpx(12)  // Más pequeño
+                    color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
+                    font.pixelSize: vpx(12)
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -137,7 +128,7 @@ Rectangle {
                 onClicked: {
                     gameMenu.launchGame();
                 }
-                onEntered: parent.scale = 1.02  // Menos escala
+                onEntered: parent.scale = 1.02
                 onExited: parent.scale = 1.0
             }
 
@@ -146,7 +137,6 @@ Rectangle {
             }
         }
 
-        // Section: Collections management
         Column {
             width: parent.width
             spacing: vpx(4)
@@ -161,16 +151,15 @@ Rectangle {
                     }
                 }
                 color: themeColors.textSecondary || "#AAA"
-                font.pixelSize: vpx(10)  // Más pequeño
+                font.pixelSize: vpx(10)
                 font.bold: true
                 anchors.left: parent.left
                 anchors.leftMargin: vpx(5)
             }
 
-            // ListView for collections (more compact)
             Rectangle {
                 width: parent.width
-                height: Math.min(customCollections.length * vpx(30), vpx(150)) // Más compacto (30px por item)
+                height: Math.min(customCollections.length * vpx(30), vpx(150))
                 color: "transparent"
 
                 ListView {
@@ -183,7 +172,7 @@ Rectangle {
 
                     delegate: Rectangle {
                         width: parent.width
-                        height: vpx(28)  // Más compacto
+                        height: vpx(28)
                         color: collectionMouse.containsMouse ?
                         themeColors.primary || "#3a6ea5" :
                         "transparent"
@@ -199,7 +188,6 @@ Rectangle {
                             spacing: vpx(6)
                             width: parent.width - vpx(16)
 
-                            // Status icon (más pequeño)
                             Rectangle {
                                 width: vpx(16)
                                 height: vpx(16)
@@ -225,12 +213,11 @@ Rectangle {
                                         if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
                                         return themeColors.text || "white";
                                     }
-                                    font.pixelSize: vpx(10)  // Más pequeño
+                                    font.pixelSize: vpx(10)
                                     font.bold: true
                                 }
                             }
 
-                            // Collection name with count (más compacto)
                             Column {
                                 width: parent.width - vpx(22)
                                 anchors.verticalCenter: parent.verticalCenter
@@ -244,7 +231,7 @@ Rectangle {
                                         if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
                                         return themeColors.text || "white";
                                     }
-                                    font.pixelSize: vpx(11)  // Más pequeño
+                                    font.pixelSize: vpx(11)
                                     font.bold: hasGame || isCurrentCollection
                                     elide: Text.ElideRight
                                 }
@@ -252,7 +239,7 @@ Rectangle {
                                 Text {
                                     text: modelData.games.length + " games"
                                     color: themeColors.text || "#888"
-                                    font.pixelSize: vpx(8)  // Más pequeño
+                                    font.pixelSize: vpx(8)
                                 }
                             }
                         }
@@ -293,7 +280,7 @@ Rectangle {
                                     }
                                 }
                             }
-                            onEntered: if (enabled) parent.scale = 1.02  // Menos escala
+                            onEntered: if (enabled) parent.scale = 1.02
                             onExited: parent.scale = 1.0
                         }
 
@@ -303,7 +290,6 @@ Rectangle {
                     }
                 }
 
-                // Scroll indicator (más delgado)
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -316,13 +302,12 @@ Rectangle {
                 }
             }
 
-            // Message when no collections exist
             Text {
                 width: parent.width
                 height: vpx(30)
                 text: "Create a collection first"
                 color: themeColors.textTertiary || "#888"
-                font.pixelSize: vpx(11)  // Más pequeño
+                font.pixelSize: vpx(11)
                 font.italic: true
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -338,17 +323,16 @@ Rectangle {
             visible: customCollections.length > 0
         }
 
-        // Close menu - EN ROJO como solicitaste
         Rectangle {
             width: parent.width
-            height: vpx(35)  // Más compacto
+            height: vpx(35)
             color: mouseClose.containsMouse ?
-            themeColors.error || "#f44336" :  // Rojo al hacer hover
+            themeColors.error || "#f44336" :
             "transparent"
             radius: vpx(5)
             border.color: mouseClose.containsMouse ?
-            themeColors.errorLight || "#ef5350" :  // Borde rojo claro al hover
-            themeColors.error || "#f44336"  // Borde rojo siempre
+            themeColors.errorLight || "#ef5350" :
+            themeColors.error || "#f44336"
             border.width: vpx(1)
 
             Row {
@@ -359,7 +343,7 @@ Rectangle {
 
                 Text {
                     text: "✕"
-                    color: themeColors.error || "#f44336"  // ROJO
+                    color: themeColors.error || "#f44336"
                     font.pixelSize: vpx(14)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -367,7 +351,7 @@ Rectangle {
 
                 Text {
                     text: "Close"
-                    color: themeColors.error || "#f44336"  // ROJO
+                    color: themeColors.error || "#f44336"
                     font.pixelSize: vpx(12)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -382,7 +366,6 @@ Rectangle {
                 onClicked: gameMenu.closeMenu()
                 onEntered: {
                     parent.scale = 1.02;
-                    // Cambiar color del texto a blanco cuando se hace hover
                     for (var i = 0; i < parent.children.length; i++) {
                         var row = parent.children[i];
                         if (row.objectName === "row" || row instanceof Row) {
@@ -397,7 +380,6 @@ Rectangle {
                 }
                 onExited: {
                     parent.scale = 1.0;
-                    // Restaurar color rojo del texto
                     for (var i = 0; i < parent.children.length; i++) {
                         var row = parent.children[i];
                         if (row.objectName === "row" || row instanceof Row) {

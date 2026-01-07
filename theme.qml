@@ -21,11 +21,7 @@ FocusScope {
     property bool isAllGamesSelected: selectedCollectionId === -1 && selectedSystemCollection === null
     property int menuX: 0
     property int menuY: 0
-
-    // Theme properties
     property bool isDarkTheme: true
-
-    // Color scheme
     property var colors: isDarkTheme ? darkColors : lightColors
 
     property var darkColors: ({
@@ -99,7 +95,6 @@ FocusScope {
         selectedSystemCollection = null;
         currentCollectionGameTitles = [];
 
-        // Load theme preference
         if (api.memory.has("theme")) {
             isDarkTheme = api.memory.get("theme") === "dark";
         }
@@ -111,7 +106,6 @@ FocusScope {
         anchors.fill: parent
         color: colors.background
 
-        // Gradiente desde esquina inferior derecha hacia el centro
         RadialGradientOverlay {
             anchors.fill: parent
             isDarkTheme: customCollectionsContainer.isDarkTheme
@@ -120,7 +114,6 @@ FocusScope {
         }
     }
 
-    // Layout principal usando RowLayout
     RowLayout {
         anchors.fill: parent
         anchors.margins: vpx(10)
@@ -135,11 +128,11 @@ FocusScope {
             border.color: colors.panelBorder
             border.width: vpx(1)
 
-            // Gradiente radial sobre el panel
             RadialGradient {
                 anchors.fill: parent
                 horizontalOffset: parent.width * 0.5
                 verticalOffset: parent.height * 0.5
+                visible: root.isDarkTheme
                 gradient: Gradient {
                     GradientStop { position: 0.0; color: isDarkTheme ? "#20ffffff" : "#15ffffff" }
                     GradientStop { position: 0.5; color: isDarkTheme ? "#08ffffff" : "#05ffffff" }
@@ -147,7 +140,6 @@ FocusScope {
                 }
                 z: 0
 
-                // Aplicar máscara para respetar el radio de las esquinas
                 layer.enabled: true
                 layer.effect: OpacityMask {
                     maskSource: Rectangle {
@@ -160,17 +152,15 @@ FocusScope {
 
             Column {
                 anchors.fill: parent
-                anchors.margins: vpx(10)
+                 anchors.margins: vpx(10)
                 spacing: vpx(10)
                 z: 1
 
-                // All Games y Theme toggle en la misma fila
                 Row {
                     width: parent.width
                     height: vpx(40)
                     spacing: vpx(8)
 
-                    // All Games button
                     Rectangle {
                         width: parent.width - vpx(48)
                         height: vpx(40)
@@ -221,7 +211,6 @@ FocusScope {
                         }
                     }
 
-                    // Theme toggle button (compacto)
                     Rectangle {
                         width: vpx(40)
                         height: vpx(40)
@@ -230,14 +219,41 @@ FocusScope {
                         border.width: vpx(1)
                         radius: vpx(8)
 
-                        Image {
+                        Item {
+                            id: iconContainer
                             width: vpx(24)
                             height: vpx(24)
                             anchors.centerIn: parent
-                            mipmap: true
-                            source: root.isDarkTheme ?
-                            "/home/gonza/.config/pegasus-frontend/themes/Collection Hub/assets/icons/light.svg" :
-                            "assets/icons/dark.svg"
+
+                            Image {
+                                id: lightIcon
+                                anchors.fill: parent
+                                mipmap: true
+                                source: "assets/icons/light.svg"
+                                visible: root.isDarkTheme
+
+                                ColorOverlay {
+                                    anchors.fill: parent
+                                    source: parent
+                                    color: "#ffffff"
+                                    visible: parent.visible
+                                }
+                            }
+
+                            Image {
+                                id: darkIcon
+                                anchors.fill: parent
+                                mipmap: true
+                                source: "assets/icons/dark.svg"
+                                visible: !root.isDarkTheme
+
+                                ColorOverlay {
+                                    anchors.fill: parent
+                                    source: parent
+                                    color: "#212121"
+                                    visible: parent.visible
+                                }
+                            }
                         }
 
                         MouseArea {
@@ -261,6 +277,8 @@ FocusScope {
                     width: parent.width
                     height: (parent.height - vpx(40)) * 0.5
                     color: "transparent"
+                    themeColors: root.colors
+                    isDarkTheme: root.isDarkThem
 
                     onCollectionSelected: function(collection) {
                         root.selectedSystemCollection = collection;
@@ -280,6 +298,8 @@ FocusScope {
                     customCollections: root.customCollections
                     selectedCollectionId: root.selectedCollectionId
                     color: "transparent"
+                    themeColors: root.colors
+                    isDarkTheme: root.isDarkTheme
 
                     onCollectionSelected: function(collectionId, collectionName, gameTitles) {
                         root.selectedCollectionId = collectionId;
@@ -305,13 +325,11 @@ FocusScope {
             }
         }
 
-        // Columna para la parte derecha (topBarContainer y gamesGrid)
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: vpx(10)
 
-            // Barra superior (topBarContainer)
             Rectangle {
                 id: topBarContainer
                 Layout.fillWidth: true
@@ -332,7 +350,6 @@ FocusScope {
                 }
             }
 
-            // Grid de juegos (gamesGrid)
             GamesGrid {
                 id: gamesGrid
                 Layout.fillWidth: true
@@ -356,7 +373,6 @@ FocusScope {
         }
     }
 
-    // Los elementos overlay (collectionEditor, gameMenu, deleteConfirm) permanecen fuera del Layout
     Rectangle {
         id: collectionEditor
         width: parent.width * 0.35
@@ -484,7 +500,6 @@ FocusScope {
         }
     }
 
-    // GameMenu independiente
     GameMenu {
         id: gameMenu
         visible: root.showGameMenu

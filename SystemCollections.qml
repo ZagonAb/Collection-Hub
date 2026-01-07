@@ -42,6 +42,10 @@ Rectangle {
             model: api.collections
             spacing: vpx(5)
             clip: true
+            leftMargin: vpx(4)
+            rightMargin: vpx(4)
+            topMargin: vpx(1)
+            bottomMargin: vpx(1)
 
             delegate: Rectangle {
                 width: parent.width
@@ -77,7 +81,7 @@ Rectangle {
                         Text {
                             text: modelData.name || modelData.shortName
                             color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                            "white" : themeColors.text || "white"
+                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
                             font.pixelSize: vpx(13)
                             font.bold: systemCollectionsContainer.selectedCollectionIndex === index
                             elide: Text.ElideRight
@@ -87,7 +91,7 @@ Rectangle {
                         Text {
                             text: "(" + modelData.games.count + " games)"
                             color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                            "white" : themeColors.textSecondary || "#AAA"
+                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.textSecondary || "#AAA"
                             font.pixelSize: vpx(10)
                         }
                     }

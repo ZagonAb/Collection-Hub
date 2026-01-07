@@ -1,4 +1,3 @@
-// RadialGradientOverlay.qml
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
 
@@ -8,8 +7,6 @@ Item {
     property bool isDarkTheme: true
     property real opacityMultiplier: 1.0
     property real radius: 0
-
-    // Propiedades de color para diferentes intensidades
     property color lightStrong: "#40ffffff"
     property color lightMedium: "#20ffffff"
     property color lightWeak: "#10ffffff"
@@ -17,7 +14,6 @@ Item {
     property color darkMedium: "#15ffffff"
     property color darkWeak: "#08ffffff"
 
-    // Elemento para la máscara (necesario para radius)
     Rectangle {
         id: maskRect
         anchors.fill: parent
@@ -29,6 +25,7 @@ Item {
         anchors.fill: parent
         horizontalOffset: parent.width * 0.5
         verticalOffset: parent.height * 0.5
+        visible: root.isDarkTheme
         gradient: Gradient {
             GradientStop {
                 position: 0.0;

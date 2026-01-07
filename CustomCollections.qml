@@ -23,7 +23,7 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: vpx(10)
-        spacing: vpx(15)
+        spacing: vpx(10)
 
         Text {
             text: "My Collections"
@@ -44,8 +44,12 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: customCollectionsContainer.customCollections
-            spacing: vpx(8)
+            spacing: vpx(5)
             clip: true
+            leftMargin: vpx(4)
+            rightMargin: vpx(4)
+            topMargin: vpx(1)
+            bottomMargin: vpx(1)
 
             delegate: Rectangle {
                 width: parent.width
@@ -91,7 +95,7 @@ Rectangle {
                         Text {
                             text: "(" + modelData.games.length + " games)"
                             color: customCollectionsContainer.selectedCollectionId === modelData.id ?
-                            "white" : themeColors.textSecondary || "#AAA"
+                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.textSecondary || "#AAA"
                             font.pixelSize: vpx(10)
                         }
                     }
@@ -162,7 +166,7 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: customCollectionsContainer.createNewCollection()
-                onEntered: parent.scale = 1.02
+                onEntered: parent.scale = 1.01
                 onExited: parent.scale = 1.0
             }
 
