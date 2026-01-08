@@ -173,10 +173,36 @@ FocusScope {
                             anchors.centerIn: parent
                             spacing: vpx(8)
 
-                            Text {
-                                text: "🎮"
-                                font.pixelSize: vpx(20)
+                            Item {
+                                width: vpx(20)
+                                height: vpx(20)
                                 anchors.verticalCenter: parent.verticalCenter
+
+                                Image {
+                                    id: allGamesIcon
+                                    anchors.fill: parent
+                                    source: "assets/icons/allgames.svg"
+                                    fillMode: Image.PreserveAspectFit
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: colors.panel
+                                        visible: parent.status !== Image.Ready
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "🎮"
+                                            font.pixelSize: vpx(14)
+                                            color: colors.text
+                                        }
+                                    }
+                                }
+
+                                ColorOverlay {
+                                    anchors.fill: allGamesIcon
+                                    source: allGamesIcon
+                                    color: root.isDarkTheme ? "white" : "#212121"
+                                }
                             }
 
                             Text {

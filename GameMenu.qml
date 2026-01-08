@@ -113,11 +113,37 @@ Rectangle {
                 anchors.leftMargin: vpx(8)
                 spacing: vpx(8)
 
-                Text {
-                    text: "▶"
-                    color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
-                    font.pixelSize: vpx(14)
+                Item {
+                    width: vpx(16)
+                    height: vpx(16)
                     anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        id: launchIcon
+                        anchors.fill: parent
+                        source: "assets/icons/play.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap:  true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            visible: parent.status !== Image.Ready
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "▶"
+                                color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
+                                font.pixelSize: vpx(12)
+                            }
+                        }
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: launchIcon
+                        source: launchIcon
+                        color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
+                    }
                 }
 
                 Text {
@@ -423,11 +449,36 @@ Rectangle {
                 anchors.leftMargin: vpx(8)
                 spacing: vpx(8)
 
-                Text {
-                    text: "🗑"
-                    color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
-                    font.pixelSize: vpx(14)
+                Item {
+                    width: vpx(14)
+                    height: vpx(14)
                     anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        id: deleteCollectionIcon
+                        anchors.fill: parent
+                        source: "assets/icons/trash.svg"
+                        fillMode: Image.PreserveAspectFit
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            visible: parent.status !== Image.Ready
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "🗑"
+                                color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                                font.pixelSize: vpx(12)
+                            }
+                        }
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: deleteCollectionIcon
+                        source: deleteCollectionIcon
+                        color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    }
                 }
 
                 Text {
@@ -483,12 +534,37 @@ Rectangle {
                 anchors.leftMargin: vpx(8)
                 spacing: vpx(8)
 
-                Text {
-                    text: "✕"
-                    color: themeColors.error || "#f44336"
-                    font.pixelSize: vpx(14)
-                    font.bold: true
+                Item {
+                    width: vpx(14)
+                    height: vpx(14)
                     anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        id: closeIcon
+                        anchors.fill: parent
+                        source: "assets/icons/close.svg"
+                        fillMode: Image.PreserveAspectFit
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            visible: parent.status !== Image.Ready
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "✕"
+                                color: mouseClose.containsMouse ? "white" : themeColors.error || "#f44336"
+                                font.pixelSize: vpx(12)
+                                font.bold: true
+                            }
+                        }
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: closeIcon
+                        source: closeIcon
+                        color: mouseClose.containsMouse ? "white" : themeColors.error || "#f44336"
+                    }
                 }
 
                 Text {

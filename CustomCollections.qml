@@ -72,10 +72,38 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: vpx(8)
 
-                    Text {
-                        text: "📁"
-                        font.pixelSize: vpx(20)
+                    Item {
+                        width: vpx(20)
+                        height: vpx(20)
                         anchors.verticalCenter: parent.verticalCenter
+
+                        Image {
+                            id: customCollectionIcon
+                            anchors.fill: parent
+                            source: "assets/icons/collection.svg"
+                            fillMode: Image.PreserveAspectFit
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "transparent"
+                                visible: parent.status !== Image.Ready
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "📁"
+                                    font.pixelSize: vpx(16)
+                                    color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                                    "white" : themeColors.text || "white"
+                                }
+                            }
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: customCollectionIcon
+                            source: customCollectionIcon
+                            color: customCollectionsContainer.selectedCollectionId === modelData.id ?
+                            "white" : themeColors.text || "white"
+                        }
                     }
 
                     Column {

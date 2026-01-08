@@ -18,10 +18,35 @@ Rectangle {
         anchors.margins: vpx(12)
         spacing: vpx(10)
 
-        Text {
-            text: "🔍"
-            font.pixelSize: vpx(24)
+        Item {
+            width: vpx(24)
+            height: vpx(24)
             anchors.verticalCenter: parent.verticalCenter
+
+            Image {
+                id: searchIcon
+                anchors.fill: parent
+                source: "assets/icons/search.svg"
+                fillMode: Image.PreserveAspectFit
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    visible: parent.status !== Image.Ready
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "🔍"
+                        font.pixelSize: vpx(20)
+                    }
+                }
+            }
+
+            ColorOverlay {
+                anchors.fill: searchIcon
+                source: searchIcon
+                color: searchColors.text
+            }
         }
 
         Rectangle {
@@ -83,12 +108,37 @@ Rectangle {
             border.color: clearMouseArea.containsMouse ? searchColors.errorLight : searchColors.inputBorder
             border.width: vpx(2)
 
-            Text {
+            Item {
+                width: vpx(20)
+                height: vpx(20)
                 anchors.centerIn: parent
-                text: "✕"
-                color: "white"
-                font.pixelSize: vpx(20)
-                font.bold: true
+
+                Image {
+                    id: clearIcon
+                    anchors.fill: parent
+                    source: "assets/icons/close.svg"
+                    fillMode: Image.PreserveAspectFit
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        visible: parent.status !== Image.Ready
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "✕"
+                            color: "white"
+                            font.pixelSize: vpx(16)
+                            font.bold: true
+                        }
+                    }
+                }
+
+                ColorOverlay {
+                    anchors.fill: clearIcon
+                    source: clearIcon
+                    color: "white"
+                }
             }
 
             MouseArea {

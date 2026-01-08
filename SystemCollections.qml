@@ -67,10 +67,38 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: vpx(8)
 
-                    Text {
-                        text: "🎮"
-                        font.pixelSize: vpx(20)
+                    Item {
+                        width: vpx(20)
+                        height: vpx(20)
                         anchors.verticalCenter: parent.verticalCenter
+
+                        Image {
+                            id: systemCollectionIcon
+                            anchors.fill: parent
+                            source: "assets/icons/allgames.svg"
+                            fillMode: Image.PreserveAspectFit
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "transparent"
+                                visible: parent.status !== Image.Ready
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "🎮"
+                                    font.pixelSize: vpx(16)
+                                    color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                    (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                }
+                            }
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: systemCollectionIcon
+                            source: systemCollectionIcon
+                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                        }
                     }
 
                     Column {

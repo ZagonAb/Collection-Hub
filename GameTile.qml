@@ -53,26 +53,52 @@ Rectangle {
             radius: vpx(8)
             clip: true
 
-            Image {
-                id: gameImage
+            Item {
                 anchors.fill: parent
                 anchors.margins: vpx(3)
-                source: gameData.assets.boxFront || ""
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
-                smooth: true
 
-                Rectangle {
+                Image {
+                    id: gameImage
                     anchors.fill: parent
-                    color: tileColors.tileImageBg
-                    visible: parent.status !== Image.Ready
-                    radius: vpx(5)
+                    source: gameData.assets.boxFront || ""
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    smooth: true
+                    visible: source !== "" && status === Image.Ready
+                }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "🎮"
-                        font.pixelSize: vpx(50)
-                        color: tileColors.inputBorder
+                Item {
+                    id: defaultIconContainer
+                    anchors.centerIn: parent
+                    width: vpx(25)
+                    height: vpx(25)
+                    visible: gameImage.source === "" || gameImage.status !== Image.Ready
+
+                    Image {
+                        id: defaultGameIcon
+                        anchors.fill: parent
+                        source: "assets/icons/allgames.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            visible: parent.status !== Image.Ready
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "🎮"
+                                font.pixelSize: vpx(30)
+                                color: tileColors.inputBorder
+                            }
+                        }
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: defaultGameIcon
+                        source: defaultGameIcon
+                        color: tile.isDarkMode ? "white" : "#212121"
                     }
                 }
             }
