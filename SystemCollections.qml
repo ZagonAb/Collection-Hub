@@ -39,18 +39,18 @@ Rectangle {
 
         ListView {
             id: systemCollectionsList
-            focus: true
-            keyNavigationWraps: false
-            highlightFollowsCurrentItem: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: api.collections
             spacing: vpx(5)
             clip: true
             leftMargin: vpx(4)
-            rightMargin: vpx(4)
+            rightMargin: vpx(10)
             topMargin: vpx(1)
             bottomMargin: vpx(1)
+            focus: true
+            keyNavigationWraps: false
+            highlightFollowsCurrentItem: true
 
             delegate: Rectangle {
                 width: parent.width
@@ -172,6 +172,25 @@ Rectangle {
                     if (focusManager) focusManager.selectAllGames();
                     event.accepted = true;
                 }
+            }
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: vpx(1)
+            anchors.top: systemCollectionsList.top
+            anchors.bottom: systemCollectionsList.bottom
+            width: vpx(2)
+            color: "transparent"
+            visible: systemCollectionsList.contentHeight > systemCollectionsList.height
+
+            Rectangle {
+                width: parent.width
+                height: Math.max(vpx(20), (systemCollectionsList.height / systemCollectionsList.contentHeight) * parent.height)
+                y: (systemCollectionsList.contentY / systemCollectionsList.contentHeight) * parent.height
+                color: themeColors.primaryHover || "#5a8ec5"
+                radius: vpx(1.5)
+                opacity: 0.6
             }
         }
     }

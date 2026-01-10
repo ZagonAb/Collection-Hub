@@ -17,6 +17,7 @@ Rectangle {
     property bool isDarkTheme: true
     property var focusManager: null
     property alias gridView: gamesGrid
+    property bool scrollbarReady: false
 
     signal gameRightClicked(var game, int x, int y)
 
@@ -144,7 +145,11 @@ Rectangle {
             Component.onCompleted: {
                 currentIndex = 0;
                 forceActiveFocus();
+                Qt.callLater(function() {
+                    gridContainer.scrollbarReady = true;
+                });
             }
+
             delegate: GameTile {
                 gameData: model
                 width: gamesGrid.calculatedCellWidth
@@ -220,6 +225,27 @@ Rectangle {
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
+            }
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: vpx(10)
+            anchors.top: parent.top
+            anchors.topMargin: gamesGrid.topMargin
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: vpx(25)
+            width: vpx(3)
+            color: "transparent"
+            visible: gridContainer.scrollbarReady && gamesGrid.contentHeight > gamesGrid.height
+
+            Rectangle {
+                width: parent.width
+                height: Math.max(vpx(30), (gamesGrid.height / gamesGrid.contentHeight) * parent.height)
+                y: (gamesGrid.contentY / gamesGrid.contentHeight) * parent.height
+                color: gridContainer.themeColors.primaryHover || "#5a8ec5"
+                radius: vpx(1.5)
+                opacity: 0.6
             }
         }
     }
