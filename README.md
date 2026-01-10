@@ -3,7 +3,7 @@
 
 A theme for Pegasus Frontend that lets you create and manage your own custom game collections.
 
-![screen0](https://github.com/ZagonAb/Collection-Hub/blob/d186a25b84a9eb9be4e9241a9ea8025ec3ebd93e/.meta/screenshots/screen0.png)
+![screen0](https://github.com/ZagonAb/Collection-Hub/blob/4465e71cee8f1d8f472a57ab3716dd034d9f726b/.meta/screenshots/screen0.png)
 
 
 ## Installation
