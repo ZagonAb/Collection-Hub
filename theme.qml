@@ -17,6 +17,7 @@ FocusScope {
     property var currentGameForMenu: null
     property bool showDeleteConfirm: false
     property int collectionToDelete: -1
+    property int deleteConfirmIndex: 0
     property string collectionToDeleteName: ""
     property bool isAllGamesSelected: selectedCollectionId === -1 && selectedSystemCollection === null
     property int menuX: 0
@@ -74,6 +75,19 @@ FocusScope {
         "overlay": "#CC000000"
     })
 
+    FocusManager {
+        id: focusManager
+
+        onSelectAllGamesTriggered: {
+            root.selectedCollectionId = -1;
+            root.selectedCollectionName = "All Games";
+            root.selectedSystemCollection = null;
+            root.currentCollectionGameTitles = [];
+            systemCollections.selectedCollectionIndex = -1;
+            customCollectionsView.selectedCollectionId = -1;
+        }
+    }
+
     function createNewCollection() {
         if (collectionNameInput.text.trim() !== "") {
             var newId = Utils.createCollection(collectionNameInput.text.trim());
@@ -99,7 +113,16 @@ FocusScope {
             isDarkTheme = api.memory.get("theme") === "dark";
         }
 
-        //console.log("Theme iniciado con All Games");
+        Qt.callLater(function() {
+            focusManager.gamesGrid = gamesGrid.gridView;
+            focusManager.systemCollections = systemCollections.systemCollectionsList;
+            focusManager.customCollections = customCollectionsView.customCollectionsList;
+            focusManager.searchBar = searchBar;
+            console.log("FocusManager configurado:");
+            console.log("- gamesGrid:", focusManager.gamesGrid);
+            console.log("- systemCollections:", focusManager.systemCollections);
+            focusManager.setInitialFocus();
+        });
     }
 
     Rectangle {
@@ -304,7 +327,8 @@ FocusScope {
                     height: (parent.height - vpx(40)) * 0.5
                     color: "transparent"
                     themeColors: root.colors
-                    isDarkTheme: root.isDarkThem
+                    isDarkTheme: root.isDarkTheme
+                    focusManager: focusManager
 
                     onCollectionSelected: function(collection) {
                         root.selectedSystemCollection = collection;
@@ -326,6 +350,7 @@ FocusScope {
                     color: "transparent"
                     themeColors: root.colors
                     isDarkTheme: root.isDarkTheme
+                    focusManager: focusManager
 
                     onCollectionSelected: function(collectionId, collectionName, gameTitles) {
                         root.selectedCollectionId = collectionId;
@@ -402,6 +427,7 @@ FocusScope {
                 color: "transparent"
                 themeColors: root.colors
                 isDarkTheme: root.isDarkTheme
+                focusManager: focusManager
 
                 onGameRightClicked: function(game, x, y) {
                     if (root.showGameMenu) {
@@ -560,6 +586,7 @@ FocusScope {
         menuY: root.menuY
         themeColors: root.colors
         isDarkTheme: root.isDarkTheme
+        focusManager: focusManager
 
         onGameAddedToCollection: function(collectionId) {
             root.customCollections = Utils.loadCustomCollections();
@@ -600,9 +627,20 @@ FocusScope {
 
         onCloseMenu: function() {
             root.showGameMenu = false;
+            var wasCollectionContext = gameMenu.isCollectionContext;
             gameMenu.isCollectionContext = false;
             gameMenu.contextCollectionId = -1;
             gameMenu.contextCollectionName = "";
+
+            if (focusManager) {
+                if (wasCollectionContext) {
+                    if (focusManager.customCollections) {
+                        focusManager.customCollections.forceActiveFocus();
+                    }
+                } else if (focusManager.gamesGrid) {
+                    focusManager.gamesGrid.forceActiveFocus();
+                }
+            }
         }
 
         onDeleteCollection: function(collectionId, collectionName) {
@@ -623,6 +661,33 @@ FocusScope {
         radius: vpx(12)
         visible: root.showDeleteConfirm
         z: 10
+        focus: visible
+
+        onVisibleChanged: {
+            if (visible) {
+                deleteConfirmIndex = 0;
+                Qt.callLater(function() {
+                    deleteConfirm.forceActiveFocus();
+                });
+            }
+        }
+
+        Keys.onPressed: function(event) {
+            if (api.keys.isAccept(event)) {
+                if (deleteConfirmIndex === 0) {
+                    mouseDeleteYes.clicked(null);
+                } else {
+                    mouseDeleteNo.clicked(null);
+                }
+                event.accepted = true;
+            } else if (api.keys.isCancel(event)) {
+                mouseDeleteNo.clicked(null);
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                deleteConfirmIndex = deleteConfirmIndex === 0 ? 1 : 0;
+                event.accepted = true;
+            }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -646,7 +711,8 @@ FocusScope {
                 Rectangle {
                     width: Math.max(vpx(100), deleteConfirm.width * 0.35)
                     height: Math.max(vpx(40), deleteConfirm.height * 0.2)
-                    color: mouseDeleteYes.containsMouse ? colors.error : colors.errorDark
+                    color: mouseDeleteYes.containsMouse || deleteConfirmIndex === 0 ?
+                    colors.error : colors.errorDark
                     radius: vpx(8)
                     border.color: colors.errorLight
                     border.width: vpx(2)
@@ -665,10 +731,20 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
+                            var deletedIndex = -1;
+                            for (var i = 0; i < root.customCollections.length; i++) {
+                                if (root.customCollections[i].id === root.collectionToDelete) {
+                                    deletedIndex = i;
+                                    break;
+                                }
+                            }
+
                             Utils.removeCollection(root.collectionToDelete);
                             root.customCollections = Utils.loadCustomCollections();
 
-                            if (root.selectedCollectionId === root.collectionToDelete) {
+                            var wasSelectedCollection = root.selectedCollectionId === root.collectionToDelete;
+
+                            if (wasSelectedCollection) {
                                 root.selectedCollectionId = -1;
                                 root.selectedCollectionName = "All Games";
                                 root.selectedSystemCollection = null;
@@ -678,6 +754,19 @@ FocusScope {
                             root.showDeleteConfirm = false;
                             root.collectionToDelete = -1;
                             root.collectionToDeleteName = "";
+
+                            if (focusManager) {
+                                if (root.customCollections.length === 0) {
+                                    focusManager.selectAllGames();
+                                } else {
+                                    var newIndex = Math.min(deletedIndex, root.customCollections.length - 1);
+                                    focusManager.lastCustomIndex = newIndex;
+                                    if (focusManager.customCollections) {
+                                        focusManager.customCollections.currentIndex = newIndex;
+                                        focusManager.customCollections.forceActiveFocus();
+                                    }
+                                }
+                            }
                         }
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
@@ -691,7 +780,8 @@ FocusScope {
                 Rectangle {
                     width: Math.max(vpx(100), deleteConfirm.width * 0.35)
                     height: Math.max(vpx(40), deleteConfirm.height * 0.2)
-                    color: mouseDeleteNo.containsMouse ? colors.inputBorder : colors.panelBorder
+                    color: mouseDeleteNo.containsMouse || deleteConfirmIndex === 1 ?
+                    colors.inputBorder : colors.panelBorder
                     radius: vpx(8)
                     border.color: colors.inputBorder
                     border.width: vpx(2)
@@ -713,6 +803,10 @@ FocusScope {
                             root.showDeleteConfirm = false;
                             root.collectionToDelete = -1;
                             root.collectionToDeleteName = "";
+
+                            if (focusManager && focusManager.customCollections) {
+                                focusManager.customCollections.forceActiveFocus();
+                            }
                         }
                         onEntered: parent.scale = 1.05
                         onExited: parent.scale = 1.0
@@ -736,11 +830,17 @@ FocusScope {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                root.showCollectionEditor = false;
-                root.showGameMenu = false;
-                root.showDeleteConfirm = false;
-                root.collectionToDelete = -1;
-                root.collectionToDeleteName = "";
+                if (root.showDeleteConfirm) {
+                    root.showDeleteConfirm = false;
+                    root.collectionToDelete = -1;
+                    root.collectionToDeleteName = "";
+                    if (focusManager && focusManager.customCollections) {
+                        focusManager.customCollections.forceActiveFocus();
+                    }
+                } else {
+                    root.showCollectionEditor = false;
+                    root.showGameMenu = false;
+                }
             }
         }
 
@@ -749,5 +849,25 @@ FocusScope {
         }
 
         Component.onCompleted: opacity = 1
+    }
+
+    Keys.onPressed: function(event) {
+        if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm) {
+            return;
+        }
+
+        if (event.key === Qt.Key_Left) {
+            focusManager.moveFocusLeft();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Right) {
+            focusManager.moveFocusRight();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Up) {
+            focusManager.moveFocusUp();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Down) {
+            focusManager.moveFocusDown();
+            event.accepted = true;
+        }
     }
 }

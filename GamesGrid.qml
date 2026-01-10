@@ -15,6 +15,8 @@ Rectangle {
     property bool isAllGamesSelected: false
     property var themeColors: ({})
     property bool isDarkTheme: true
+    property var focusManager: null
+    property alias gridView: gamesGrid
 
     signal gameRightClicked(var game, int x, int y)
 
@@ -117,6 +119,7 @@ Rectangle {
 
         GridView {
             id: gamesGrid
+            focus: true
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -132,10 +135,16 @@ Rectangle {
             cellHeight: calculatedCellHeight + spacing
             model: filteredModel
             clip: true
+            keyNavigationWraps: false
+            highlightFollowsCurrentItem: true
 
             leftMargin: spacing
             topMargin: spacing
 
+            Component.onCompleted: {
+                currentIndex = 0;
+                forceActiveFocus();
+            }
             delegate: GameTile {
                 gameData: model
                 width: gamesGrid.calculatedCellWidth
@@ -156,6 +165,22 @@ Rectangle {
                 onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(null, x, y);
                     gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
+                }
+            }
+
+            Keys.onPressed: function(event) {
+                if (api.keys.isAccept(event)) {
+                    if (currentItem && currentItem.gameData) {
+                        var globalPos = currentItem.mapToItem(null, currentItem.width / 2, currentItem.height / 2);
+                        gridContainer.gameRightClicked(currentItem.gameData, globalPos.x, globalPos.y);
+                        event.accepted = true;
+                    }
+                } else if (api.keys.isCancel(event)) {
+                    if (focusManager) focusManager.moveFocusLeft();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Left && currentIndex === 0) {
+                    if (focusManager) focusManager.moveFocusLeft();
+                    event.accepted = true;
                 }
             }
 

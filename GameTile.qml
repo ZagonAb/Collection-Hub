@@ -1,19 +1,33 @@
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
+import "utils.js" as Utils
 
 Rectangle {
     id: tile
     color: tileColors.tileBg
     radius: vpx(10)
-    border.color: isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0"
-    border.width: isDarkMode ? 0 : vpx(2)
+
+    property bool isCurrent: GridView.isCurrentItem
+    property bool gridHasFocus: GridView.view ? GridView.view.activeFocus : false
+
+    onIsCurrentChanged: {
+        if (isCurrent) {
+            tile.scale = 1.05;
+        } else {
+            tile.scale = 1.0;
+        }
+    }
+
+    border.width: vpx(2)
+    border.color: (isCurrent && gridHasFocus) ? tileColors.primary :
+    (isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0")
 
     property var gameData
     property bool showCollectionsInfo: false
     property bool isGameInUserCollection: false
     property var tileColors: ({})
     property bool isDarkMode: true
-    property bool isHovered: false
+    property bool isHovered: tileMouseArea.containsMouse || isCurrent
 
     signal rightClicked(var gameData, real x, real y)
 
@@ -229,19 +243,25 @@ Rectangle {
         z: 3
 
         onEntered: {
-            tile.isHovered = true;
-            tile.scale = 1.05;
+            if (!tile.isCurrent) {
+                tile.scale = 1.05;
+            }
         }
 
         onExited: {
-            tile.isHovered = false;
-            tile.scale = 1.0;
+            if (!tile.isCurrent) {
+                tile.scale = 1.0;
+            }
         }
 
         onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton) {
                 tile.rightClicked(gameData, mouse.x, mouse.y);
-            } else if (mouse.button === Qt.LeftButton) {
+            }
+        }
+
+        onDoubleClicked: function(mouse) {
+            if (mouse.button === Qt.LeftButton) {
                 Utils.launchGameFromCollection(gameData.title);
             }
         }

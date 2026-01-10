@@ -10,6 +10,8 @@ Rectangle {
     property int selectedCollectionId: -1
     property var themeColors: ({})
     property bool isDarkTheme: true
+    property var focusManager: null
+    property alias customCollectionsList: customCollectionsList
 
     signal collectionSelected(int collectionId, string collectionName, var gameTitles)
     signal createNewCollection()
@@ -42,6 +44,9 @@ Rectangle {
 
         ListView {
             id: customCollectionsList
+            focus: true
+            keyNavigationWraps: false
+            highlightFollowsCurrentItem: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: customCollectionsContainer.customCollections
@@ -59,9 +64,12 @@ Rectangle {
                 themeColors.primary || "#3a6ea5" :
                 "transparent"
                 radius: vpx(5)
-                border.color: customCollectionsContainer.selectedCollectionId === modelData.id ?
-                themeColors.primaryHover || "#5a8ec5" :
-                themeColors.panelBorder || "#555"
+
+                property bool isCurrent: ListView.isCurrentItem
+
+                border.color: (isCurrent && customCollectionsList.activeFocus) ? themeColors.primary :
+                (customCollectionsContainer.selectedCollectionId === modelData.id ?
+                themeColors.primaryHover : themeColors.panelBorder)
                 border.width: vpx(2)
 
                 Row {
@@ -177,7 +185,52 @@ Rectangle {
                 }
             }
 
-            // Mensaje cuando no hay colecciones
+            Keys.onPressed: function(event) {
+                if (!activeFocus) return;
+
+                if (api.keys.isAccept(event)) {
+                    if (currentItem) {
+                        var modelData = customCollectionsContainer.customCollections[currentIndex];
+                        customCollectionsContainer.selectedCollectionId = modelData.id;
+
+                        var titles = [];
+                        for (var i = 0; i < modelData.games.length; i++) {
+                            titles.push(modelData.games[i].title);
+                        }
+
+                        customCollectionsContainer.collectionSelected(
+                            modelData.id,
+                            modelData.name,
+                            titles
+                        );
+
+                        if (focusManager) {
+                            focusManager.lastCustomIndex = currentIndex;
+                            focusManager.moveFocusRight();
+                        }
+                    }
+                    event.accepted = true;
+                } else if (api.keys.isDetails(event)) {
+                    if (currentItem) {
+                        var modelData = customCollectionsContainer.customCollections[currentIndex];
+                        var globalPos = currentItem.mapToItem(null, currentItem.width / 2, currentItem.height / 2);
+                        customCollectionsContainer.collectionRightClicked(
+                            modelData.id,
+                            modelData.name,
+                            globalPos.x,
+                            globalPos.y
+                        );
+                    }
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Right) {
+                    if (focusManager) focusManager.moveFocusRight();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Up && currentIndex === 0) {
+                    if (focusManager) focusManager.moveFocusUp();
+                    event.accepted = true;
+                }
+            }
+
             Text {
                 anchors.centerIn: parent
                 text: "No collections yet"

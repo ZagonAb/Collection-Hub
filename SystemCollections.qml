@@ -9,6 +9,8 @@ Rectangle {
     property int selectedCollectionIndex: -1
     property var themeColors: ({})
     property bool isDarkTheme: true
+    property var focusManager: null
+    property alias systemCollectionsList: systemCollectionsList
 
     radius: 10
     color: themeColors.panel || "#2c2c2c"
@@ -37,6 +39,9 @@ Rectangle {
 
         ListView {
             id: systemCollectionsList
+            focus: true
+            keyNavigationWraps: false
+            highlightFollowsCurrentItem: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: api.collections
@@ -54,9 +59,12 @@ Rectangle {
                 themeColors.primary || "#3a6ea5" :
                 "transparent"
                 radius: vpx(5)
-                border.color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                themeColors.primaryHover || "#5a8ec5" :
-                themeColors.panelBorder || "#555"
+
+                property bool isCurrent: ListView.isCurrentItem
+
+                border.color: (isCurrent && systemCollectionsList.activeFocus) ? themeColors.primary :
+                (systemCollectionsContainer.selectedCollectionIndex === index ?
+                themeColors.primaryHover : themeColors.panelBorder)
                 border.width: vpx(2)
 
                 Row {
@@ -139,6 +147,30 @@ Rectangle {
 
                 Behavior on scale {
                     NumberAnimation { duration: 150 }
+                }
+            }
+
+            Keys.onPressed: function(event) {
+                if (api.keys.isAccept(event)) {
+                    if (currentItem) {
+                        var modelData = model.get(currentIndex);
+                        systemCollectionsContainer.selectedCollectionIndex = currentIndex;
+                        systemCollectionsContainer.collectionSelected(modelData);
+                        if (focusManager) {
+                            focusManager.lastSystemIndex = currentIndex;
+                            focusManager.moveFocusRight();
+                        }
+                    }
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Right) {
+                    if (focusManager) focusManager.moveFocusRight();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Down && currentIndex === count - 1) {
+                    if (focusManager) focusManager.moveFocusDown();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Up && currentIndex === 0) {
+                    if (focusManager) focusManager.selectAllGames();
+                    event.accepted = true;
                 }
             }
         }

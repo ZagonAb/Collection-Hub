@@ -20,6 +20,7 @@ Rectangle {
     property int menuY: 0
     property bool isCollectionContext: false
     property int contextCollectionId: -1
+    property int highlightedIndex: -1
     property string contextCollectionName: ""
 
     signal gameAddedToCollection(int collectionId)
@@ -31,6 +32,31 @@ Rectangle {
     property bool isInCurrentCollection: {
         if (selectedCollectionId === -1) return false;
         return Utils.isGameInCollection(selectedCollectionId, gameTitle);
+    }
+
+    property var focusManager: null
+    property int currentMenuIndex: 0
+    property int menuItemCount: {
+        var count = 0;
+
+        if (!isCollectionContext) {
+            count += 1;
+            if (customCollections.length > 0) {
+                count += customCollections.length;
+            }
+            if (selectedCollectionId !== -1 &&
+                selectedSystemCollection === null && isInCurrentCollection) {
+                count += 1;
+                }
+        }
+
+        if (isCollectionContext) {
+            count += 1;
+        }
+
+        count += 1;
+
+        return count;
     }
 
     color: root ? root.colors.menucolor || root.colors.panel || "#2c2c2c" : "#2c2c2c"
@@ -49,6 +75,109 @@ Rectangle {
 
             x = Math.max(vpx(10), Math.min(targetX, parent.width - width - vpx(10)));
             y = Math.max(vpx(10), Math.min(targetY, parent.height - height - vpx(10)));
+        }
+    }
+
+    function getItemAtIndex(index) {
+        var currentIdx = 0;
+
+        if (!isCollectionContext) {
+            if (index === currentIdx) return launchGameBtn;
+            currentIdx++;
+
+            if (customCollections.length > 0) {
+                if (index >= currentIdx && index < currentIdx + customCollections.length) {
+                    return collectionsListView.itemAtIndex(index - currentIdx);
+                }
+                currentIdx += customCollections.length;
+            }
+
+            if (selectedCollectionId !== -1 &&
+                selectedSystemCollection === null && isInCurrentCollection) {
+                if (index === currentIdx) return removeFromCollectionBtn;
+                currentIdx++;
+                }
+        }
+
+        if (isCollectionContext) {
+            if (index === currentIdx) return deleteCollectionBtn;
+            currentIdx++;
+        }
+
+        if (index === currentIdx) return closeBtn;
+
+        return null;
+    }
+
+    function highlightCurrentItem() {
+        highlightedIndex = currentMenuIndex;
+    }
+
+    function activateCurrentItem() {
+        var item = getItemAtIndex(currentMenuIndex);
+        if (item === launchGameBtn) {
+            gameMenu.launchGame();
+        } else if (item === removeFromCollectionBtn) {
+            var success = Utils.removeGameFromCollection(selectedCollectionId, currentGame.title);
+            if (success) {
+                gameMenu.gameRemovedFromCollection();
+                gameMenu.closeMenu();
+            }
+        } else if (item === deleteCollectionBtn) {
+            gameMenu.deleteCollection(contextCollectionId, contextCollectionName);
+            gameMenu.closeMenu();
+        } else if (item === closeBtn) {
+            gameMenu.closeMenu();
+        } else if (collectionsListView.visible) {
+            var listIndex = currentMenuIndex - 1;
+            if (!isCollectionContext && listIndex >= 0 && listIndex < customCollections.length) {
+                var modelData = customCollections[listIndex];
+                var hasGame = Utils.isGameInCollection(modelData.id, gameMenu.gameTitle);
+                var isCurrentCollection = selectedCollectionId === modelData.id;
+
+                if (hasGame && isCurrentCollection) {
+                    var success = Utils.removeGameFromCollection(selectedCollectionId, currentGame.title);
+                    if (success) {
+                        gameMenu.gameRemovedFromCollection();
+                    }
+                } else if (!hasGame) {
+                    var success = Utils.addGameToCollection(modelData.id, currentGame);
+                    if (success) {
+                        gameMenu.gameAddedToCollection(modelData.id);
+                    }
+                }
+            }
+        }
+    }
+
+    Keys.onPressed: function(event) {
+        if (api.keys.isAccept(event)) {
+            activateCurrentItem();
+            event.accepted = true;
+        } else if (api.keys.isCancel(event)) {
+            closeMenu();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Up) {
+            currentMenuIndex = Math.max(0, currentMenuIndex - 1);
+            highlightCurrentItem();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Down) {
+            currentMenuIndex = Math.min(menuItemCount - 1, currentMenuIndex + 1);
+            highlightCurrentItem();
+            event.accepted = true;
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            currentMenuIndex = 0;
+            highlightedIndex = -1;
+            forceActiveFocus();
+            Qt.callLater(function() {
+                highlightedIndex = 0;
+            });
+        } else {
+            highlightedIndex = -1;
         }
     }
 
@@ -95,14 +224,15 @@ Rectangle {
         }
 
         Rectangle {
+            id: launchGameBtn
             width: parent.width
             height: vpx(35)
             visible: !isCollectionContext
-            color: mouseLaunch.containsMouse ?
+            color: mouseLaunch.containsMouse || highlightedIndex === 0 ?
             themeColors.success || "#4CAF50" :
             "transparent"
             radius: vpx(5)
-            border.color: mouseLaunch.containsMouse ?
+            border.color: mouseLaunch.containsMouse || highlightedIndex === 0 ?
             themeColors.successLight || "#66BB6A" :
             "transparent"
             border.width: vpx(1)
@@ -207,13 +337,19 @@ Rectangle {
                     delegate: Rectangle {
                         width: parent.width
                         height: vpx(28)
-                        color: collectionMouse.containsMouse ?
+                        color: collectionMouse.containsMouse || isHighlighted ?
                         themeColors.primary || "#3a6ea5" :
                         "transparent"
                         radius: vpx(4)
 
                         property bool isCurrentCollection: selectedCollectionId === modelData.id
                         property bool hasGame: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
+                        property bool isHighlighted: {
+                            if (isCollectionContext) return false;
+                            var baseIndex = 1;
+                            var listIndex = baseIndex + index;
+                            return highlightedIndex === listIndex;
+                        }
 
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
@@ -359,20 +495,29 @@ Rectangle {
         }
 
         Rectangle {
+            id: removeFromCollectionBtn
             width: parent.width
             height: vpx(35)
             visible: !isCollectionContext &&
             selectedCollectionId !== -1 &&
             selectedSystemCollection === null &&
             isInCurrentCollection
-            color: mouseRemoveFromCollection.containsMouse ?
+            color: mouseRemoveFromCollection.containsMouse || isRemoveHighlighted ?
             themeColors.error || "#f44336" :
             "transparent"
             radius: vpx(5)
-            border.color: mouseRemoveFromCollection.containsMouse ?
+            border.color: mouseRemoveFromCollection.containsMouse || isRemoveHighlighted ?
             themeColors.errorLight || "#ef5350" :
             themeColors.error || "#f44336"
             border.width: vpx(1)
+
+            property bool isRemoveHighlighted: {
+                var idx = 1;
+                if (!isCollectionContext && customCollections.length > 0) {
+                    idx += customCollections.length;
+                }
+                return highlightedIndex === idx;
+            }
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
@@ -382,7 +527,8 @@ Rectangle {
 
                 Text {
                     text: "−"
-                    color: mouseRemoveFromCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    color: mouseRemoveFromCollection.containsMouse || removeFromCollectionBtn.isRemoveHighlighted ?
+                    "white" : themeColors.error || "#f44336"
                     font.pixelSize: vpx(16)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -390,7 +536,8 @@ Rectangle {
 
                 Text {
                     text: "Remove from Collection"
-                    color: mouseRemoveFromCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    color: mouseRemoveFromCollection.containsMouse || removeFromCollectionBtn.isRemoveHighlighted ?
+                    "white" : themeColors.error || "#f44336"
                     font.pixelSize: vpx(12)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -431,17 +578,25 @@ Rectangle {
         }
 
         Rectangle {
+            id: deleteCollectionBtn
             width: parent.width
             height: vpx(35)
             visible: isCollectionContext
-            color: mouseDeleteCollection.containsMouse ?
+            color: mouseDeleteCollection.containsMouse || isDeleteHighlighted ?
             themeColors.error || "#f44336" :
             "transparent"
             radius: vpx(5)
-            border.color: mouseDeleteCollection.containsMouse ?
+            border.color: mouseDeleteCollection.containsMouse || isDeleteHighlighted ?
             themeColors.errorLight || "#ef5350" :
             themeColors.error || "#f44336"
             border.width: vpx(1)
+
+            property bool isDeleteHighlighted: {
+                if (isCollectionContext) {
+                    return highlightedIndex === 0;
+                }
+                return false;
+            }
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
@@ -468,7 +623,8 @@ Rectangle {
                             Text {
                                 anchors.centerIn: parent
                                 text: "🗑"
-                                color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                                color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
+                                "white" : themeColors.error || "#f44336"
                                 font.pixelSize: vpx(12)
                             }
                         }
@@ -477,13 +633,15 @@ Rectangle {
                     ColorOverlay {
                         anchors.fill: deleteCollectionIcon
                         source: deleteCollectionIcon
-                        color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                        color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
+                        "white" : themeColors.error || "#f44336"
                     }
                 }
 
                 Text {
                     text: "Delete Collection"
-                    color: mouseDeleteCollection.containsMouse ? "white" : themeColors.error || "#f44336"
+                    color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
+                    "white" : themeColors.error || "#f44336"
                     font.pixelSize: vpx(12)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -517,16 +675,21 @@ Rectangle {
         }
 
         Rectangle {
+            id: closeBtn
             width: parent.width
             height: vpx(35)
-            color: mouseClose.containsMouse ?
+            color: mouseClose.containsMouse || isCloseHighlighted ?
             themeColors.error || "#f44336" :
             "transparent"
             radius: vpx(5)
-            border.color: mouseClose.containsMouse ?
+            border.color: mouseClose.containsMouse || isCloseHighlighted ?
             themeColors.errorLight || "#ef5350" :
             themeColors.error || "#f44336"
             border.width: vpx(1)
+
+            property bool isCloseHighlighted: {
+                return highlightedIndex === menuItemCount - 1;
+            }
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
@@ -553,7 +716,8 @@ Rectangle {
                             Text {
                                 anchors.centerIn: parent
                                 text: "✕"
-                                color: mouseClose.containsMouse ? "white" : themeColors.error || "#f44336"
+                                color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
+                                "white" : themeColors.error || "#f44336"
                                 font.pixelSize: vpx(12)
                                 font.bold: true
                             }
@@ -563,13 +727,15 @@ Rectangle {
                     ColorOverlay {
                         anchors.fill: closeIcon
                         source: closeIcon
-                        color: mouseClose.containsMouse ? "white" : themeColors.error || "#f44336"
+                        color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
+                        "white" : themeColors.error || "#f44336"
                     }
                 }
 
                 Text {
                     text: "Close"
-                    color: themeColors.error || "#f44336"
+                    color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
+                    "white" : themeColors.error || "#f44336"
                     font.pixelSize: vpx(12)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter

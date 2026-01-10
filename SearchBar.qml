@@ -172,4 +172,8 @@ Rectangle {
     function focusSearch() {
         searchInput.forceActiveFocus();
     }
+
+    function forceActiveFocus() {
+        searchInput.forceActiveFocus();
+    }
 }
