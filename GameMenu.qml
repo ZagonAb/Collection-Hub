@@ -133,14 +133,8 @@ Rectangle {
             if (!isCollectionContext && listIndex >= 0 && listIndex < customCollections.length) {
                 var modelData = customCollections[listIndex];
                 var hasGame = Utils.isGameInCollection(modelData.id, gameMenu.gameTitle);
-                var isCurrentCollection = selectedCollectionId === modelData.id;
 
-                if (hasGame && isCurrentCollection) {
-                    var success = Utils.removeGameFromCollection(selectedCollectionId, currentGame.title);
-                    if (success) {
-                        gameMenu.gameRemovedFromCollection();
-                    }
-                } else if (!hasGame) {
+                if (!hasGame) {
                     var success = Utils.addGameToCollection(modelData.id, currentGame);
                     if (success) {
                         gameMenu.gameAddedToCollection(modelData.id);
@@ -419,28 +413,15 @@ Rectangle {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: {
-                                if (isCurrentCollection && hasGame) return Qt.PointingHandCursor;
-                                if (hasGame) return Qt.ForbiddenCursor;
+                                if (hasGame && !isCurrentCollection) return Qt.ForbiddenCursor;
+                                if (hasGame && isCurrentCollection) return Qt.ForbiddenCursor;
                                 return Qt.PointingHandCursor;
                             }
 
-                            enabled: {
-                                if (hasGame) {
-                                    return isCurrentCollection;
-                                }
-                                return true;
-                            }
+                            enabled: !hasGame
 
                             onClicked: {
-                                if (hasGame && isCurrentCollection) {
-                                    var success = Utils.removeGameFromCollection(
-                                        selectedCollectionId,
-                                        currentGame.title
-                                    );
-                                    if (success) {
-                                        gameMenu.gameRemovedFromCollection();
-                                    }
-                                } else if (!hasGame) {
+                                if (!hasGame) {
                                     var success = Utils.addGameToCollection(
                                         modelData.id,
                                         currentGame
