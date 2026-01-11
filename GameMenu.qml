@@ -6,7 +6,7 @@ import "qrc:/qmlutils" as PegasusUtils
 Rectangle {
     id: gameMenu
 
-    width: parent.width * 0.15
+    width: parent.width * 0.18
     height: Math.min(menuColumn.height + vpx(25), parent.height * 0.8)
 
     property var themeColors: ({})
@@ -510,12 +510,13 @@ Rectangle {
                     boundsBehavior: Flickable.StopAtBounds
 
                     delegate: Rectangle {
-                        width: parent.width
+                        width: parent.width - vpx(15)
                         height: vpx(28)
                         color: collectionMouse.containsMouse || isHighlighted ?
                         themeColors.primary || "#3a6ea5" :
                         "transparent"
                         radius: vpx(4)
+                        anchors.margins: vpx(10)
 
                         property bool isCurrentCollection: selectedCollectionId === modelData.id
                         property bool hasGame: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
@@ -525,6 +526,8 @@ Rectangle {
                             var listIndex = baseIndex + index;
                             return highlightedIndex === listIndex;
                         }
+
+                        anchors.horizontalCenter: parent.horizontalCenter
 
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
@@ -550,12 +553,13 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: {
                                         if (hasGame) return "✓";
-                                        if (isCurrentCollection) return "−";
+                                        if (isCurrentCollection) return "+";
                                         return "+";
                                     }
                                     color: {
+                                        if (isHighlighted || collectionMouse.containsMouse) return "white";
                                         if (hasGame) return "white";
-                                        if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
+                                        if (isCurrentCollection) return "white";
                                         return themeColors.text || "white";
                                     }
                                     font.pixelSize: vpx(10)
@@ -572,6 +576,7 @@ Rectangle {
                                     width: parent.width
                                     text: modelData.name
                                     color: {
+                                        if (isHighlighted || collectionMouse.containsMouse) return "white";
                                         if (hasGame) return themeColors.success || "#4CAF50";
                                         if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
                                         return themeColors.text || "white";
@@ -583,7 +588,7 @@ Rectangle {
 
                                 Text {
                                     text: modelData.games.length + " games"
-                                    color: themeColors.text || "#888"
+                                    color: isHighlighted || collectionMouse.containsMouse ? "white" : themeColors.text || "#888"
                                     font.pixelSize: vpx(8)
                                 }
                             }
