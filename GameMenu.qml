@@ -1236,7 +1236,7 @@ Rectangle {
                     Item {
                         id: scrollContainer
                         width: parent.width
-                        height: vpx(150)
+                        height: vpx(125)
                         clip: true
 
                         PegasusUtils.AutoScroll {
