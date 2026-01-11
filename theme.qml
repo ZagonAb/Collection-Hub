@@ -118,9 +118,9 @@ FocusScope {
             focusManager.systemCollections = systemCollections.systemCollectionsList;
             focusManager.customCollections = customCollectionsView.customCollectionsList;
             focusManager.searchBar = searchBar;
-            console.log("FocusManager configurado:");
-            console.log("- gamesGrid:", focusManager.gamesGrid);
-            console.log("- systemCollections:", focusManager.systemCollections);
+            //console.log("FocusManager configurado:");
+            //console.log("- gamesGrid:", focusManager.gamesGrid);
+            //console.log("- systemCollections:", focusManager.systemCollections);
             focusManager.setInitialFocus();
         });
     }
@@ -175,7 +175,7 @@ FocusScope {
 
             Column {
                 anchors.fill: parent
-                 anchors.margins: vpx(10)
+                anchors.margins: vpx(10)
                 spacing: vpx(10)
                 z: 1
 
@@ -647,6 +647,10 @@ FocusScope {
             root.collectionToDelete = collectionId;
             root.collectionToDeleteName = collectionName;
             root.showDeleteConfirm = true;
+        }
+
+        onShowGameDetails: function() {
+            gameMenu.showDetails = true;
         }
     }
 

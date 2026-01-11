@@ -171,3 +171,40 @@ function getNameCollecForGame(game) {
     }
     return "default";
 }
+
+function cleanAndSplitGenres(genreText) {
+    if (!genreText) return [];
+
+    var separators = [",", "/", "-", "&", "|", ";"];
+    var allParts = [genreText];
+
+    for (var i = 0; i < separators.length; i++) {
+        var separator = separators[i];
+        var newParts = [];
+
+        for (var j = 0; j < allParts.length; j++) {
+            var part = allParts[j];
+            var splitParts = part.split(separator);
+
+            for (var k = 0; k < splitParts.length; k++) {
+                newParts.push(splitParts[k]);
+            }
+        }
+        allParts = newParts;
+    }
+
+    var cleanedParts = [];
+    for (var l = 0; l < allParts.length; l++) {
+        var cleaned = allParts[l].trim();
+
+        if (cleaned.length > 0 &&
+            cleaned.toLowerCase() !== "and" &&
+            cleaned.toLowerCase() !== "or" &&
+            cleaned.toLowerCase() !== "game" &&
+            cleaned.length > 2) {
+            cleanedParts.push(cleaned);
+            }
+    }
+
+    return cleanedParts;
+}
