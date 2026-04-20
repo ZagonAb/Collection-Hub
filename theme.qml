@@ -131,9 +131,9 @@ FocusScope {
 
         RadialGradientOverlay {
             anchors.fill: parent
-            isDarkTheme: customCollectionsContainer.isDarkTheme
+            isDarkTheme: root.isDarkTheme
             opacityMultiplier: 0.7
-            radius: customCollectionsContainer.radius
+            radius: 10
         }
     }
 

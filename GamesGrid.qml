@@ -125,10 +125,10 @@ Rectangle {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
 
-            property int desiredColumns: 5
+            property int desiredColumns: 3
             property int spacing: vpx(10)
             property int calculatedCellWidth: Math.floor((parent.width - vpx(20) - (desiredColumns + 1) * spacing) / desiredColumns)
-            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 1.3)
+            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 1.0)
 
             width: desiredColumns * calculatedCellWidth + (desiredColumns + 1) * spacing
 
@@ -166,6 +166,12 @@ Rectangle {
 
                 tileColors: gridContainer.themeColors
                 isDarkMode: gridContainer.isDarkTheme
+
+                onIsSelectedChanged: {
+                    if (isSelected) {
+                        gamesGrid.currentIndex = index;
+                    }
+                }
 
                 onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(null, x, y);

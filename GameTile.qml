@@ -9,17 +9,19 @@ Rectangle {
 
     property bool isCurrent: GridView.isCurrentItem
     property bool gridHasFocus: GridView.view ? GridView.view.activeFocus : false
+    property bool isSelected: false
 
     onIsCurrentChanged: {
         if (isCurrent) {
             tile.scale = 1.05;
         } else {
             tile.scale = 1.0;
+            tile.isSelected = false;
         }
     }
 
     border.width: vpx(2)
-    border.color: (isCurrent && gridHasFocus) ? tileColors.primary :
+    border.color: (isCurrent && (gridHasFocus || isSelected)) ? tileColors.primary :
     (isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0")
 
     property var gameData
@@ -62,7 +64,7 @@ Rectangle {
         Rectangle {
             id: imageContainer
             width: parent.width
-            height: parent.height * 0.65
+            height: parent.height * 0.80
             color: tileColors.tileImageBg
             radius: vpx(8)
             clip: true
@@ -244,7 +246,7 @@ Rectangle {
 
         onEntered: {
             if (!tile.isCurrent) {
-                tile.scale = 1.05;
+                tile.scale = 1.02;
             }
         }
 
@@ -255,7 +257,13 @@ Rectangle {
         }
 
         onClicked: function(mouse) {
-            if (mouse.button === Qt.RightButton) {
+            if (mouse.button === Qt.LeftButton) {
+                tile.isSelected = true;
+                if (GridView.view) {
+                    GridView.view.currentIndex = index;
+                    GridView.view.forceActiveFocus();
+                }
+            } else if (mouse.button === Qt.RightButton) {
                 tile.rightClicked(gameData, mouse.x, mouse.y);
             }
         }

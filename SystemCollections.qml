@@ -37,160 +37,164 @@ Rectangle {
             clip: true
         }
 
-        ListView {
-            id: systemCollectionsList
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: api.collections
-            spacing: vpx(5)
-            clip: true
-            leftMargin: vpx(4)
-            rightMargin: vpx(10)
-            topMargin: vpx(1)
-            bottomMargin: vpx(1)
-            focus: true
-            keyNavigationWraps: false
-            highlightFollowsCurrentItem: true
 
-            delegate: Rectangle {
-                width: parent.width
-                height: vpx(43)
-                color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                themeColors.primary || "#3a6ea5" :
-                "transparent"
-                radius: vpx(5)
+            ListView {
+                id: systemCollectionsList
+                anchors.fill: parent
+                model: api.collections
+                spacing: vpx(5)
+                clip: true
+                leftMargin: vpx(4)
+                rightMargin: vpx(10)
+                topMargin: vpx(1)
+                bottomMargin: vpx(1)
+                focus: true
+                keyNavigationWraps: false
+                highlightFollowsCurrentItem: true
 
-                property bool isCurrent: ListView.isCurrentItem
+                delegate: Rectangle {
+                    width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
+                    height: vpx(43)
+                    color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                    themeColors.primary || "#3a6ea5" :
+                    "transparent"
+                    radius: vpx(5)
 
-                border.color: (isCurrent && systemCollectionsList.activeFocus) ? themeColors.primary :
-                (systemCollectionsContainer.selectedCollectionIndex === index ?
-                themeColors.primaryHover : themeColors.panelBorder)
-                border.width: vpx(2)
+                    property bool isCurrent: ListView.isCurrentItem
 
-                Row {
-                    anchors.left: parent.left
-                    anchors.leftMargin: vpx(10)
-                    anchors.right: parent.right
-                    anchors.rightMargin: vpx(10)
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: vpx(8)
+                    border.color: (isCurrent && systemCollectionsList.activeFocus) ? themeColors.primary :
+                    (systemCollectionsContainer.selectedCollectionIndex === index ?
+                    themeColors.primaryHover : themeColors.panelBorder)
+                    border.width: vpx(2)
 
-                    Item {
-                        width: vpx(20)
-                        height: vpx(20)
+                    Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: vpx(10)
+                        anchors.right: parent.right
+                        anchors.rightMargin: vpx(10)
                         anchors.verticalCenter: parent.verticalCenter
+                        spacing: vpx(8)
 
-                        Image {
-                            id: systemCollectionIcon
-                            anchors.fill: parent
-                            source: "assets/icons/allgames.svg"
-                            fillMode: Image.PreserveAspectFit
+                        Item {
+                            width: vpx(20)
+                            height: vpx(20)
+                            anchors.verticalCenter: parent.verticalCenter
 
-                            Rectangle {
+                            Image {
+                                id: systemCollectionIcon
                                 anchors.fill: parent
-                                color: "transparent"
-                                visible: parent.status !== Image.Ready
+                                source: "assets/icons/allgames.svg"
+                                fillMode: Image.PreserveAspectFit
 
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "🎮"
-                                    font.pixelSize: vpx(16)
-                                    color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                    (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "transparent"
+                                    visible: parent.status !== Image.Ready
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "🎮"
+                                        font.pixelSize: vpx(16)
+                                        color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                        (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                    }
                                 }
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: systemCollectionIcon
+                                source: systemCollectionIcon
+                                color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
                             }
                         }
 
-                        ColorOverlay {
-                            anchors.fill: systemCollectionIcon
-                            source: systemCollectionIcon
-                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: vpx(2)
+                            width: parent.width - vpx(40)
+
+                            Text {
+                                text: modelData.name || modelData.shortName
+                                color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                font.pixelSize: vpx(13)
+                                font.bold: systemCollectionsContainer.selectedCollectionIndex === index
+                                elide: Text.ElideRight
+                                width: parent.width
+                            }
+
+                            Text {
+                                text: "(" + modelData.games.count + " games)"
+                                color: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.textSecondary || "#AAA"
+                                font.pixelSize: vpx(10)
+                            }
                         }
                     }
 
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: vpx(2)
-                        width: parent.width - vpx(40)
-
-                        Text {
-                            text: modelData.name || modelData.shortName
-                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
-                            font.pixelSize: vpx(13)
-                            font.bold: systemCollectionsContainer.selectedCollectionIndex === index
-                            elide: Text.ElideRight
-                            width: parent.width
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            systemCollectionsContainer.selectedCollectionIndex = index;
+                            systemCollectionsContainer.collectionSelected(modelData);
                         }
+                        onEntered: parent.scale = 1.02
+                        onExited: parent.scale = 1.0
+                    }
 
-                        Text {
-                            text: "(" + modelData.games.count + " games)"
-                            color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                            (isDarkTheme ? "white" : "#f5f5f5") : themeColors.textSecondary || "#AAA"
-                            font.pixelSize: vpx(10)
-                        }
+                    Behavior on scale {
+                        NumberAnimation { duration: 150 }
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        systemCollectionsContainer.selectedCollectionIndex = index;
-                        systemCollectionsContainer.collectionSelected(modelData);
-                    }
-                    onEntered: parent.scale = 1.02
-                    onExited: parent.scale = 1.0
-                }
-
-                Behavior on scale {
-                    NumberAnimation { duration: 150 }
-                }
-            }
-
-            Keys.onPressed: function(event) {
-                if (api.keys.isAccept(event)) {
-                    if (currentItem) {
-                        var modelData = model.get(currentIndex);
-                        systemCollectionsContainer.selectedCollectionIndex = currentIndex;
-                        systemCollectionsContainer.collectionSelected(modelData);
-                        if (focusManager) {
-                            focusManager.lastSystemIndex = currentIndex;
-                            focusManager.moveFocusRight();
+                Keys.onPressed: function(event) {
+                    if (api.keys.isAccept(event)) {
+                        if (currentItem) {
+                            var modelData = model.get(currentIndex);
+                            systemCollectionsContainer.selectedCollectionIndex = currentIndex;
+                            systemCollectionsContainer.collectionSelected(modelData);
+                            if (focusManager) {
+                                focusManager.lastSystemIndex = currentIndex;
+                                focusManager.moveFocusRight();
+                            }
                         }
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Right) {
+                        if (focusManager) focusManager.moveFocusRight();
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Down && currentIndex === count - 1) {
+                        if (focusManager) focusManager.moveFocusDown();
+                        event.accepted = true;
+                    } else if (event.key === Qt.Key_Up && currentIndex === 0) {
+                        if (focusManager) focusManager.selectAllGames();
+                        event.accepted = true;
                     }
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Right) {
-                    if (focusManager) focusManager.moveFocusRight();
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Down && currentIndex === count - 1) {
-                    if (focusManager) focusManager.moveFocusDown();
-                    event.accepted = true;
-                } else if (event.key === Qt.Key_Up && currentIndex === 0) {
-                    if (focusManager) focusManager.selectAllGames();
-                    event.accepted = true;
                 }
             }
-        }
-
-        Rectangle {
-            anchors.right: parent.right
-            anchors.rightMargin: vpx(1)
-            anchors.top: systemCollectionsList.top
-            anchors.bottom: systemCollectionsList.bottom
-            width: vpx(2)
-            color: "transparent"
-            visible: systemCollectionsList.contentHeight > systemCollectionsList.height
 
             Rectangle {
-                width: parent.width
-                height: Math.max(vpx(20), (systemCollectionsList.height / systemCollectionsList.contentHeight) * parent.height)
-                y: (systemCollectionsList.contentY / systemCollectionsList.contentHeight) * parent.height
-                color: themeColors.primaryHover || "#5a8ec5"
-                radius: vpx(1.5)
-                opacity: 0.6
+                anchors.right: parent.right
+                anchors.rightMargin: vpx(1)
+                anchors.top: systemCollectionsList.top
+                anchors.bottom: systemCollectionsList.bottom
+                width: vpx(2)
+                color: "transparent"
+                visible: systemCollectionsList.contentHeight > systemCollectionsList.height
+
+                Rectangle {
+                    width: parent.width
+                    height: Math.max(vpx(20), (systemCollectionsList.height / systemCollectionsList.contentHeight) * parent.height)
+                    y: (systemCollectionsList.contentY / systemCollectionsList.contentHeight) * parent.height
+                    color: themeColors.primaryHover || "#5a8ec5"
+                    radius: vpx(1.5)
+                    opacity: 0.6
+                }
             }
         }
     }
