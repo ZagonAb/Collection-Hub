@@ -93,7 +93,6 @@ FocusScope {
             var newId = Utils.createCollection(collectionNameInput.text.trim());
             customCollections = Utils.loadCustomCollections();
             showCollectionEditor = false;
-            //console.log("Colección creada:", collectionNameInput.text.trim());
         }
     }
 
@@ -118,9 +117,6 @@ FocusScope {
             focusManager.systemCollections = systemCollections.systemCollectionsList;
             focusManager.customCollections = customCollectionsView.customCollectionsList;
             focusManager.searchBar = searchBar;
-            //console.log("FocusManager configurado:");
-            //console.log("- gamesGrid:", focusManager.gamesGrid);
-            //console.log("- systemCollections:", focusManager.systemCollections);
             focusManager.setInitialFocus();
         });
     }
@@ -613,6 +609,18 @@ FocusScope {
                         titles.push(root.customCollections[i].games[j].title);
                     }
                     root.currentCollectionGameTitles = titles;
+                    break;
+                }
+            }
+        }
+
+        onRenameCollection: function(collectionId) {
+            root.customCollections = Utils.loadCustomCollections();
+            for (var i = 0; i < root.customCollections.length; i++) {
+                if (root.customCollections[i].id === collectionId) {
+                    if (root.selectedCollectionId === collectionId) {
+                        root.selectedCollectionName = root.customCollections[i].name;
+                    }
                     break;
                 }
             }

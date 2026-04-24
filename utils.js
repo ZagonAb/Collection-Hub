@@ -4,7 +4,11 @@ function saveCustomCollections(collections) {
 }
 
 function loadCustomCollections() {
-    return api.memory.get('customCollections') || [];
+    var collections = api.memory.get('customCollections') || [];
+    collections.sort(function(a, b) {
+        return (a.name || "").localeCompare(b.name || "");
+    });
+    return collections;
 }
 
 function addGameToCollection(collectionId, game) {
@@ -155,7 +159,6 @@ function launchGameFromCollection(gameTitle) {
         }
     }
 
-    //console.log("No se pudo encontrar el juego para lanzar:", gameTitle);
     return false;
 }
 
@@ -170,6 +173,19 @@ function getNameCollecForGame(game) {
         }
     }
     return "default";
+}
+
+function renameCollection(collectionId, newName) {
+    var collections = loadCustomCollections();
+    for (var i = 0; i < collections.length; i++) {
+        if (collections[i].id === collectionId) {
+            if (collections[i].name === newName) return false;
+            collections[i].name = newName;
+            saveCustomCollections(collections);
+            return true;
+        }
+    }
+    return false;
 }
 
 function cleanAndSplitGenres(genreText) {
