@@ -26,7 +26,6 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        //console.log("GamesGrid: Inicializando, total juegos:", api.allGames.count);
         updateFilteredModel();
     }
 
@@ -68,16 +67,27 @@ Rectangle {
                     }
                 }
             } else {
+                var foundPaths = {};
                 var foundTitles = {};
                 for (var i = 0; i < collectionGameTitles.length; i++) {
-                    foundTitles[collectionGameTitles[i]] = true;
+                    var entry = collectionGameTitles[i];
+                    if (entry && entry.indexOf("/") !== -1) {
+                        foundPaths[entry] = true;
+                    } else {
+                        foundTitles[entry] = true;
+                    }
                 }
 
                 for (var i = 0; i < api.allGames.count; i++) {
                     var game = api.allGames.get(i);
-                    if (game && game.title && !seenTitles[game.title] && foundTitles[game.title]) {
-                        sourceGames.push(game);
-                        seenTitles[game.title] = true;
+                    if (game && game.title && !seenTitles[game.title]) {
+                        var gamePath = Utils.getGamePath(game);
+                        var matchByPath = gamePath && foundPaths[gamePath];
+                        var matchByTitle = foundTitles[game.title];
+                        if (matchByPath || matchByTitle) {
+                            sourceGames.push(game);
+                            seenTitles[game.title] = true;
+                        }
                     }
                 }
             }
@@ -86,8 +96,6 @@ Rectangle {
         for (var i = 0; i < sourceGames.length; i++) {
             filteredModel.append(sourceGames[i]);
         }
-
-        //console.log("GamesGrid: Mostrando", filteredModel.count, "juegos filtrados (sin duplicados)");
     }
 
     onSystemCollectionChanged: {
@@ -161,7 +169,7 @@ Rectangle {
 
                 isGameInUserCollection: {
                     if (gridContainer.selectedCollectionId === -1) return false;
-                    return Utils.isGameInCollection(gridContainer.selectedCollectionId, model.title);
+                    return Utils.isGameInCollection(gridContainer.selectedCollectionId, model);
                 }
 
                 tileColors: gridContainer.themeColors

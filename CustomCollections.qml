@@ -14,10 +14,10 @@ Rectangle {
     property var focusManager: null
     property alias customCollectionsList: customCollectionsList
 
-    signal collectionSelected(int collectionId, string collectionName, var gameTitles)
     signal createNewCollection()
     signal deleteCollection(int collectionId, string collectionName)
     signal collectionRightClicked(int collectionId, string collectionName, int x, int y)
+    signal collectionSelected(int collectionId, string collectionName, var gameFilePaths)
 
     radius: 10
     color: themeColors.panel || "#2c2c2c"
@@ -75,15 +75,16 @@ Rectangle {
                             var modelData = customCollectionsContainer.customCollections[currentIndex];
                             customCollectionsContainer.selectedCollectionId = modelData.id;
 
-                            var titles = [];
+                            var filePaths = [];
                             for (var i = 0; i < modelData.games.length; i++) {
-                                titles.push(modelData.games[i].title);
+                                var fp = modelData.games[i].filePath || modelData.games[i].title;
+                                filePaths.push(fp);
                             }
 
                             customCollectionsContainer.collectionSelected(
                                 modelData.id,
                                 modelData.name,
-                                titles
+                                filePaths
                             );
 
                             if (focusManager) {
@@ -203,15 +204,16 @@ Rectangle {
                             if (mouse.button === Qt.LeftButton) {
                                 customCollectionsContainer.selectedCollectionId = modelData.id;
 
-                                var titles = [];
+                                var filePaths = [];
                                 for (var i = 0; i < modelData.games.length; i++) {
-                                    titles.push(modelData.games[i].title);
+                                    var fp = modelData.games[i].filePath || modelData.games[i].title;
+                                    filePaths.push(fp);
                                 }
 
                                 customCollectionsContainer.collectionSelected(
                                     modelData.id,
                                     modelData.name,
-                                    titles
+                                    filePaths
                                 );
                             } else if (mouse.button === Qt.RightButton) {
                                 var globalPos = mapToItem(customCollectionsContainer.parent.parent, mouse.x, mouse.y);

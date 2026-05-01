@@ -348,11 +348,11 @@ FocusScope {
                     isDarkTheme: root.isDarkTheme
                     focusManager: focusManager
 
-                    onCollectionSelected: function(collectionId, collectionName, gameTitles) {
+                    onCollectionSelected: function(collectionId, collectionName, gameFilePaths) {
                         root.selectedCollectionId = collectionId;
                         root.selectedCollectionName = collectionName;
                         root.selectedSystemCollection = null;
-                        root.currentCollectionGameTitles = gameTitles;
+                        root.currentCollectionGameTitles = gameFilePaths;
                         systemCollections.selectedCollectionIndex = -1;
                         searchBar.clear();
                         gamesGrid.searchFilter = "";
@@ -589,11 +589,13 @@ FocusScope {
             if (root.selectedCollectionId === collectionId) {
                 for (var i = 0; i < root.customCollections.length; i++) {
                     if (root.customCollections[i].id === collectionId) {
-                        var titles = [];
+                        var filePaths = [];
                         for (var j = 0; j < root.customCollections[i].games.length; j++) {
-                            titles.push(root.customCollections[i].games[j].title);
+                            var fp = root.customCollections[i].games[j].filePath
+                            || root.customCollections[i].games[j].title;
+                            filePaths.push(fp);
                         }
-                        root.currentCollectionGameTitles = titles;
+                        root.currentCollectionGameTitles = filePaths;
                         break;
                     }
                 }
@@ -604,11 +606,13 @@ FocusScope {
             root.customCollections = Utils.loadCustomCollections();
             for (var i = 0; i < root.customCollections.length; i++) {
                 if (root.customCollections[i].id === root.selectedCollectionId) {
-                    var titles = [];
+                    var filePaths = [];
                     for (var j = 0; j < root.customCollections[i].games.length; j++) {
-                        titles.push(root.customCollections[i].games[j].title);
+                        var fp = root.customCollections[i].games[j].filePath
+                        || root.customCollections[i].games[j].title;
+                        filePaths.push(fp);
                     }
-                    root.currentCollectionGameTitles = titles;
+                    root.currentCollectionGameTitles = filePaths;
                     break;
                 }
             }

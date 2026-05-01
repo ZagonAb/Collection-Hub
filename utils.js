@@ -1,4 +1,3 @@
-
 function saveCustomCollections(collections) {
     api.memory.set('customCollections', collections);
 }
@@ -11,14 +10,33 @@ function loadCustomCollections() {
     return collections;
 }
 
+function getGamePath(game) {
+    if (!game) return null;
+    if (game.files && game.files.count > 0) {
+        var f = game.files.get(0);
+        if (f && f.path) return f.path;
+    }
+    if (game.files && game.files.path) {
+        return game.files.path;
+    }
+    return null;
+}
+
 function addGameToCollection(collectionId, game) {
     var collections = loadCustomCollections();
+    var gamePath = getGamePath(game);
 
     for (var i = 0; i < collections.length; i++) {
         if (collections[i].id === collectionId) {
             var alreadyAdded = false;
+
             for (var j = 0; j < collections[i].games.length; j++) {
                 var existingGame = collections[i].games[j];
+
+                if (gamePath && existingGame.filePath && existingGame.filePath === gamePath) {
+                    alreadyAdded = true;
+                    break;
+                }
                 if (existingGame.title === game.title) {
                     alreadyAdded = true;
                     break;
@@ -32,11 +50,9 @@ function addGameToCollection(collectionId, game) {
             }
 
             if (!alreadyAdded) {
-                var gameId = game.title;
-                if (game.extra && game.extra.id) {
+                var gameId = gamePath || game.title;
+                if (!gamePath && game.extra && game.extra.id) {
                     gameId = game.extra.id.toString();
-                } else if (game.files && game.files.path) {
-                    gameId = game.files.path;
                 }
 
                 var systemCollections = [];
@@ -51,6 +67,7 @@ function addGameToCollection(collectionId, game) {
 
                 collections[i].games.push({
                     title: game.title,
+                    filePath: gamePath || "",
                     gameId: gameId,
                     developer: game.developer || "",
                     year: game.releaseYear || 0,
@@ -66,15 +83,18 @@ function addGameToCollection(collectionId, game) {
     return false;
 }
 
-function removeGameFromCollection(collectionId, gameTitle) {
+function removeGameFromCollection(collectionId, gameTitle, gamePath) {
     var collections = loadCustomCollections();
 
     for (var i = 0; i < collections.length; i++) {
         if (collections[i].id === collectionId) {
             var newGames = [];
             for (var j = 0; j < collections[i].games.length; j++) {
-                if (collections[i].games[j].title !== gameTitle) {
-                    newGames.push(collections[i].games[j]);
+                var g = collections[i].games[j];
+                var matchByPath = gamePath && g.filePath && g.filePath === gamePath;
+                var matchByTitle = g.title === gameTitle;
+                if (!matchByPath && !matchByTitle) {
+                    newGames.push(g);
                 }
             }
             collections[i].games = newGames;
@@ -123,15 +143,17 @@ function removeCollection(collectionId) {
     return filtered;
 }
 
-function isGameInCollection(collectionId, gameTitle) {
+function isGameInCollection(collectionId, game) {
     var collections = loadCustomCollections();
+    var gamePath = (typeof game === "object" && game !== null) ? getGamePath(game) : null;
+    var gameTitle = (typeof game === "object" && game !== null) ? game.title : game;
 
     for (var i = 0; i < collections.length; i++) {
         if (collections[i].id === collectionId) {
             for (var j = 0; j < collections[i].games.length; j++) {
-                if (collections[i].games[j].title === gameTitle) {
-                    return true;
-                }
+                var g = collections[i].games[j];
+                if (gamePath && g.filePath && g.filePath === gamePath) return true;
+                if (g.title === gameTitle) return true;
             }
             break;
         }
@@ -201,7 +223,6 @@ function cleanAndSplitGenres(genreText) {
         for (var j = 0; j < allParts.length; j++) {
             var part = allParts[j];
             var splitParts = part.split(separator);
-
             for (var k = 0; k < splitParts.length; k++) {
                 newParts.push(splitParts[k]);
             }
@@ -212,7 +233,6 @@ function cleanAndSplitGenres(genreText) {
     var cleanedParts = [];
     for (var l = 0; l < allParts.length; l++) {
         var cleaned = allParts[l].trim();
-
         if (cleaned.length > 0 &&
             cleaned.toLowerCase() !== "and" &&
             cleaned.toLowerCase() !== "or" &&

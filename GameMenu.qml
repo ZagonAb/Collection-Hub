@@ -37,7 +37,8 @@ Rectangle {
 
     property bool isInCurrentCollection: {
         if (selectedCollectionId === -1) return false;
-        return Utils.isGameInCollection(selectedCollectionId, gameTitle);
+        if (!currentGame) return false;
+        return Utils.isGameInCollection(selectedCollectionId, currentGame);
     }
 
     property var focusManager: null
@@ -181,7 +182,12 @@ Rectangle {
                 gameMenu.showGameDetails();
             }
         } else if (item === removeFromCollectionBtn) {
-            var success = Utils.removeGameFromCollection(selectedCollectionId, currentGame.title);
+            var gamePath = Utils.getGamePath(currentGame);
+            var success = Utils.removeGameFromCollection(
+                selectedCollectionId,
+                currentGame.title,
+                gamePath
+            );
             if (success) {
                 gameMenu.gameRemovedFromCollection();
                 gameMenu.closeMenu();
@@ -200,8 +206,7 @@ Rectangle {
             var listIndex = currentMenuIndex - 2;
             if (!isCollectionContext && listIndex >= 0 && listIndex < customCollections.length) {
                 var modelData = customCollections[listIndex];
-                var hasGame = Utils.isGameInCollection(modelData.id, gameMenu.gameTitle);
-
+                var hasGame = Utils.isGameInCollection(modelData.id, currentGame);
                 if (!hasGame) {
                     var success = Utils.addGameToCollection(modelData.id, currentGame);
                     if (success) {
@@ -741,9 +746,11 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
+                            var gamePath = Utils.getGamePath(currentGame);
                             var success = Utils.removeGameFromCollection(
                                 selectedCollectionId,
-                                currentGame.title
+                                currentGame.title,
+                                gamePath
                             );
                             if (success) {
                                 gameMenu.gameRemovedFromCollection();
