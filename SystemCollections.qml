@@ -79,8 +79,8 @@ Rectangle {
                         spacing: vpx(8)
 
                         Item {
-                            width: vpx(26)
-                            height: vpx(26)
+                            width: vpx(32)
+                            height: vpx(32)
                             anchors.verticalCenter: parent.verticalCenter
 
                             Image {
