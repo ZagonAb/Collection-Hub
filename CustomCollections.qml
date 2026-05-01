@@ -50,10 +50,10 @@ Rectangle {
             ListView {
                 id: customCollectionsList
                 anchors.fill: parent
-                anchors.leftMargin: vpx(4)
-                anchors.rightMargin: vpx(10)
-                anchors.topMargin: vpx(1)
-                anchors.bottomMargin: vpx(1)
+                leftMargin: vpx(4)
+                rightMargin: vpx(10)
+                topMargin: vpx(1)
+                bottomMargin: vpx(1)
                 model: customCollectionsContainer.customCollections
                 spacing: vpx(5)
                 clip: true
@@ -115,7 +115,8 @@ Rectangle {
                 }
 
                 delegate: Rectangle {
-                    width: parent.width
+                    //width: parent.width
+                    width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
                     height: vpx(43)
                     color: customCollectionsContainer.selectedCollectionId === modelData.id ?
                     themeColors.primary || "#3a6ea5" :
@@ -297,7 +298,7 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: customCollectionsContainer.createNewCollection()
-                onEntered: parent.scale = 1.01
+                onEntered: parent.scale = 1.02
                 onExited: parent.scale = 1.0
             }
 
