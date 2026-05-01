@@ -276,13 +276,13 @@ FocusScope {
                                 mipmap: true
                                 source: "assets/icons/light.svg"
                                 visible: root.isDarkTheme
+                            }
 
-                                ColorOverlay {
-                                    anchors.fill: parent
-                                    source: parent
-                                    color: "#ffffff"
-                                    visible: parent.visible
-                                }
+                            ColorOverlay {
+                                anchors.fill: lightIcon
+                                source: lightIcon
+                                color: "#ffffff"
+                                visible: lightIcon.visible
                             }
 
                             Image {
@@ -291,13 +291,13 @@ FocusScope {
                                 mipmap: true
                                 source: "assets/icons/dark.svg"
                                 visible: !root.isDarkTheme
+                            }
 
-                                ColorOverlay {
-                                    anchors.fill: parent
-                                    source: parent
-                                    color: "#212121"
-                                    visible: parent.visible
-                                }
+                            ColorOverlay {
+                                anchors.fill: darkIcon
+                                source: darkIcon
+                                color: "#212121"
+                                visible: darkIcon.visible
                             }
                         }
 
