@@ -79,15 +79,16 @@ Rectangle {
                         spacing: vpx(8)
 
                         Item {
-                            width: vpx(20)
-                            height: vpx(20)
+                            width: vpx(26)
+                            height: vpx(26)
                             anchors.verticalCenter: parent.verticalCenter
 
                             Image {
                                 id: systemCollectionIcon
                                 anchors.fill: parent
-                                source: "assets/icons/allgames.svg"
+                                source: "assets/systems/" + (modelData.shortName || modelData.name).toLowerCase() + ".png"
                                 fillMode: Image.PreserveAspectFit
+                                mipmap: true
 
                                 Rectangle {
                                     anchors.fill: parent
