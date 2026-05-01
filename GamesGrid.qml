@@ -25,6 +25,10 @@ Rectangle {
         id: filteredModel
     }
 
+    ColorMapping {
+        id: colorMapper
+    }
+
     Component.onCompleted: {
         updateFilteredModel();
     }
@@ -136,7 +140,7 @@ Rectangle {
             property int desiredColumns: 3
             property int spacing: vpx(10)
             property int calculatedCellWidth: Math.floor((parent.width - vpx(20) - (desiredColumns + 1) * spacing) / desiredColumns)
-            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 1.0)
+            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 0.9)
 
             width: desiredColumns * calculatedCellWidth + (desiredColumns + 1) * spacing
 
@@ -146,9 +150,12 @@ Rectangle {
             clip: true
             keyNavigationWraps: false
             highlightFollowsCurrentItem: true
-
             leftMargin: spacing
             topMargin: spacing
+
+            highlightRangeMode: GridView.StrictlyEnforceRange
+            preferredHighlightBegin: topMargin
+            preferredHighlightEnd: height - topMargin - cellHeight
 
             Component.onCompleted: {
                 currentIndex = 0;
@@ -184,6 +191,16 @@ Rectangle {
                 onRightClicked: function(game, x, y) {
                     var globalPos = mapToItem(null, x, y);
                     gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
+                }
+
+                selectedBorderColor: {
+                    if (gridContainer.systemCollection && gridContainer.systemCollection.shortName) {
+                        var mappedColor = colorMapper.getColor(gridContainer.systemCollection.shortName);
+                        if (mappedColor !== "#000000") {
+                            return mappedColor;
+                        }
+                    }
+                    return gridContainer.themeColors.primary;
                 }
             }
 

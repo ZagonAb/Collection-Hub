@@ -4,24 +4,25 @@ import "utils.js" as Utils
 
 Rectangle {
     id: tile
-    color: tileColors.tileBg
-    radius: vpx(10)
+    color: "transparent"
+    radius: vpx(12)
 
     property bool isCurrent: GridView.isCurrentItem
     property bool gridHasFocus: GridView.view ? GridView.view.activeFocus : false
     property bool isSelected: false
+    property color selectedBorderColor: tileColors.primary
 
     onIsCurrentChanged: {
         if (isCurrent) {
-            tile.scale = 1.05;
+            tile.scale = 1.02;
         } else {
             tile.scale = 1.0;
             tile.isSelected = false;
         }
     }
 
-    border.width: vpx(2)
-    border.color: (isCurrent && (gridHasFocus || isSelected)) ? tileColors.primary :
+    border.width: vpx(3)
+    border.color: (isCurrent && (gridHasFocus || isSelected)) ? selectedBorderColor :
     (isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0")
 
     property var gameData
@@ -33,31 +34,9 @@ Rectangle {
 
     signal rightClicked(var gameData, real x, real y)
 
-    RadialGradient {
-        anchors.fill: parent
-        horizontalOffset: parent.width * 0.5
-        verticalOffset: parent.height * 0.5
-        visible: isDarkMode
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: isDarkMode ? "#20ffffff" : "#15ffffff" }
-            GradientStop { position: 0.5; color: isDarkMode ? "#08ffffff" : "#05ffffff" }
-            GradientStop { position: 1.0; color: "transparent" }
-        }
-        z: 0
-
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: tile.width
-                height: tile.height
-                radius: vpx(10)
-            }
-        }
-    }
-
     Column {
         anchors.fill: parent
-        anchors.margins: vpx(12)
+        anchors.margins: vpx(5)
         spacing: vpx(8)
         z: 2
 
@@ -66,8 +45,93 @@ Rectangle {
             width: parent.width
             height: parent.height * 0.80
             color: tileColors.tileImageBg
-            radius: vpx(8)
+            radius: vpx(10)
             clip: true
+
+            Rectangle {
+                id: bgBlurMask
+                anchors.fill: parent
+                radius: vpx(10)
+                visible: false
+            }
+
+            Item {
+                id: bgBlurContainer
+                anchors.fill: parent
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: bgBlurMask
+                }
+
+                Image {
+                    id: bgBlurImage
+                    anchors.fill: parent
+                    source: gameData.assets.boxFront || ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    smooth: true
+                    visible: source !== "" && status === Image.Ready
+
+                    layer.enabled: true
+                    layer.effect: FastBlur {
+                        radius: 48
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#55000000"
+                    visible: bgBlurImage.visible
+                }
+            }
+
+            Rectangle {
+                id: textGameInfo
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.margins: vpx(6)
+                width: collectionsText.contentWidth + vpx(16)
+                height: vpx(20)
+                color: "#AA000000"
+                radius: vpx(4)
+                visible: showCollectionsInfo && collectionsText.text !== ""
+                z: 3
+
+                Text {
+                    id: collectionsText
+                    anchors.centerIn: parent
+                    text: {
+                        if (!gameData.collections || gameData.collections.count === 0) {
+                            return "";
+                        }
+
+                        var collectionNames = [];
+                        var maxCollections = 2;
+
+                        for (var i = 0; i < Math.min(gameData.collections.count, maxCollections); i++) {
+                            var collection = gameData.collections.get(i);
+                            if (collection && collection.shortName) {
+                                collectionNames.push(collection.shortName);
+                            } else if (collection && collection.name) {
+                                var name = collection.name;
+                                var words = name.split(' ');
+                                if (words.length > 2) {
+                                    name = words.slice(0, 2).join(' ');
+                                }
+                                collectionNames.push(name);
+                            }
+                        }
+
+                        if (gameData.collections.count > maxCollections) {
+                            return collectionNames.join(", ") + " (+" + (gameData.collections.count - maxCollections) + ")";
+                        } else {
+                            return collectionNames.join(", ");
+                        }
+                    }
+                    color: "white"
+                    font.pixelSize: vpx(11)
+                }
+            }
 
             Item {
                 anchors.fill: parent
@@ -109,91 +173,11 @@ Rectangle {
                         mipmap: true
                     }
 
-                    Item {
-                        anchors.fill: parent
-                        visible: !systemFallbackIcon.visible
-
-                        Image {
-                            id: defaultGameIcon
-                            anchors.fill: parent
-                            source: "assets/icons/allgames.svg"
-                            fillMode: Image.PreserveAspectFit
-                            mipmap: true
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                visible: parent.status !== Image.Ready
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "🎮"
-                                    font.pixelSize: vpx(30)
-                                    color: tileColors.inputBorder
-                                }
-                            }
-                        }
-
-                        ColorOverlay {
-                            anchors.fill: defaultGameIcon
-                            source: defaultGameIcon
-                            color: tile.isDarkMode ? "white" : "#212121"
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: glassMask
-                anchors.fill: parent
-                radius: vpx(8)
-                visible: false
-            }
-
-            Item {
-                id: glassEffect
-                anchors.fill: parent
-                visible: tile.isHovered
-
-                LinearGradient {
-                    id: diagonalReflection
-                    anchors.fill: parent
-                    start: Qt.point(0, 0)
-                    end: Qt.point(parent.width, parent.height)
-                    gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#60ffffff" }
-                        GradientStop { position: 0.4; color: "#25ffffff" }
-                        GradientStop { position: 0.7; color: "#08ffffff" }
-                        GradientStop { position: 1.0; color: "transparent" }
-                    }
-
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: glassMask
-                    }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: vpx(8)
-                    color: "transparent"
-                    border.color: "#40ffffff"
-                    border.width: vpx(1.5)
-                    opacity: 0.6
-                }
-            }
-
-            Item {
-                anchors.fill: parent
-                visible: tile.isHovered
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#50000000"
-
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: glassMask
+                    ColorOverlay {
+                        anchors.fill: systemFallbackIcon
+                        source: systemFallbackIcon
+                        visible: systemFallbackIcon.visible
+                        color: tile.isDarkMode ? "white" : (tileColors.text || "#212121")
                     }
                 }
             }
@@ -211,54 +195,8 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
         }
 
-        Rectangle {
-            id: textGameInfo
-            width: parent.width
-            height: showCollectionsInfo && collectionsText.text !== "" ? vpx(20) : 0
-            color: "transparent"
-            visible: showCollectionsInfo && collectionsText.text !== ""
-
-            Text {
-                id: collectionsText
-                anchors.centerIn: parent
-                width: parent.width
-                text: {
-                    if (!gameData.collections || gameData.collections.count === 0) {
-                        return "";
-                    }
-
-                    var collectionNames = [];
-                    var maxCollections = 2;
-
-                    for (var i = 0; i < Math.min(gameData.collections.count, maxCollections); i++) {
-                        var collection = gameData.collections.get(i);
-                        if (collection && collection.shortName) {
-                            collectionNames.push(collection.shortName);
-                        } else if (collection && collection.name) {
-                            var name = collection.name;
-                            var words = name.split(' ');
-                            if (words.length > 2) {
-                                name = words.slice(0, 2).join(' ');
-                            }
-                            collectionNames.push(name);
-                        }
-                    }
-
-                    if (gameData.collections.count > maxCollections) {
-                        return collectionNames.join(", ") + " (+" + (gameData.collections.count - maxCollections) + ")";
-                    } else {
-                        return collectionNames.join(", ");
-                    }
-                }
-                color: tileColors.textSecondary
-                font.pixelSize: vpx(11)
-                wrapMode: Text.Wrap
-                maximumLineCount: 1
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignHCenter
-            }
-        }
     }
+
 
     MouseArea {
         id: tileMouseArea
@@ -270,7 +208,7 @@ Rectangle {
 
         onEntered: {
             if (!tile.isCurrent) {
-                tile.scale = 1.02;
+                tile.scale = 1.01;
             }
         }
 

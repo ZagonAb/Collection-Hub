@@ -26,10 +26,11 @@ FocusScope {
     property var colors: isDarkTheme ? darkColors : lightColors
 
     property var darkColors: ({
-        "background": "#0a0a0a",
-        "panel": "#151515",
+        "background": "#151519",
+        "panel": "#28282c",
+        "rightpanel": "#222226",
         "menucolor": "#090909",
-        "panelBorder": "#252525",
+        "panelBorder": "#28282c",
         "primary": "#3a6ea5",
         "primaryHover": "#5a8ec5",
         "text": "#ffffff",
@@ -51,10 +52,11 @@ FocusScope {
     })
 
     property var lightColors: ({
-        "background": "#f5f5f5",
-        "panel": "#ffffff",
+        "background": "#d7d7d8",
+        "panel": "#f2f2f4",
+        "rightpanel": "#fafafb",
         "menucolor": "#ebebeb",
-        "panelBorder": "#e0e0e0",
+        "panelBorder": "#f2f2f4",
         "primary": "#2196F3",
         "primaryHover": "#42A5F5",
         "text": "#212121",
@@ -71,7 +73,7 @@ FocusScope {
         "separator": "#e0e0e0",
         "tileBg": "#ffffff",
         "tileBorder": "#e0e0e0",
-        "tileImageBg": "#fafafa",
+        "tileImageBg": "#d7d7d8",
         "overlay": "#CC000000"
     })
 
@@ -124,50 +126,18 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         color: colors.background
-
-        RadialGradientOverlay {
-            anchors.fill: parent
-            isDarkTheme: root.isDarkTheme
-            opacityMultiplier: 0.7
-            radius: 10
-        }
     }
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: vpx(10)
-        spacing: vpx(10)
+        spacing: 1
 
         Rectangle {
             id: leftPanel
             Layout.preferredWidth: parent.width * 0.22
-            Layout.preferredHeight: parent.height * 0.97
+            Layout.preferredHeight: parent.height
             color: colors.panel
-            radius: 10
-            border.color: colors.panelBorder
-            border.width: vpx(1)
-
-            RadialGradient {
-                anchors.fill: parent
-                horizontalOffset: parent.width * 0.5
-                verticalOffset: parent.height * 0.5
-                visible: root.isDarkTheme
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: isDarkTheme ? "#20ffffff" : "#15ffffff" }
-                    GradientStop { position: 0.5; color: isDarkTheme ? "#08ffffff" : "#05ffffff" }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-                z: 0
-
-                layer.enabled: true
-                layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: leftPanel.width
-                        height: leftPanel.height
-                        radius: 10
-                    }
-                }
-            }
+            radius: 0
 
             Column {
                 anchors.fill: parent
@@ -186,15 +156,15 @@ FocusScope {
                         color: root.selectedCollectionId === -1 && root.selectedSystemCollection === null ? colors.primary : "transparent"
                         border.color: colors.primary
                         border.width: vpx(1)
-                        radius: vpx(8)
+                        radius: vpx(10)
 
                         Row {
                             anchors.centerIn: parent
                             spacing: vpx(8)
 
                             Item {
-                                width: vpx(20)
-                                height: vpx(20)
+                                width: vpx(28)
+                                height: vpx(28)
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Image {
@@ -262,7 +232,7 @@ FocusScope {
                         color: themeToggleMouseArea.containsMouse ? colors.primary : "transparent"
                         border.color: colors.panelBorder
                         border.width: vpx(1)
-                        radius: vpx(8)
+                        radius: vpx(10)
 
                         Item {
                             id: iconContainer
@@ -389,19 +359,19 @@ FocusScope {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: vpx(10)
+            spacing: 0
 
             Rectangle {
                 id: topBarContainer
                 Layout.fillWidth: true
-                Layout.preferredHeight: vpx(80)
-                color: "transparent"
+                Layout.preferredHeight: vpx(60)
+                color: colors.rightpanel
 
                 SearchBar {
                     id: searchBar
                     anchors {
                         fill: parent
-                        margins: vpx(10)
+                        margins: vpx(0)
                     }
                     searchColors: root.colors
 
@@ -420,7 +390,7 @@ FocusScope {
                 collectionGameTitles: root.currentCollectionGameTitles
                 systemCollection: root.selectedSystemCollection
                 isAllGamesSelected: root.isAllGamesSelected
-                color: "transparent"
+                color: colors.rightpanel
                 themeColors: root.colors
                 isDarkTheme: root.isDarkTheme
                 focusManager: focusManager

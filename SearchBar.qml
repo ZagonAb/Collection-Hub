@@ -3,10 +3,7 @@ import QtGraphicalEffects 1.12
 
 Rectangle {
     id: searchBar
-    color: searchColors.panel
-    border.color: searchColors.panelBorder
-    border.width: vpx(2)
-    radius: vpx(8)
+    color: colors.rightpanel
 
     property string searchText: ""
     property var searchColors: ({})
@@ -50,7 +47,7 @@ Rectangle {
         }
 
         Rectangle {
-            width: parent.width - vpx(100)
+            width: parent.width - vpx(80)
             height: parent.height
             color: searchColors.inputBg
             radius: vpx(6)

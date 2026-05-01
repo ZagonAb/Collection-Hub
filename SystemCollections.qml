@@ -6,11 +6,28 @@ Rectangle {
     id: systemCollectionsContainer
 
     signal collectionSelected(var collection)
+
+    ColorMapping {
+        id: colorMapper
+    }
+
     property int selectedCollectionIndex: -1
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var focusManager: null
     property alias systemCollectionsList: systemCollectionsList
+
+    property color scrollbarColor: {
+        if (selectedCollectionIndex >= 0 && selectedCollectionIndex < systemCollectionsList.count) {
+            var data = systemCollectionsList.model.get(selectedCollectionIndex);
+            var shortName = data.shortName || data.name || "";
+            var mapped = colorMapper.getColor(shortName);
+            if (mapped !== "#000000" && mapped !== "") {
+                return mapped;
+            }
+        }
+        return themeColors.primaryHover || "#5a8ec5";
+    }
 
     radius: 10
     color: themeColors.panel || "#2c2c2c"
@@ -31,8 +48,8 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            height: vpx(2)
-            color: themeColors.separator || "#444"
+            height: vpx(1)
+            color: themeColors.background || "#444"
             radius: vpx(1)
             clip: true
         }
@@ -58,17 +75,29 @@ Rectangle {
                 delegate: Rectangle {
                     width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
                     height: vpx(43)
-                    color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                    themeColors.primary || "#3a6ea5" :
-                    "transparent"
-                    radius: vpx(5)
 
+                    property bool isHovered: false
+                    property bool isSelected: systemCollectionsContainer.selectedCollectionIndex === index
+
+                    property color systemColor: {
+                        var shortName = modelData.shortName || modelData.name || "";
+                        var mapped = colorMapper.getColor(shortName);
+                        return mapped === "#000000" || !mapped
+                        ? themeColors.primary || "#3a6ea5"
+                        : mapped;
+                    }
+
+                    color: {
+                        if (isSelected) {
+                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.35);
+                        }
+                        if ((isHovered || (isCurrent && systemCollectionsList.activeFocus)) && !isSelected) {
+                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.15);
+                        }
+                        return "transparent";
+                    }
+                    radius: vpx(10)
                     property bool isCurrent: ListView.isCurrentItem
-
-                    border.color: (isCurrent && systemCollectionsList.activeFocus) ? themeColors.primary :
-                    (systemCollectionsContainer.selectedCollectionIndex === index ?
-                    themeColors.primaryHover : themeColors.panelBorder)
-                    border.width: vpx(2)
 
                     Row {
                         anchors.left: parent.left
@@ -100,7 +129,7 @@ Rectangle {
                                         text: "🎮"
                                         font.pixelSize: vpx(16)
                                         color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                        (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                        (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
                                     }
                                 }
                             }
@@ -109,7 +138,7 @@ Rectangle {
                                 anchors.fill: systemCollectionIcon
                                 source: systemCollectionIcon
                                 color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
                             }
                         }
 
@@ -121,7 +150,7 @@ Rectangle {
                             Text {
                                 text: modelData.name || modelData.shortName
                                 color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.text || "white"
+                                (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
                                 font.pixelSize: vpx(13)
                                 font.bold: systemCollectionsContainer.selectedCollectionIndex === index
                                 elide: Text.ElideRight
@@ -131,7 +160,7 @@ Rectangle {
                             Text {
                                 text: "(" + modelData.games.count + " games)"
                                 color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                (isDarkTheme ? "white" : "#f5f5f5") : themeColors.textSecondary || "#AAA"
+                                (isDarkTheme ? "white" : themeColors.text) : themeColors.textSecondary || "#AAA"
                                 font.pixelSize: vpx(10)
                             }
                         }
@@ -144,9 +173,21 @@ Rectangle {
                         onClicked: {
                             systemCollectionsContainer.selectedCollectionIndex = index;
                             systemCollectionsContainer.collectionSelected(modelData);
+                            systemCollectionsList.positionViewAtIndex(index, ListView.Contain);
+
+                            if (systemCollectionsContainer.focusManager) {
+                                systemCollectionsContainer.focusManager.lastSystemIndex = index;
+                                systemCollectionsContainer.focusManager.moveFocusRight();
+                            }
                         }
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
+                        onEntered: {
+                            parent.isHovered = true;
+                            parent.scale = 1.02;
+                        }
+                        onExited: {
+                            parent.isHovered = false;
+                            parent.scale = 1.0;
+                        }
                     }
 
                     Behavior on scale {
@@ -160,6 +201,7 @@ Rectangle {
                             var modelData = model.get(currentIndex);
                             systemCollectionsContainer.selectedCollectionIndex = currentIndex;
                             systemCollectionsContainer.collectionSelected(modelData);
+                            positionViewAtIndex(currentIndex, ListView.Contain);
                             if (focusManager) {
                                 focusManager.lastSystemIndex = currentIndex;
                                 focusManager.moveFocusRight();
@@ -184,7 +226,7 @@ Rectangle {
                 anchors.rightMargin: vpx(1)
                 anchors.top: systemCollectionsList.top
                 anchors.bottom: systemCollectionsList.bottom
-                width: vpx(2)
+                width: vpx(3)
                 color: "transparent"
                 visible: systemCollectionsList.contentHeight > systemCollectionsList.height
 
@@ -192,11 +234,13 @@ Rectangle {
                     width: parent.width
                     height: Math.max(vpx(20), (systemCollectionsList.height / systemCollectionsList.contentHeight) * parent.height)
                     y: (systemCollectionsList.contentY / systemCollectionsList.contentHeight) * parent.height
-                    color: themeColors.primaryHover || "#5a8ec5"
+                    color: systemCollectionsContainer.scrollbarColor
                     radius: vpx(1.5)
-                    opacity: 0.6
+                    opacity: 1.0
                 }
             }
         }
     }
 }
+
+

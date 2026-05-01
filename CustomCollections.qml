@@ -38,8 +38,8 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            height: vpx(2)
-            color: themeColors.separator || "#444"
+            height: vpx(1)
+            color: themeColors.background || "#444"
             radius: vpx(1)
         }
 
@@ -74,6 +74,7 @@ Rectangle {
                         if (currentItem) {
                             var modelData = customCollectionsContainer.customCollections[currentIndex];
                             customCollectionsContainer.selectedCollectionId = modelData.id;
+                            positionViewAtIndex(currentIndex, ListView.Contain);
 
                             var filePaths = [];
                             for (var i = 0; i < modelData.games.length; i++) {
@@ -115,17 +116,12 @@ Rectangle {
                 }
 
                 delegate: Rectangle {
-                    //width: parent.width
                     width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
                     height: vpx(43)
                     color: customCollectionsContainer.selectedCollectionId === modelData.id ?
                     themeColors.primary || "#3a6ea5" :
                     "transparent"
-                    radius: vpx(5)
-                    border.color: (isCurrent && customCollectionsList.activeFocus) ? themeColors.primary :
-                    (customCollectionsContainer.selectedCollectionId === modelData.id ?
-                    themeColors.primaryHover : themeColors.panelBorder)
-                    border.width: vpx(2)
+                    radius: vpx(10)
 
                     property bool isCurrent: ListView.isCurrentItem
 
@@ -204,6 +200,7 @@ Rectangle {
                         onClicked: function(mouse) {
                             if (mouse.button === Qt.LeftButton) {
                                 customCollectionsContainer.selectedCollectionId = modelData.id;
+                                customCollectionsList.positionViewAtIndex(index, ListView.Contain);
 
                                 var filePaths = [];
                                 for (var i = 0; i < modelData.games.length; i++) {
@@ -258,7 +255,7 @@ Rectangle {
                 anchors.rightMargin: vpx(2)
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: vpx(2)
+                width: vpx(3)
                 color: "transparent"
                 visible: scrollbarReady && customCollectionsList.contentHeight > customCollectionsList.height
 
@@ -268,7 +265,7 @@ Rectangle {
                     y: (customCollectionsList.contentY / customCollectionsList.contentHeight) * parent.height
                     color: themeColors.primaryHover || "#5a8ec5"
                     radius: vpx(1.5)
-                    opacity: 0.6
+                    opacity: 1.0
                 }
             }
         }
