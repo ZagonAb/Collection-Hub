@@ -86,35 +86,59 @@ Rectangle {
                 Item {
                     id: defaultIconContainer
                     anchors.centerIn: parent
-                    width: vpx(25)
-                    height: vpx(25)
+                    width: vpx(86)
+                    height: vpx(86)
                     visible: gameImage.source === "" || gameImage.status !== Image.Ready
 
                     Image {
-                        id: defaultGameIcon
+                        id: systemFallbackIcon
                         anchors.fill: parent
-                        source: "assets/icons/allgames.svg"
-                        fillMode: Image.PreserveAspectFit
-                        mipmap: true
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "transparent"
-                            visible: parent.status !== Image.Ready
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "🎮"
-                                font.pixelSize: vpx(30)
-                                color: tileColors.inputBorder
+                        source: {
+                            if (gameData.collections && gameData.collections.count > 0) {
+                                var firstColl = gameData.collections.get(0);
+                                var shortName = firstColl.shortName || firstColl.name;
+                                if (shortName) {
+                                    return "assets/systems/" + shortName.toLowerCase() + ".png";
+                                }
                             }
+                            return "";
                         }
+                        fillMode: Image.PreserveAspectFit
+                        visible: source !== "" && status === Image.Ready
+                        mipmap: true
                     }
 
-                    ColorOverlay {
-                        anchors.fill: defaultGameIcon
-                        source: defaultGameIcon
-                        color: tile.isDarkMode ? "white" : "#212121"
+                    Item {
+                        anchors.fill: parent
+                        visible: !systemFallbackIcon.visible
+
+                        Image {
+                            id: defaultGameIcon
+                            anchors.fill: parent
+                            source: "assets/icons/allgames.svg"
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "transparent"
+                                visible: parent.status !== Image.Ready
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "🎮"
+                                    font.pixelSize: vpx(30)
+                                    color: tileColors.inputBorder
+                                }
+                            }
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: defaultGameIcon
+                            source: defaultGameIcon
+                            color: tile.isDarkMode ? "white" : "#212121"
+                        }
                     }
                 }
             }
