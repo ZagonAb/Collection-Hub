@@ -88,6 +88,9 @@ Item {
         console.log("moveFocusDown llamado, currentFocusArea:", currentFocusArea);
         if (currentFocusArea === focusSearch) {
             currentFocusArea = focusGrid;
+            if (searchBar && searchBar.searchText === "") {
+                searchBar.collapse();
+            }
             if (gamesGrid) {
                 gamesGrid.forceActiveFocus();
             }

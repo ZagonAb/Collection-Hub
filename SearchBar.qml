@@ -1,141 +1,110 @@
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
 
-Rectangle {
+Item {
     id: searchBar
-    color: colors.rightpanel
 
     property string searchText: ""
     property var searchColors: ({})
 
+    property bool isExpanded: false
+    property int collapsedWidth: vpx(52)
+    property int expandedWidth: vpx(680)
+
     signal searchChanged(string text)
 
-    Row {
+    width: isExpanded ? expandedWidth : collapsedWidth
+    height: vpx(44)
+
+    Behavior on width {
+        NumberAnimation {
+            duration: 250
+            easing.type: Easing.InOutQuad
+        }
+    }
+
+    Rectangle {
+        id: barBackground
         anchors.fill: parent
-        anchors.margins: vpx(12)
-        spacing: vpx(10)
+        color: searchColors.inputBg || "#0f0f0f"
+        radius: vpx(10)
+        border.color: searchInput.activeFocus ? (searchColors.primary || "#3a6ea5") : (searchColors.inputBorder || "#303030")
+        border.width: vpx(2)
+        opacity: isExpanded ? 1.0 : 0.0
+        clip: true
 
-        Item {
-            width: vpx(24)
-            height: vpx(24)
-            anchors.verticalCenter: parent.verticalCenter
+        Behavior on opacity {
+            NumberAnimation { duration: 200 }
+        }
 
-            Image {
-                id: searchIcon
+        TextInput {
+            id: searchInput
+            anchors {
+                left: parent.left
+                right: clearBtn.left
+                top: parent.top
+                bottom: parent.bottom
+                leftMargin: vpx(46)
+                rightMargin: vpx(6)
+            }
+            color: searchColors.text || "#ffffff"
+            font.pixelSize: vpx(15)
+            selectByMouse: true
+            verticalAlignment: TextInput.AlignVCenter
+            clip: true
+            enabled: isExpanded
+            visible: isExpanded
+
+            Text {
                 anchors.fill: parent
-                source: "assets/icons/search.svg"
-                fillMode: Image.PreserveAspectFit
+                text: "Buscar juego..."
+                color: searchColors.textTertiary || "#707070"
+                font.pixelSize: vpx(15)
+                verticalAlignment: Text.AlignVCenter
+                visible: parent.text === ""
+            }
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    visible: parent.status !== Image.Ready
+            Keys.onReturnPressed: {
+                searchBar.searchText = text.trim()
+                searchBar.searchChanged(text.trim())
+            }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "🔍"
-                        font.pixelSize: vpx(20)
-                    }
+            onTextChanged: {
+                if (text.trim() === "" && searchBar.searchText !== "") {
+                    searchBar.searchText = ""
+                    searchBar.searchChanged("")
                 }
             }
 
-            ColorOverlay {
-                anchors.fill: searchIcon
-                source: searchIcon
-                color: searchColors.text
+            Keys.onEscapePressed: {
+                searchBar.collapse()
             }
         }
 
         Rectangle {
-            width: parent.width - vpx(80)
-            height: parent.height
-            color: searchColors.inputBg
-            radius: vpx(6)
-            border.color: searchInput.activeFocus ? searchColors.primary : searchColors.inputBorder
-            border.width: vpx(2)
-
-            TextInput {
-                id: searchInput
-                anchors.fill: parent
-                anchors.leftMargin: vpx(12)
-                anchors.rightMargin: vpx(12)
-                color: searchColors.text
-                font.pixelSize: vpx(16)
-                selectByMouse: true
-                verticalAlignment: TextInput.AlignVCenter
-                clip: true
-
-                Text {
-                    anchors.fill: parent
-                    text: "Search and press Enter..."
-                    color: searchColors.textTertiary
-                    font.pixelSize: vpx(16)
-                    verticalAlignment: Text.AlignVCenter
-                    visible: parent.text === ""
-                }
-
-                Keys.onReturnPressed: {
-                    searchBar.searchText = text.trim();
-                    searchBar.searchChanged(text.trim());
-                }
-
-                onTextChanged: {
-                    if (text.trim() === "" && searchBar.searchText !== "") {
-                        searchBar.searchText = "";
-                        searchBar.searchChanged("");
-                    }
-                }
-
-                Keys.onEscapePressed: {
-                    text = "";
-                    searchBar.searchText = "";
-                    searchBar.searchChanged("");
-                    focus = false;
-                }
+            id: clearBtn
+            width: vpx(28)
+            height: vpx(28)
+            anchors {
+                right: parent.right
+                rightMargin: vpx(52)
+                verticalCenter: parent.verticalCenter
             }
-        }
+            color: clearMouseArea.containsMouse ? (searchColors.error || "#f44336") : "transparent"
+            radius: vpx(14)
+            opacity: isExpanded && searchInput.text !== "" ? 1.0 : 0.0
+            visible: opacity > 0
 
-        Rectangle {
-            width: vpx(36)
-            height: vpx(36)
-            color: clearMouseArea.containsMouse ? searchColors.error : searchColors.panelBorder
-            radius: vpx(6)
-            visible: searchInput.text !== ""
-            anchors.verticalCenter: parent.verticalCenter
-            border.color: clearMouseArea.containsMouse ? searchColors.errorLight : searchColors.inputBorder
-            border.width: vpx(2)
+            Behavior on opacity {
+                NumberAnimation { duration: 150 }
+            }
 
-            Item {
-                width: vpx(20)
-                height: vpx(20)
+            Text {
                 anchors.centerIn: parent
-
-                Image {
-                    id: clearIcon
-                    anchors.fill: parent
-                    source: "assets/icons/close.svg"
-                    fillMode: Image.PreserveAspectFit
-
-                    Rectangle {
-                        anchors.fill: parent
-                        color: "transparent"
-                        visible: parent.status !== Image.Ready
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "✕"
-                            color: "white"
-                            font.pixelSize: vpx(16)
-                            font.bold: true
-                        }
-                    }
-                }
-
-                ColorOverlay {
-                    anchors.fill: clearIcon
-                    source: clearIcon
-                    color: "white"
-                }
+                text: "✕"
+                color: "white"
+                font.pixelSize: vpx(14)
+                font.bold: true
             }
 
             MouseArea {
@@ -144,33 +113,105 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    searchInput.text = "";
-                    searchBar.searchText = "";
-                    searchBar.searchChanged("");
-                    searchInput.focus = false;
+                    searchInput.text = ""
+                    searchBar.searchText = ""
+                    searchBar.searchChanged("")
+                    searchInput.forceActiveFocus()
                 }
-
-                onEntered: parent.scale = 1.05
-                onExited: parent.scale = 1.0
-            }
-
-            Behavior on scale {
-                NumberAnimation { duration: 150 }
             }
         }
     }
 
+    Rectangle {
+        id: toggleBtn
+        width: vpx(44)
+        height: vpx(44)
+        anchors {
+            right: parent.right
+            verticalCenter: parent.verticalCenter
+        }
+        color: toggleMouseArea.containsMouse || isExpanded
+        ? (searchColors.primary || "#3a6ea5")
+        : "transparent"
+        radius: vpx(10)
+        border.color: isExpanded
+        ? (searchColors.primary || "#3a6ea5")
+        : (searchColors.inputBorder || "#303030")
+        border.width: vpx(2)
+
+        Behavior on color {
+            ColorAnimation { duration: 180 }
+        }
+
+        scale: toggleMouseArea.containsMouse ? 1.08 : 1.0
+        Behavior on scale {
+            NumberAnimation { duration: 130 }
+        }
+
+        Item {
+            width: vpx(22)
+            height: vpx(22)
+            anchors.centerIn: parent
+
+            Image {
+                id: searchIconImg
+                anchors.fill: parent
+                source: "assets/icons/search.svg"
+                fillMode: Image.PreserveAspectFit
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    visible: parent.status !== Image.Ready
+                    Text {
+                        anchors.centerIn: parent
+                        text: "🔍"
+                        font.pixelSize: vpx(18)
+                    }
+                }
+            }
+
+            ColorOverlay {
+                anchors.fill: searchIconImg
+                source: searchIconImg
+                color: colors.text
+            }
+        }
+
+        MouseArea {
+            id: toggleMouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (isExpanded) {
+                    searchBar.collapse()
+                } else {
+                    searchBar.expand()
+                }
+            }
+        }
+    }
+
+    function expand() {
+        isExpanded = true
+        Qt.callLater(function() { searchInput.forceActiveFocus() })
+    }
+
+    function collapse() {
+        searchInput.text = ""
+        searchBar.searchText = ""
+        searchBar.searchChanged("")
+        isExpanded = false
+        searchInput.focus = false
+    }
+
     function clear() {
-        searchInput.text = "";
-        searchText = "";
-        searchChanged("");
+        searchInput.text = ""
+        searchText = ""
+        searchChanged("")
     }
 
-    function focusSearch() {
-        searchInput.forceActiveFocus();
-    }
-
-    function forceActiveFocus() {
-        searchInput.forceActiveFocus();
-    }
+    function focusSearch() { expand() }
+    function forceActiveFocus() { expand() }
 }

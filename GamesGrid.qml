@@ -12,6 +12,7 @@ Rectangle {
     property var collectionGameTitles: []
     property var systemCollection: null
     property string searchFilter: ""
+    property int sortOrder: 0
     property bool isAllGamesSelected: false
     property var themeColors: ({})
     property bool isDarkTheme: true
@@ -30,7 +31,7 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        updateFilteredModel();
+        Qt.callLater(updateFilteredModel);
     }
 
     function updateFilteredModel() {
@@ -97,6 +98,56 @@ Rectangle {
             }
         }
 
+        if (sortOrder === 0) {
+            sourceGames.sort(function(a, b) {
+                var ta = (a.sortBy || a.title || "").toLowerCase();
+                var tb = (b.sortBy || b.title || "").toLowerCase();
+                return ta < tb ? -1 : ta > tb ? 1 : 0;
+            });
+        } else if (sortOrder === 1) {
+            sourceGames.sort(function(a, b) {
+                var ta = (a.sortBy || a.title || "").toLowerCase();
+                var tb = (b.sortBy || b.title || "").toLowerCase();
+                return ta > tb ? -1 : ta < tb ? 1 : 0;
+            });
+        } else if (sortOrder === 2) {
+            sourceGames.sort(function(a, b) {
+                var da = (a.lastPlayed && !isNaN(a.lastPlayed.getTime())) ? a.lastPlayed.getTime() : 0;
+                var db = (b.lastPlayed && !isNaN(b.lastPlayed.getTime())) ? b.lastPlayed.getTime() : 0;
+                return db - da;
+            });
+        } else if (sortOrder === 3) {
+            sourceGames.sort(function(a, b) {
+                var timeA = a.playTime || 0;
+                var timeB = b.playTime || 0;
+                if (timeB !== timeA) {
+                    return timeB - timeA;
+                }
+                var countA = a.playCount || 0;
+                var countB = b.playCount || 0;
+                return countB - countA;
+            });
+        } else if (sortOrder === 4) {
+            sourceGames.sort(function(a, b) {
+                var fa = a.favorite ? 1 : 0;
+                var fb = b.favorite ? 1 : 0;
+                if (fa !== fb) return fb - fa;
+
+                if (fa === 1) {
+                    var timeA = a.playTime || 0;
+                    var timeB = b.playTime || 0;
+                    if (timeB !== timeA) return timeB - timeA;
+                    var countA = a.playCount || 0;
+                    var countB = b.playCount || 0;
+                    return countB - countA;
+                }
+
+                var ta = (a.sortBy || a.title || "").toLowerCase();
+                var tb = (b.sortBy || b.title || "").toLowerCase();
+                return ta < tb ? -1 : ta > tb ? 1 : 0;
+            });
+        }
+
         for (var i = 0; i < sourceGames.length; i++) {
             filteredModel.append(sourceGames[i]);
         }
@@ -120,6 +171,10 @@ Rectangle {
         updateFilteredModel();
     }
 
+    onSortOrderChanged: {
+        updateFilteredModel();
+    }
+
     Connections {
         target: api.allGames
         function onModelReset() {
@@ -140,7 +195,7 @@ Rectangle {
             property int desiredColumns: 3
             property int spacing: vpx(10)
             property int calculatedCellWidth: Math.floor((parent.width - vpx(20) - (desiredColumns + 1) * spacing) / desiredColumns)
-            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 0.9)
+            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 1.0)
 
             width: desiredColumns * calculatedCellWidth + (desiredColumns + 1) * spacing
 

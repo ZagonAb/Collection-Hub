@@ -14,6 +14,12 @@ FocusScope {
     property var selectedSystemCollection: null
     property bool showCollectionEditor: false
     property bool showGameMenu: false
+    property int sortOrder: 0
+    property bool showSortMenu: false
+
+    onShowSortMenuChanged: {
+        //console.log("[ROOT] showSortMenu cambio a:", showSortMenu);
+    }
     property var currentGameForMenu: null
     property bool showDeleteConfirm: false
     property int collectionToDelete: -1
@@ -370,13 +376,66 @@ FocusScope {
                 SearchBar {
                     id: searchBar
                     anchors {
-                        fill: parent
-                        margins: vpx(0)
+                        right: sortBtn.left
+                        rightMargin: vpx(8)
+                        verticalCenter: parent.verticalCenter
                     }
                     searchColors: root.colors
 
                     onSearchChanged: function(text) {
                         gamesGrid.searchFilter = text;
+                    }
+                }
+
+                Rectangle {
+                    id: sortBtn
+                    anchors {
+                        right: parent.right
+                        rightMargin: vpx(10)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: vpx(44)
+                    height: vpx(44)
+                    color: root.showSortMenu ? colors.primary : (sortBtnMouse.containsMouse ? colors.primary : "transparent")
+                    border.color: root.showSortMenu ? colors.primary : colors.panelBorder
+                    border.width: vpx(2)
+                    radius: vpx(10)
+
+                    Item {
+                        width: vpx(22)
+                        height: vpx(22)
+                        anchors.centerIn: parent
+
+                        Image {
+                            id: sortIcon
+                            anchors.fill: parent
+                            source: "assets/icons/menu.svg"
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: sortIcon
+                            source: sortIcon
+                            color: root.isDarkTheme ? "#ffffff" : "#212121"
+                        }
+                    }
+
+                    MouseArea {
+                        id: sortBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.showSortMenu = !root.showSortMenu;
+                            if (root.showSortMenu) {
+                                root.showGameMenu = false;
+                            }
+                        }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 120 }
                     }
                 }
             }
@@ -390,6 +449,7 @@ FocusScope {
                 collectionGameTitles: root.currentCollectionGameTitles
                 systemCollection: root.selectedSystemCollection
                 isAllGamesSelected: root.isAllGamesSelected
+                sortOrder: root.sortOrder
                 color: colors.rightpanel
                 themeColors: root.colors
                 isDarkTheme: root.isDarkTheme
@@ -811,7 +871,7 @@ FocusScope {
         color: colors.overlay
         visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm
         z: 9
-        opacity: 0
+        opacity: 1
 
         MouseArea {
             anchors.fill: parent
@@ -833,8 +893,6 @@ FocusScope {
         Behavior on opacity {
             NumberAnimation { duration: 200 }
         }
-
-        Component.onCompleted: opacity = 1
     }
 
     Keys.onPressed: function(event) {
@@ -854,6 +912,33 @@ FocusScope {
         } else if (event.key === Qt.Key_Down) {
             focusManager.moveFocusDown();
             event.accepted = true;
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        visible: root.showSortMenu
+        z: 29
+        onClicked: {
+            root.showSortMenu = false;
+        }
+    }
+
+    SortMenu {
+        id: sortMenuPopup
+        anchors.right: root.right
+        anchors.rightMargin: vpx(10)
+        anchors.top: root.top
+        anchors.topMargin: vpx(66)
+        themeColors: root.colors
+        isDarkTheme: root.isDarkTheme
+        currentSort: root.sortOrder
+        visible: root.showSortMenu
+        z: 30
+
+        onSortSelected: function(sortIndex) {
+            root.sortOrder = sortIndex;
+            root.showSortMenu = false;
         }
     }
 }
