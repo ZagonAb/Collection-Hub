@@ -8,6 +8,7 @@
 
 
 ![screen0](https://github.com/ZagonAb/Collection-Hub/blob/351fa8cec934af6df412c70fe45fa8c1ba5786ad/.meta/screenshots/screen0.png)
+![screen1](https://github.com/ZagonAb/Collection-Hub/blob/52f2ef04add2b5370da61a45edeec76188091716/.meta/screenshots/screen1.png)
 
 
 ## Installation
