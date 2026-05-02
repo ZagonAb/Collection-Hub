@@ -57,7 +57,7 @@ Item {
 
             Text {
                 anchors.fill: parent
-                text: "Buscar juego..."
+                text: "Search here..."
                 color: searchColors.textTertiary || "#707070"
                 font.pixelSize: vpx(15)
                 verticalAlignment: Text.AlignVCenter
