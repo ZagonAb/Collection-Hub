@@ -7,8 +7,8 @@
 > The theme will continue to evolve, so you may encounter interface issues. If that happens, you can open an [issue](https://github.com/ZagonAb/Collection-Hub/issues) or wait for a more stable version.
 
 
-![screen0](https://github.com/ZagonAb/Collection-Hub/blob/50b1b535c7151ee898a0da2bfb89d9885e8d7cef/.meta/screenshots/screen0.png)
-![screen1](https://github.com/ZagonAb/Collection-Hub/blob/52f2ef04add2b5370da61a45edeec76188091716/.meta/screenshots/screen1.png)
+![screen0](https://github.com/ZagonAb/Collection-Hub/blob/e9c1ea9ddcf615a0ea45e545bfcb060358179c12/.meta/screenshots/screen0.png)
+![screen1](https://github.com/ZagonAb/Collection-Hub/blob/e9c1ea9ddcf615a0ea45e545bfcb060358179c12/.meta/screenshots/screen1.png)
 
 
 ## Installation
