@@ -118,12 +118,21 @@ Rectangle {
                 delegate: Rectangle {
                     width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
                     height: vpx(43)
-                    color: customCollectionsContainer.selectedCollectionId === modelData.id ?
-                    themeColors.primary || "#3a6ea5" :
-                    "transparent"
-                    radius: vpx(10)
 
                     property bool isCurrent: ListView.isCurrentItem
+                    property bool isSelected: customCollectionsContainer.selectedCollectionId === modelData.id
+                    property color primaryColor: themeColors.primary || "#3a6ea5"
+
+                    color: {
+                        if (isSelected) {
+                            return primaryColor;
+                        }
+                        if (isCurrent && customCollectionsList.activeFocus && !isSelected) {
+                            return Qt.rgba(primaryColor.r, primaryColor.g, primaryColor.b, 0.15);
+                        }
+                        return "transparent";
+                    }
+                    radius: vpx(10)
 
                     Row {
                         anchors.left: parent.left

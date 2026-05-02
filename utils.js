@@ -244,3 +244,22 @@ function cleanAndSplitGenres(genreText) {
 
     return cleanedParts;
 }
+
+function formatPlayTime(seconds) {
+    if (!seconds || seconds <= 0) return "0m";
+    var h = Math.floor(seconds / 3600);
+    var m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return h + "h " + m + "m";
+    return m + "m";
+}
+
+function toggleGameFavorite(gameTitle) {
+    for (var i = 0; i < api.allGames.count; i++) {
+        var game = api.allGames.get(i);
+        if (game.title === gameTitle) {
+            game.favorite = !game.favorite;
+            return game.favorite;
+        }
+    }
+    return null;
+}

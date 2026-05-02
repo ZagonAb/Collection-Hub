@@ -12,6 +12,7 @@ Rectangle {
     property bool isSelected: false
     property color selectedBorderColor: tileColors.primary
 
+
     onIsCurrentChanged: {
         if (isCurrent) {
             tile.scale = 1.02;
@@ -33,6 +34,7 @@ Rectangle {
     property bool isHovered: tileMouseArea.containsMouse || isCurrent
 
     signal rightClicked(var gameData, real x, real y)
+    signal showDetailRequested(var gameData)
 
     Column {
         anchors.fill: parent
@@ -71,6 +73,7 @@ Rectangle {
                     asynchronous: true
                     smooth: true
                     visible: source !== "" && status === Image.Ready
+                    scale: 7.5
 
                     layer.enabled: true
                     layer.effect: FastBlur {
@@ -82,6 +85,41 @@ Rectangle {
                     anchors.fill: parent
                     color: "#55000000"
                     visible: bgBlurImage.visible
+                }
+            }
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.right:  textGameInfo.visible ? textGameInfo.left : parent.right
+                anchors.rightMargin: textGameInfo.visible ? vpx(4) : vpx(6)
+                anchors.bottomMargin: vpx(6)
+                width: vpx(20)
+                height: vpx(20)
+                color: "#AA000000"
+                radius: vpx(4)
+                visible: gameData.favorite
+                z: 3
+
+                Behavior on anchors.rightMargin { NumberAnimation { duration: 150 } }
+
+                Item {
+                    anchors.centerIn: parent
+                    width: vpx(12)
+                    height: vpx(12)
+
+                    Image {
+                        id: favIndicatorIcon
+                        anchors.fill: parent
+                        source: "assets/icons/favorite-on.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: favIndicatorIcon
+                        source: favIndicatorIcon
+                        color: "#ffffff"
+                    }
                 }
             }
 
@@ -232,7 +270,7 @@ Rectangle {
 
         onDoubleClicked: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                Utils.launchGameFromCollection(gameData.title);
+                tile.showDetailRequested(gameData);
             }
         }
 

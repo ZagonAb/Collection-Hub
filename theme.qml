@@ -16,6 +16,22 @@ FocusScope {
     property bool showGameMenu: false
     property int sortOrder: 0
     property bool showSortMenu: false
+    property var currentDetailGame: null
+
+    function openGameDetail(game) {
+        console.log("Abriendo detalle para:", game.title);
+        currentDetailGame = game;
+        gameDetailLoader.active = true;
+    }
+
+    function closeGameDetail() {
+        console.log("Cerrando detalle");
+        gameDetailLoader.active = false;
+        currentDetailGame = null;
+        if (focusManager && focusManager.gamesGrid) {
+            focusManager.gamesGrid.forceActiveFocus();
+        }
+    }
 
     onShowSortMenuChanged: {
         //console.log("[ROOT] showSortMenu cambio a:", showSortMenu);
@@ -455,6 +471,10 @@ FocusScope {
                 isDarkTheme: root.isDarkTheme
                 focusManager: focusManager
 
+                onShowGameDetail: function(game) {
+                    root.openGameDetail(game);
+                }
+
                 onGameRightClicked: function(game, x, y) {
                     if (root.showGameMenu) {
                         root.showGameMenu = false;
@@ -869,13 +889,17 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         color: colors.overlay
-        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm
+        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || gameDetailLoader.active
         z: 9
         opacity: 1
 
         MouseArea {
             anchors.fill: parent
             onClicked: {
+                if (gameDetailLoader.active) {
+                    return;
+                }
+
                 if (root.showDeleteConfirm) {
                     root.showDeleteConfirm = false;
                     root.collectionToDelete = -1;
@@ -896,6 +920,10 @@ FocusScope {
     }
 
     Keys.onPressed: function(event) {
+        if (gameDetailLoader.active) {
+            return;
+        }
+
         if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm) {
             return;
         }
@@ -939,6 +967,44 @@ FocusScope {
         onSortSelected: function(sortIndex) {
             root.sortOrder = sortIndex;
             root.showSortMenu = false;
+        }
+    }
+
+    Loader {
+        id: gameDetailLoader
+        anchors.fill: parent
+        active: false
+        z: 15
+        sourceComponent: GameDetail {
+            gameData: root.currentDetailGame
+            detailColors: root.colors
+            isDarkTheme: root.isDarkTheme
+
+            onClose: root.closeGameDetail()
+            onLaunchRequested: {
+                if (root.currentDetailGame) {
+                    Utils.launchGameFromCollection(root.currentDetailGame.title)
+                }
+                root.closeGameDetail()
+            }
+            onFavoriteToggled: {
+                if (root.currentDetailGame) {
+                    var newState = Utils.toggleGameFavorite(root.currentDetailGame.title)
+                    if (newState !== null)
+                        root.currentDetailGame.favorite = newState
+                    console.log("Favorite toggled for:", root.currentDetailGame.title, "→", newState)
+                }
+            }
+        }
+
+        onActiveChanged: {
+            if (active) {
+                Qt.callLater(function() {
+                    if (gameDetailLoader.item) {
+                        gameDetailLoader.item.forceActiveFocus()
+                    }
+                })
+            }
         }
     }
 }

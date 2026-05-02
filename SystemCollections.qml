@@ -89,7 +89,7 @@ Rectangle {
 
                     color: {
                         if (isSelected) {
-                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.35);
+                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.45);
                         }
                         if ((isHovered || (isCurrent && systemCollectionsList.activeFocus)) && !isSelected) {
                             return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.15);

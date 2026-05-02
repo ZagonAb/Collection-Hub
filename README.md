@@ -1,7 +1,7 @@
 
 # Collection Hub
 
-A theme for Pegasus Frontend that lets you create and manage your own custom game collections, visually inspired in Cartridges.
+- A theme for Pegasus Frontend that lets you create and manage custom game collections, with a design inspired by the Cartridges app.
 
 
 > The theme will continue to evolve, so you may encounter interface issues. If that happens, you can open an [issue](https://github.com/ZagonAb/Collection-Hub/issues) or wait for a more stable version.

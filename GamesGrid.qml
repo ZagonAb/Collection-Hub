@@ -21,6 +21,7 @@ Rectangle {
     property bool scrollbarReady: false
 
     signal gameRightClicked(var game, int x, int y)
+    signal showGameDetail(var game)
 
     ListModel {
         id: filteredModel
@@ -229,6 +230,10 @@ Rectangle {
                 (gridContainer.selectedCollectionId !== -1 &&
                 gridContainer.systemCollection === null)
 
+                onShowDetailRequested: function(game) {
+                    gridContainer.showGameDetail(game);
+                }
+
                 isGameInUserCollection: {
                     if (gridContainer.selectedCollectionId === -1) return false;
                     return Utils.isGameInCollection(gridContainer.selectedCollectionId, model);
@@ -262,8 +267,7 @@ Rectangle {
             Keys.onPressed: function(event) {
                 if (api.keys.isAccept(event)) {
                     if (currentItem && currentItem.gameData) {
-                        var globalPos = currentItem.mapToItem(null, currentItem.width / 2, currentItem.height / 2);
-                        gridContainer.gameRightClicked(currentItem.gameData, globalPos.x, globalPos.y);
+                        gridContainer.showGameDetail(currentItem.gameData);
                         event.accepted = true;
                     }
                 } else if (api.keys.isCancel(event)) {
