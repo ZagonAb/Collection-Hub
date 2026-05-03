@@ -131,9 +131,9 @@ FocusScope {
             transparentBorder: true
             horizontalOffset: 0
             verticalOffset: vpx(10)
-            radius: vpx(28)
-            samples: 25
-            color: "#AA000000"
+            radius: vpx(18)
+            samples: 35
+            color: "black"
         }
 
         scale: 0.88
