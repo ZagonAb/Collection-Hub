@@ -22,9 +22,16 @@ FocusScope {
         return accentColor;
     }
 
+
+    property int selectedCollectionId: -1
+    property var selectedSystemCollection: null
+    property bool isInCurrentCollection: selectedCollectionId !== -1 && currentGame
+    && Utils.isGameInCollection(selectedCollectionId, currentGame)
+
     signal closed()
     signal launchGame()
     signal gameAddedToCollection(int collectionId)
+    signal gameRemovedFromCollection(int collectionId)
 
     readonly property color panelBg: isDarkTheme ? "#1c1c20" : "#f2f2f4"
     readonly property color panelBorder: themeColors.primary || (isDarkTheme ? "#3a6ea5" : "#2196F3")
@@ -51,7 +58,14 @@ FocusScope {
             }
         } else if (navSection === 1) {
             addGameRoot.launchGame();
-        } else if (navSection === 2) {
+        } else if (navSection === 2 && removeBtn.visible) {
+            var gamePath = Utils.getGamePath(currentGame);
+            var success = Utils.removeGameFromCollection(selectedCollectionId, currentGame.title, gamePath);
+            if (success) {
+                addGameRoot.gameRemovedFromCollection(selectedCollectionId);
+                addGameRoot.closed();
+            }
+        } else if (navSection === 3 || (!removeBtn.visible && navSection === 2)) {
             addGameRoot.closed();
         }
     }
@@ -73,12 +87,12 @@ FocusScope {
             event.accepted = true;
             return;
         }
+
         if (event.key === Qt.Key_Up) {
             if (navSection === 0) {
                 if (listNavIndex > 0) {
                     listNavIndex--;
                     collectionsView.currentIndex = listNavIndex;
-                    collectionsView.positionViewAtIndex(listNavIndex, ListView.Contain);
                 }
             } else if (navSection === 1) {
                 navSection = 0;
@@ -86,32 +100,46 @@ FocusScope {
                 collectionsView.currentIndex = listNavIndex;
             } else if (navSection === 2) {
                 navSection = 1;
+            } else if (navSection === 3) {
+                navSection = removeBtn.visible ? 2 : 1;
             }
             event.accepted = true;
             return;
         }
+
         if (event.key === Qt.Key_Down) {
             if (navSection === 0) {
                 if (listNavIndex < customCollections.length - 1) {
                     listNavIndex++;
                     collectionsView.currentIndex = listNavIndex;
-                    collectionsView.positionViewAtIndex(listNavIndex, ListView.Contain);
                 } else {
                     navSection = 1;
                 }
             } else if (navSection === 1) {
-                navSection = 2;
+                navSection = removeBtn.visible ? 2 : 3;
+            } else if (navSection === 2) {
+                navSection = 3;
             }
             event.accepted = true;
             return;
         }
+
         if (event.key === Qt.Key_Left) {
-            if (navSection === 2) navSection = 1;
+            if (navSection === 2) {
+                navSection = 1;
+            } else if (navSection === 3) {
+                navSection = removeBtn.visible ? 2 : 1;
+            }
             event.accepted = true;
             return;
         }
+
         if (event.key === Qt.Key_Right) {
-            if (navSection === 1) navSection = 2;
+            if (navSection === 1) {
+                navSection = removeBtn.visible ? 2 : 3;
+            } else if (navSection === 2) {
+                navSection = 3;
+            }
             event.accepted = true;
             return;
         }
@@ -345,7 +373,9 @@ FocusScope {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: parent.width - closeBtn.width - vpx(10)
+                width: parent.width - closeBtn.width
+                - (removeBtn.visible ? removeBtn.width + vpx(10) : 0)
+                - vpx(10)
 
                 readonly property bool padFocus: addGameRoot.navSection === 1
 
@@ -390,13 +420,79 @@ FocusScope {
             }
 
             Item {
+                id: removeBtn
+                anchors.left: launchBtn.right
+                anchors.leftMargin: vpx(10)
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: vpx(160)
+                visible: !addGameRoot.isCollectionContext
+                && selectedCollectionId !== -1
+                && selectedSystemCollection === null
+                && isInCurrentCollection
+
+                readonly property bool padFocus: addGameRoot.navSection === 2
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width + vpx(6)
+                    height: parent.height + vpx(6)
+                    radius: vpx(30)
+                    color: "transparent"
+                    border.color: addGameRoot.currentItemBorderColor
+                    border.width: vpx(2)
+                    opacity: removeBtn.padFocus ? 1.0 : 0.0
+                    scale: removeBtn.padFocus ? 1.02 : 1.0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: vpx(25)
+                    color: mouseRemove.containsMouse ? "#e0e0e0" : "#ffffff"
+                    scale: removeBtn.padFocus ? 1.02 : 1.0
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Remove game"
+                        color: "#111111"
+                        font.pixelSize: vpx(16)
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    id: mouseRemove
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var gamePath = Utils.getGamePath(currentGame);
+                        var success = Utils.removeGameFromCollection(
+                            selectedCollectionId,
+                            currentGame.title,
+                            gamePath
+                        );
+                        if (success) {
+                            addGameRoot.gameRemovedFromCollection(selectedCollectionId);
+                            addGameRoot.closed();
+                        }
+                    }
+                    onEntered: addGameRoot.navSection = 2
+                }
+            }
+
+            Item {
                 id: closeBtn
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: vpx(50)
 
-                readonly property bool padFocus: addGameRoot.navSection === 2
+                readonly property bool padFocus: addGameRoot.navSection === 3
 
                 Rectangle {
                     anchors.fill: parent
@@ -422,7 +518,7 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: addGameRoot.navSection = 2
+                        onEntered: addGameRoot.navSection = 3
                         onClicked: addGameRoot.closed()
                     }
                 }

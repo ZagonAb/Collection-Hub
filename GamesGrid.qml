@@ -26,6 +26,7 @@ Rectangle {
     signal showGameDetail(var game)
     signal requestAddGame(var game)
     signal gameAddedToCollection(int collectionId)
+    signal gameRemovedFromCollection(int collectionId)
 
     onRequestAddGame: function(game) {
         addGameLoader.openForGame(game);
@@ -375,10 +376,13 @@ Rectangle {
 
             onLoaded: {
                 if (addGameLoader.item) {
-                    addGameLoader.item.currentGame       = addGameLoader._pendingGame;
-                    addGameLoader.item.themeColors       = gridContainer.themeColors;
-                    addGameLoader.item.isDarkTheme       = gridContainer.isDarkTheme;
-                    addGameLoader.item.customCollections = gridContainer.customCollections;
+                    addGameLoader.item.currentGame          = addGameLoader._pendingGame;
+                    addGameLoader.item.themeColors          = gridContainer.themeColors;
+                    addGameLoader.item.isDarkTheme          = gridContainer.isDarkTheme;
+                    addGameLoader.item.customCollections    = gridContainer.customCollections;
+                    addGameLoader.item.selectedCollectionId = gridContainer.selectedCollectionId;
+                    addGameLoader.item.selectedSystemCollection = gridContainer.systemCollection;
+
                     addGameLoader.item.closed.connect(function() {
                         addGameLoader.active = false;
                         gamesGrid.forceActiveFocus();
@@ -392,6 +396,10 @@ Rectangle {
                     addGameLoader.item.gameAddedToCollection.connect(function(collectionId) {
                         gridContainer.gameAddedToCollection(collectionId);
                     });
+                    addGameLoader.item.gameRemovedFromCollection.connect(function(collectionId) {
+                        gridContainer.gameRemovedFromCollection(collectionId);
+                    });
+
                     addGameLoader.item.forceActiveFocus();
                 }
             }
