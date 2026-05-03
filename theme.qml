@@ -387,6 +387,60 @@ FocusScope {
                 Layout.preferredHeight: vpx(60)
                 color: colors.rightpanel
 
+                Row {
+                    id: leftIndicators
+                    anchors {
+                        left: parent.left
+                        leftMargin: vpx(10)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    spacing: vpx(16)
+
+                    Row {
+                        spacing: vpx(4)
+                        Image {
+                            width: vpx(22)
+                            height: vpx(22)
+                            source: "assets/icons/x.svg"
+                            fillMode: Image.PreserveAspectFit
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                            }
+                            mipmap: true
+                        }
+                        Text {
+                            text: "Menu"
+                            color: colors.text
+                            font.pixelSize: vpx(12)
+                            font.bold: false
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    Row {
+                        spacing: vpx(4)
+                        Image {
+                            width: vpx(22)
+                            height: vpx(22)
+                            source: "assets/icons/a.svg"
+                            fillMode: Image.PreserveAspectFit
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                            }
+                            mipmap: true
+                        }
+                        Text {
+                            text: "Details"
+                            color: colors.text
+                            font.pixelSize: vpx(12)
+                            font.bold: false
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
                 SearchBar {
                     id: searchBar
                     anchors {
