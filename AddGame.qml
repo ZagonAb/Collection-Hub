@@ -118,16 +118,6 @@ FocusScope {
     }
 
     Rectangle {
-        anchors.fill: parent
-        color: "#BB000000"
-        z: 0
-        MouseArea {
-            anchors.fill: parent
-            onClicked: addGameRoot.closed()
-        }
-    }
-
-    Rectangle {
         id: panel
         z: 1
         anchors.centerIn: parent
