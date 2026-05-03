@@ -470,9 +470,28 @@ FocusScope {
                 themeColors: root.colors
                 isDarkTheme: root.isDarkTheme
                 focusManager: focusManager
+                customCollections: root.customCollections
 
                 onShowGameDetail: function(game) {
                     root.openGameDetail(game);
+                }
+
+                onGameAddedToCollection: function(collectionId) {
+                    root.customCollections = Utils.loadCustomCollections();
+                    if (root.selectedCollectionId === collectionId) {
+                        for (var i = 0; i < root.customCollections.length; i++) {
+                            if (root.customCollections[i].id === collectionId) {
+                                var filePaths = [];
+                                for (var j = 0; j < root.customCollections[i].games.length; j++) {
+                                    var fp = root.customCollections[i].games[j].filePath
+                                    || root.customCollections[i].games[j].title;
+                                    filePaths.push(fp);
+                                }
+                                root.currentCollectionGameTitles = filePaths;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 onGameRightClicked: function(game, x, y) {

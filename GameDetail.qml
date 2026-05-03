@@ -32,7 +32,7 @@ FocusScope {
             currentButton = Math.min(2, currentButton + 1)
             event.accepted = true
 
-        } else if (api.keys.isAccept(event)) {
+        } else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
             if (currentButton === 0) {
                 root.launchRequested()
             } else if (currentButton === 1) {

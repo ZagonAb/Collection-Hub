@@ -19,9 +19,17 @@ Rectangle {
     property var focusManager: null
     property alias gridView: gamesGrid
     property bool scrollbarReady: false
+    property var  customCollections: []
+    property var  addGameLoaderRef:  null
 
     signal gameRightClicked(var game, int x, int y)
     signal showGameDetail(var game)
+    signal requestAddGame(var game)
+    signal gameAddedToCollection(int collectionId)
+
+    onRequestAddGame: function(game) {
+        addGameLoader.openForGame(game);
+    }
 
     ListModel {
         id: filteredModel
@@ -265,7 +273,15 @@ Rectangle {
             }
 
             Keys.onPressed: function(event) {
-                if (api.keys.isAccept(event)) {
+                if (api.keys.isDetails(event)) {
+                    if (currentItem && currentItem.gameData) {
+                        gridContainer.requestAddGame(currentItem.gameData);
+                        event.accepted = true;
+                    }
+                    return;
+                }
+
+                if (!event.isAutoRepeat && api.keys.isAccept(event)) {
                     if (currentItem && currentItem.gameData) {
                         gridContainer.showGameDetail(currentItem.gameData);
                         event.accepted = true;
@@ -336,6 +352,48 @@ Rectangle {
                 color: gridContainer.themeColors.primaryHover || "#5a8ec5"
                 radius: vpx(1.5)
                 opacity: 0.6
+            }
+        }
+
+        Loader {
+            id: addGameLoader
+            anchors.fill: parent
+            active: false
+            z: 50
+            source: active ? "AddGame.qml" : ""
+
+            Component.onCompleted: {
+                gridContainer.addGameLoaderRef = addGameLoader;
+            }
+
+            property var _pendingGame: null
+
+            function openForGame(game) {
+                _pendingGame = game;
+                active = true;
+            }
+
+            onLoaded: {
+                if (addGameLoader.item) {
+                    addGameLoader.item.currentGame       = addGameLoader._pendingGame;
+                    addGameLoader.item.themeColors       = gridContainer.themeColors;
+                    addGameLoader.item.isDarkTheme       = gridContainer.isDarkTheme;
+                    addGameLoader.item.customCollections = gridContainer.customCollections;
+                    addGameLoader.item.closed.connect(function() {
+                        addGameLoader.active = false;
+                        gamesGrid.forceActiveFocus();
+                    });
+                    addGameLoader.item.launchGame.connect(function() {
+                        if (addGameLoader._pendingGame) {
+                            Utils.launchGameFromCollection(addGameLoader._pendingGame.title);
+                        }
+                        addGameLoader.active = false;
+                    });
+                    addGameLoader.item.gameAddedToCollection.connect(function(collectionId) {
+                        gridContainer.gameAddedToCollection(collectionId);
+                    });
+                    addGameLoader.item.forceActiveFocus();
+                }
             }
         }
     }
