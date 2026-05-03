@@ -19,13 +19,11 @@ FocusScope {
     property var currentDetailGame: null
 
     function openGameDetail(game) {
-        console.log("Abriendo detalle para:", game.title);
         currentDetailGame = game;
         gameDetailLoader.active = true;
     }
 
     function closeGameDetail() {
-        console.log("Cerrando detalle");
         gameDetailLoader.active = false;
         currentDetailGame = null;
         if (focusManager && focusManager.gamesGrid) {
@@ -400,6 +398,10 @@ FocusScope {
 
                     onSearchChanged: function(text) {
                         gamesGrid.searchFilter = text;
+                    }
+
+                    onMoveToSortMenu: {
+                        root.showSortMenu = true;
                     }
                 }
 
@@ -939,7 +941,8 @@ FocusScope {
     }
 
     Keys.onPressed: function(event) {
-        if (gameDetailLoader.active) {
+        if (gameDetailLoader.active) { return; }
+        if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || root.showSortMenu) {
             return;
         }
 
@@ -987,6 +990,15 @@ FocusScope {
             root.sortOrder = sortIndex;
             root.showSortMenu = false;
         }
+
+        onSortOrderChangedOnly: function(sortIndex) {
+            root.sortOrder = sortIndex;
+        }
+
+        onCloseMenu: {
+            root.showSortMenu = false;
+            searchBar.forceActiveFocus();
+        }
     }
 
     Loader {
@@ -1011,7 +1023,6 @@ FocusScope {
                     var newState = Utils.toggleGameFavorite(root.currentDetailGame.title)
                     if (newState !== null)
                         root.currentDetailGame.favorite = newState
-                    console.log("Favorite toggled for:", root.currentDetailGame.title, "→", newState)
                 }
             }
         }

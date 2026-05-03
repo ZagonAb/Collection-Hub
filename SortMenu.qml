@@ -7,12 +7,40 @@ Item {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property int currentSort: 0
+    property int highlightIndex: 0
 
     signal sortSelected(int sortIndex)
+    signal closeMenu()
+    signal sortOrderChangedOnly(int sortIndex)
 
     width: vpx(200)
     height: bubble.height + tail.height
     visible: false
+
+    onVisibleChanged: {
+        if (visible) {
+            highlightIndex = currentSort;
+            forceActiveFocus();
+        }
+    }
+
+    focus: true
+
+    Keys.onPressed: function(event) {
+        if (api.keys.isCancel(event)) {
+            sortMenu.closeMenu();
+            event.accepted = true;
+        } else if (api.keys.isAccept(event)) {
+            sortMenu.sortOrderChangedOnly(highlightIndex);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Up) {
+            highlightIndex = Math.max(0, highlightIndex - 1);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Down) {
+            highlightIndex = Math.min(4, highlightIndex + 1);
+            event.accepted = true;
+        }
+    }
 
     Canvas {
         id: tail
@@ -110,9 +138,15 @@ Item {
                 delegate: Rectangle {
                     width: parent.width
                     height: vpx(34)
-                    color: optionMouse.containsMouse
-                        ? (isDarkTheme ? "#3a3a3e" : "#e8e8f0")
-                        : (sortMenu.currentSort === index ? (isDarkTheme ? "#333366" : "#d0d8ff") : "transparent")
+                    color: {
+                        if (sortMenu.activeFocus && sortMenu.highlightIndex === index)
+                            return (isDarkTheme ? "#4a4a5e" : "#c0c8ff");
+                            if (optionMouse.containsMouse)
+                                return (isDarkTheme ? "#3a3a3e" : "#e8e8f0");
+                                if (sortMenu.currentSort === index)
+                                    return (isDarkTheme ? "#333366" : "#d0d8ff");
+                                    return "transparent";
+                    }
                     radius: vpx(6)
 
                     Row {
@@ -159,7 +193,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            sortMenu.currentSort = index;
+                            sortMenu.highlightIndex = index;
                             sortMenu.sortSelected(index);
                         }
                     }

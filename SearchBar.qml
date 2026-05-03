@@ -12,6 +12,7 @@ Item {
     property int expandedWidth: vpx(680)
 
     signal searchChanged(string text)
+    signal moveToSortMenu()
 
     width: isExpanded ? expandedWidth : collapsedWidth
     height: vpx(44)
@@ -64,20 +65,23 @@ Item {
                 visible: parent.text === ""
             }
 
-            Keys.onReturnPressed: {
-                searchBar.searchText = text.trim()
-                searchBar.searchChanged(text.trim())
-            }
-
-            onTextChanged: {
-                if (text.trim() === "" && searchBar.searchText !== "") {
-                    searchBar.searchText = ""
-                    searchBar.searchChanged("")
+            Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Right) {
+                    if (text.length === 0 || cursorPosition === text.length) {
+                        searchBar.moveToSortMenu();
+                        event.accepted = true;
+                        return;
+                    }
                 }
-            }
-
-            Keys.onEscapePressed: {
-                searchBar.collapse()
+                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    searchBar.searchText = text.trim();
+                    searchBar.searchChanged(text.trim());
+                    event.accepted = true;
+                }
+                else if (event.key === Qt.Key_Escape) {
+                    searchBar.collapse();
+                    event.accepted = true;
+                }
             }
         }
 

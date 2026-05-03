@@ -46,14 +46,6 @@ Rectangle {
             color: themeColors.text || "white"
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            height: vpx(1)
-            color: themeColors.background || "#444"
-            radius: vpx(1)
-            clip: true
-        }
-
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true

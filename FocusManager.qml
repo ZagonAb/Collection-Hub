@@ -20,7 +20,6 @@ Item {
     signal selectAllGamesTriggered()
 
     function selectAllGames() {
-        console.log("selectAllGames llamado");
         lastSystemIndex = 0;
         currentFocusArea = focusGrid;
         selectAllGamesTriggered();
@@ -39,17 +38,14 @@ Item {
     }
 
     function moveFocusLeft() {
-        console.log("moveFocusLeft llamado, systemCollections:", systemCollections);
         currentFocusArea = focusSystem;
         if (systemCollections) {
-            console.log("Intentando enfocar systemCollections");
             systemCollections.currentIndex = lastSystemIndex;
             systemCollections.forceActiveFocus();
         }
     }
 
     function moveFocusRight() {
-        console.log("moveFocusRight llamado, currentFocusArea:", currentFocusArea, "gamesGrid:", gamesGrid);
         if (currentFocusArea === focusSystem) {
             lastSystemIndex = systemCollections ? systemCollections.currentIndex : 0;
         } else if (currentFocusArea === focusCustom) {
@@ -59,7 +55,6 @@ Item {
         if (currentFocusArea === focusSystem || currentFocusArea === focusCustom) {
             currentFocusArea = focusGrid;
             if (gamesGrid) {
-                console.log("Enfocando gamesGrid");
                 gamesGrid.currentIndex = 0;
                 gamesGrid.forceActiveFocus();
             }
@@ -67,7 +62,6 @@ Item {
     }
 
     function moveFocusUp() {
-        console.log("moveFocusUp llamado, currentFocusArea:", currentFocusArea);
         if (currentFocusArea === focusGrid) {
             currentFocusArea = focusSearch;
             if (searchBar) {
@@ -77,7 +71,6 @@ Item {
             lastCustomIndex = customCollections ? customCollections.currentIndex : 0;
             currentFocusArea = focusSystem;
             if (systemCollections) {
-                console.log("Regresando a systemCollections");
                 systemCollections.currentIndex = systemCollections.count - 1;
                 systemCollections.forceActiveFocus();
             }
@@ -85,7 +78,6 @@ Item {
     }
 
     function moveFocusDown() {
-        console.log("moveFocusDown llamado, currentFocusArea:", currentFocusArea);
         if (currentFocusArea === focusSearch) {
             currentFocusArea = focusGrid;
             if (searchBar && searchBar.searchText === "") {
@@ -98,7 +90,6 @@ Item {
             lastSystemIndex = systemCollections ? systemCollections.currentIndex : 0;
             currentFocusArea = focusCustom;
             if (customCollections) {
-                console.log("Enfocando customCollections");
                 customCollections.currentIndex = lastCustomIndex;
                 customCollections.forceActiveFocus();
             }
