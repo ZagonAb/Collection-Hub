@@ -89,6 +89,55 @@ Rectangle {
             }
 
             Rectangle {
+                id: playTimeBadge
+                anchors.bottom: parent.bottom
+                anchors.right: fvImage.visible ? fvImage.left : (textGameInfo.visible ? textGameInfo.left : parent.right)
+                anchors.rightMargin: fvImage.visible ? vpx(4) : (textGameInfo.visible ? vpx(4) : vpx(6))
+                anchors.bottomMargin: vpx(6)
+                width: playTimeText.contentWidth + vpx(10)
+                height: vpx(20)
+                color: "#AA000000"
+                radius: vpx(4)
+                visible: gameData.playTime > 0
+                z: 3
+
+                Behavior on anchors.rightMargin { NumberAnimation { duration: 150 } }
+
+                Text {
+                    id: playTimeText
+                    anchors.centerIn: parent
+                    text: Utils.formatPlayTime(gameData.playTime)
+                    color: "white"
+                    font.pixelSize: vpx(11)
+                }
+            }
+
+            Rectangle {
+                id: playCountBadge
+                anchors.bottom: parent.bottom
+                anchors.right: playTimeBadge.visible ? playTimeBadge.left : (fvImage.visible ? fvImage.left : (textGameInfo.visible ? textGameInfo.left : parent.right))
+                anchors.rightMargin: playTimeBadge.visible ? vpx(4) : (fvImage.visible ? vpx(4) : (textGameInfo.visible ? vpx(4) : vpx(6)))
+                anchors.bottomMargin: vpx(6)
+                width: playCountText.contentWidth + vpx(10)
+                height: vpx(20)
+                color: "#AA000000"
+                radius: vpx(4)
+                visible: gameData.playCount > 0
+                z: 3
+
+                Behavior on anchors.rightMargin { NumberAnimation { duration: 150 } }
+
+                Text {
+                    id: playCountText
+                    anchors.centerIn: parent
+                    text: "\u25b6 " + gameData.playCount
+                    color: "white"
+                    font.pixelSize: vpx(11)
+                }
+            }
+
+            Rectangle {
+                id: fvImage
                 anchors.bottom: parent.bottom
                 anchors.right:  textGameInfo.visible ? textGameInfo.left : parent.right
                 anchors.rightMargin: textGameInfo.visible ? vpx(4) : vpx(6)

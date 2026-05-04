@@ -246,11 +246,13 @@ function cleanAndSplitGenres(genreText) {
 }
 
 function formatPlayTime(seconds) {
-    if (!seconds || seconds <= 0) return "0m";
+    if (!seconds || seconds <= 0) return "00:00:00";
     var h = Math.floor(seconds / 3600);
     var m = Math.floor((seconds % 3600) / 60);
-    if (h > 0) return h + "h " + m + "m";
-    return m + "m";
+    var s = Math.floor(seconds % 60);
+    return (h < 10 ? "0" + h : h) + ":" +
+           (m < 10 ? "0" + m : m) + ":" +
+           (s < 10 ? "0" + s : s);
 }
 
 function toggleGameFavorite(gameTitle) {

@@ -53,7 +53,7 @@ FocusScope {
             if (col && !Utils.isGameInCollection(col.id, currentGame)) {
                 if (Utils.addGameToCollection(col.id, currentGame)) {
                     addGameRoot.gameAddedToCollection(col.id);
-                    addGameRoot.customCollections = Utils.loadCustomCollections();
+                    collectionsView.forceLayout();
                 }
             }
         } else if (navSection === 1) {
@@ -309,8 +309,8 @@ FocusScope {
                         Text {
                             anchors.left: stateIcon.right
                             anchors.leftMargin: vpx(10)
-                            anchors.right: parent.right
-                            anchors.rightMargin: vpx(12)
+                            anchors.right: countBadge.left
+                            anchors.rightMargin: vpx(8)
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.name || ""
                             color: colDelegate.alreadyAdded ? addedBorder : titleColor
@@ -337,7 +337,7 @@ FocusScope {
                             if (!colDelegate.alreadyAdded && addGameRoot.currentGame) {
                                 if (Utils.addGameToCollection(modelData.id, addGameRoot.currentGame)) {
                                     addGameRoot.gameAddedToCollection(modelData.id);
-                                    addGameRoot.customCollections = Utils.loadCustomCollections();
+                                    collectionsView.forceLayout();
                                 }
                             }
                         }
@@ -505,34 +505,12 @@ FocusScope {
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
-                    Item {
+                    Text {
                         anchors.centerIn: parent
-                        width: vpx(20)
-                        height: vpx(20)
-
-                        Image {
-                            id: closeIcon
-                            anchors.fill: parent
-                            source: "assets/icons/back.svg"
-                            fillMode: Image.PreserveAspectFit
-                            mipmap: true
-                            visible: status === Image.Ready
-                        }
-
-                        ColorOverlay {
-                            anchors.fill: closeIcon
-                            source: closeIcon
-                            color: isDarkTheme ? "#ffffff" : "#212121"
-                            visible: closeIcon.visible
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "✕"
-                            color: isDarkTheme ? "#ffffff" : "#212121"
-                            font.pixelSize: vpx(16)
-                            visible: closeIcon.status !== Image.Ready
-                        }
+                        text: "✕"
+                        color: isDarkTheme ? "#ffffff" : "#212121"
+                        font.pixelSize: vpx(20)
+                        font.bold: true
                     }
 
                     MouseArea {
