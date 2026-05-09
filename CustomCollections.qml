@@ -272,38 +272,5 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            id: createCollectionBtn
-            Layout.fillWidth: true
-            height: vpx(30)
-            color: mouseCreate.containsMouse ?
-            themeColors.successLight || "#4CAF50" :
-            themeColors.successDark || "#2E7D32"
-            radius: vpx(5)
-            border.color: themeColors.successLight || "#66BB6A"
-            border.width: vpx(2)
-
-            Text {
-                anchors.centerIn: parent
-                text: "+ New Collection"
-                color: "white"
-                font.pixelSize: vpx(15)
-                font.bold: true
-            }
-
-            MouseArea {
-                id: mouseCreate
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: customCollectionsContainer.createNewCollection()
-                onEntered: parent.scale = 1.02
-                onExited: parent.scale = 1.0
-            }
-
-            Behavior on scale {
-                NumberAnimation { duration: 150 }
-            }
-        }
     }
 }

@@ -141,6 +141,7 @@ FocusScope {
             focusManager.searchBar = searchBar;
             focusManager.sortBtn = sortBtn;
             focusManager.themeBtn = themeBtnScope;
+            focusManager.createBtn = createCollectionTopBtn;
             focusManager.setInitialFocus();
         });
     }
@@ -495,8 +496,8 @@ FocusScope {
                 FocusScope {
                     id: themeBtnScope
                     anchors {
-                        right: parent.right
-                        rightMargin: vpx(10)
+                        right: createCollectionTopBtn.left
+                        rightMargin: vpx(6)
                         verticalCenter: parent.verticalCenter
                     }
                     width: vpx(44)
@@ -572,6 +573,89 @@ FocusScope {
                     Keys.onPressed: function(event) {
                         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
                             root.toggleTheme();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Right) {
+                            focusManager.moveFocusRight();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Left) {
+                            focusManager.moveFocusLeft();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
+                            focusManager.moveFocusDown();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            focusManager.moveFocusUp();
+                            event.accepted = true;
+                        }
+                    }
+                }
+
+                FocusScope {
+                    id: createCollectionTopBtn
+                    anchors {
+                        right: parent.right
+                        rightMargin: vpx(10)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: vpx(44)
+                    height: vpx(44)
+
+                    property bool keyboardFocused: activeFocus &&
+                        focusManager.currentFocusArea === focusManager.focusCreateBtn
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: createBtnMouse.containsMouse || parent.keyboardFocused
+                            ? colors.primary : "transparent"
+                        border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
+                        border.width: vpx(2)
+                        radius: vpx(10)
+
+                        Item {
+                            width: vpx(22)
+                            height: vpx(22)
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: plusIcon
+                                anchors.fill: parent
+                                source: "assets/icons/plus.svg"
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: plusIcon
+                                source: plusIcon
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                            }
+                        }
+
+                        MouseArea {
+                            id: createBtnMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.showCollectionEditor = true;
+                                collectionNameInput.text = "";
+                            }
+                            onEntered: parent.scale = 1.05
+                            onExited: parent.scale = 1.0
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation { duration: 150 }
+                        }
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            root.showCollectionEditor = true;
+                            collectionNameInput.text = "";
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Right) {
                             focusManager.moveFocusRight();

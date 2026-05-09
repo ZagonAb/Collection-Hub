@@ -9,6 +9,7 @@ Item {
     property var searchBar: null
     property var sortBtn: null
     property var themeBtn: null
+    property var createBtn: null
 
     property int currentFocusArea: 0
     property int lastSystemIndex: 0
@@ -20,6 +21,7 @@ Item {
     readonly property int focusSearch: 3
     readonly property int focusSortBtn: 4
     readonly property int focusThemeBtn: 5
+    readonly property int focusCreateBtn: 6
 
     signal selectAllGamesTriggered()
 
@@ -42,7 +44,10 @@ Item {
     }
 
     function moveFocusLeft() {
-        if (currentFocusArea === focusThemeBtn) {
+        if (currentFocusArea === focusCreateBtn) {
+            currentFocusArea = focusThemeBtn;
+            if (themeBtn) themeBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusThemeBtn) {
             currentFocusArea = focusSortBtn;
             if (sortBtn) sortBtn.forceActiveFocus();
         } else if (currentFocusArea === focusSortBtn) {
@@ -73,6 +78,9 @@ Item {
         } else if (currentFocusArea === focusSortBtn) {
             currentFocusArea = focusThemeBtn;
             if (themeBtn) themeBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusThemeBtn) {
+            currentFocusArea = focusCreateBtn;
+            if (createBtn) createBtn.forceActiveFocus();
         } else if (currentFocusArea === focusSearch) {
             currentFocusArea = focusSortBtn;
             if (sortBtn) sortBtn.forceActiveFocus();
@@ -98,7 +106,8 @@ Item {
     function moveFocusDown() {
         if (currentFocusArea === focusSearch ||
             currentFocusArea === focusSortBtn ||
-            currentFocusArea === focusThemeBtn) {
+            currentFocusArea === focusThemeBtn ||
+            currentFocusArea === focusCreateBtn) {
             currentFocusArea = focusGrid;
             if (searchBar && searchBar.searchText === "") {
                 searchBar.collapse();
