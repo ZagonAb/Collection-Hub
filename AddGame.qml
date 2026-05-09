@@ -266,9 +266,12 @@ FocusScope {
                     height: vpx(50)
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    readonly property bool alreadyAdded: addGameRoot.currentGame
-                    ? Utils.isGameInCollection(modelData.id, addGameRoot.currentGame)
-                    : false
+                    readonly property bool alreadyAdded: {
+                        var _ = addGameRoot.customCollections.length;
+                        return addGameRoot.currentGame
+                            ? Utils.isGameInCollection(modelData.id, addGameRoot.currentGame)
+                            : false;
+                    }
                     readonly property bool padHighlight:
                     addGameRoot.navSection === 0 && addGameRoot.listNavIndex === index
 
