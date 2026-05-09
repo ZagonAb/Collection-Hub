@@ -421,9 +421,9 @@ FocusScope {
                             ? colors.primary
                             : (sortBtnMouse.containsMouse || parent.keyboardFocused
                                ? colors.primary : "transparent")
-                        border.color: root.showSortMenu || parent.keyboardFocused
+                        /*border.color: root.showSortMenu || parent.keyboardFocused
                             ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)
+                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {
@@ -508,8 +508,8 @@ FocusScope {
                         anchors.fill: parent
                         color: themeToggleMouseArea.containsMouse || parent.keyboardFocused
                             ? colors.primary : "transparent"
-                        border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)
+                        /*border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
+                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {
@@ -604,8 +604,8 @@ FocusScope {
                         anchors.fill: parent
                         color: createBtnMouse.containsMouse || parent.keyboardFocused
                             ? colors.primary : "transparent"
-                        border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)
+                        /*border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
+                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {

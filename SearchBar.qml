@@ -138,10 +138,10 @@ Item {
         ? (searchColors.primary || "#3a6ea5")
         : "transparent"
         radius: vpx(10)
-        border.color: isExpanded
+        /*border.color: isExpanded
         ? (searchColors.primary || "#3a6ea5")
         : (searchColors.inputBorder || "#303030")
-        border.width: vpx(2)
+        border.width: vpx(2)*/
 
         Behavior on color {
             ColorAnimation { duration: 180 }
