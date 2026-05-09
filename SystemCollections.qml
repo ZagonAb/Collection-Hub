@@ -81,10 +81,10 @@ Rectangle {
 
                     color: {
                         if (isSelected) {
-                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.45);
+                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.55);
                         }
                         if ((isHovered || (isCurrent && systemCollectionsList.activeFocus)) && !isSelected) {
-                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.15);
+                            return Qt.rgba(systemColor.r, systemColor.g, systemColor.b, 0.30);
                         }
                         return "transparent";
                     }
