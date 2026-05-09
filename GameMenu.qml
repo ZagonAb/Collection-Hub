@@ -1,960 +1,398 @@
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
 import "utils.js" as Utils
-import "qrc:/qmlutils" as PegasusUtils
 
-Rectangle {
-    id: gameMenu
-
-    width: parent.width * 0.18
-    height: Math.min(menuColumn.height + vpx(25), parent.height * 0.8)
+FocusScope {
+    id: gameMenuRoot
+    anchors.fill: parent
+    focus: true
 
     property var themeColors: ({})
     property bool isDarkTheme: true
-    property var currentGame: null
-    property string gameTitle: currentGame ? currentGame.title : ""
-    property int selectedCollectionId: -1
-    property string selectedCollectionName: ""
-    property var selectedSystemCollection: null
-    property var customCollections: []
-    property int menuX: 0
-    property int menuY: 0
-    property bool isCollectionContext: false
     property int contextCollectionId: -1
     property string contextCollectionName: ""
-    property int highlightedIndex: -1
-    property bool showDetails: false
-    property var gameDetailsLoader: null
+    property var focusManager: null
+
+    readonly property color panelBg:        isDarkTheme ? "#1c1c20" : "#f2f2f4"
+    readonly property color titleColor:     isDarkTheme ? "#ffffff" : "#212121"
+    readonly property color subtitleColor:  isDarkTheme ? "#a0a0a0" : "#616161"
+    readonly property color separatorColor: isDarkTheme ? "#2a2a2e" : "#e0e0e0"
+    readonly property color itemBg:         isDarkTheme ? "#111114" : "#ffffff"
+    readonly property color itemBorder:     isDarkTheme ? "#303036" : "#e0e0e0"
+    readonly property color accentColor:    themeColors.primary || "#3a6ea5"
+
+    property int navSection: 0
     property bool renameMode: false
 
-    signal gameAddedToCollection(int collectionId)
-    signal gameRemovedFromCollection()
-    signal launchGame()
     signal closeMenu()
     signal deleteCollection(int collectionId, string collectionName)
-    signal showGameDetails()
     signal renameCollection(int collectionId)
 
-    property bool isInCurrentCollection: {
-        if (selectedCollectionId === -1) return false;
-        if (!currentGame) return false;
-        return Utils.isGameInCollection(selectedCollectionId, currentGame);
-    }
-
-    property var focusManager: null
-    property int currentMenuIndex: 0
-    property int menuItemCount: {
-        var count = 0;
-
-        if (!isCollectionContext) {
-            count += 1;
-            count += 1;
-            if (customCollections.length > 0) {
-                count += customCollections.length;
-            }
-            if (selectedCollectionId !== -1 &&
-                selectedSystemCollection === null && isInCurrentCollection) {
-                count += 1;
-                }
-        }
-
-        if (isCollectionContext) {
-            count += 1;
-            count += 1;
-        }
-
-        count += 1;
-        return count;
-    }
-
-    color: root ? root.colors.menucolor || root.colors.panel || "#2c2c2c" : "#2c2c2c"
-    border.color: themeColors.primary || "#3a6ea5"
-    border.width: vpx(3)
-    radius: vpx(12)
-    z: 20
-
-    onMenuXChanged: updatePosition()
-    onMenuYChanged: updatePosition()
-    onShowDetailsChanged: {
-        if (showDetails) {
-            loadGameDetails();
-            updatePosition();
-        } else if (gameDetailsLoader) {
-            gameDetailsLoader.active = false;
-        }
-    }
-
-    onCurrentGameChanged: {
-        if (showDetails && gameDetailsLoader && gameDetailsLoader.item) {
-            showDetails = false;
-            gameDetailsLoader.active = false;
-        }
-    }
-
-    function updatePosition() {
-        if (parent) {
-            var targetX = menuX;
-            var targetY = menuY + vpx(15);
-
-            if (showDetails && gameDetailsLoader && gameDetailsLoader.item) {
-                var detailsWidth = gameDetailsLoader.item.width;
-                var totalWidth = width + detailsWidth + vpx(5);
-
-                if (menuX + totalWidth > parent.width - vpx(10)) {
-                    targetX = menuX - totalWidth + vpx(10);
-                } else {
-                    targetX = menuX;
-                }
-            } else {
-                targetX = menuX - width - vpx(2);
-            }
-
-            x = Math.max(vpx(10), Math.min(targetX, parent.width - width - vpx(10)));
-            y = Math.max(vpx(10), Math.min(targetY, parent.height - height - vpx(10)));
-
-            if (showDetails && gameDetailsLoader && gameDetailsLoader.item) {
-                positionDetailsPanel();
-            }
-        }
-    }
-
-    function loadGameDetails() {
-        if (!gameDetailsLoader) {
-            gameDetailsLoader = detailsLoaderComponent.createObject(gameMenu.parent, {
-                "z": 21
-            });
-        }
-        gameDetailsLoader.active = true;
-        if (gameDetailsLoader.item) {
-            gameDetailsLoader.item.gameData = currentGame;
-        }
-        updatePosition();
-    }
-
-    function getItemAtIndex(index) {
-        var currentIdx = 0;
-
-        if (!isCollectionContext) {
-            if (index === currentIdx) return launchGameBtn;
-            currentIdx++;
-
-            if (index === currentIdx) return showDetailsBtn;
-            currentIdx++;
-
-            if (customCollections.length > 0) {
-                if (index >= currentIdx && index < currentIdx + customCollections.length) {
-                    return collectionsListView.itemAtIndex(index - currentIdx);
-                }
-                currentIdx += customCollections.length;
-            }
-
-            if (selectedCollectionId !== -1 &&
-                selectedSystemCollection === null && isInCurrentCollection) {
-                if (index === currentIdx) return removeFromCollectionBtn;
-                currentIdx++;
-                }
-        }
-
-        if (isCollectionContext) {
-            if (index === currentIdx) return renameCollectionBtn;
-            currentIdx++;
-            if (index === currentIdx) return deleteCollectionBtn;
-            currentIdx++;
-        }
-
-        if (index === currentIdx) return closeBtn;
-
-        return null;
-    }
-
-    function highlightCurrentItem() {
-        highlightedIndex = currentMenuIndex;
-    }
-
-    function activateCurrentItem() {
-        var item = getItemAtIndex(currentMenuIndex);
-        if (item === launchGameBtn) {
-            gameMenu.launchGame();
-        } else if (item === showDetailsBtn) {
-            if (showDetails) {
-                gameMenu.showDetails = false;
-            } else {
-                gameMenu.showGameDetails();
-            }
-        } else if (item === removeFromCollectionBtn) {
-            var gamePath = Utils.getGamePath(currentGame);
-            var success = Utils.removeGameFromCollection(
-                selectedCollectionId,
-                currentGame.title,
-                gamePath
-            );
-            if (success) {
-                gameMenu.gameRemovedFromCollection();
-                gameMenu.closeMenu();
-            }
-        } else if (item === deleteCollectionBtn) {
-            gameMenu.deleteCollection(contextCollectionId, contextCollectionName);
-            gameMenu.closeMenu();
-        } else if (item === renameCollectionBtn) {
-            renameMode = true;
-            renameInput.text = contextCollectionName;
-            renameInput.selectAll();
-            renameMenu.forceActiveFocus();
-        } else if (item === closeBtn) {
-            gameMenu.closeMenu();
-        } else if (collectionsListView.visible) {
-            var listIndex = currentMenuIndex - 2;
-            if (!isCollectionContext && listIndex >= 0 && listIndex < customCollections.length) {
-                var modelData = customCollections[listIndex];
-                var hasGame = Utils.isGameInCollection(modelData.id, currentGame);
-                if (!hasGame) {
-                    var success = Utils.addGameToCollection(modelData.id, currentGame);
-                    if (success) {
-                        gameMenu.gameAddedToCollection(modelData.id);
-                    }
-                }
-            }
-        }
-    }
-
-    function positionDetailsPanel() {
-        if (!gameMenu.parent || !gameDetailsLoader || !gameDetailsLoader.item) return;
-
-        var detailsPanel = gameDetailsLoader.item;
-        var detailsX = gameMenu.x + gameMenu.width + vpx(5);
-        var detailsY = gameMenu.y;
-
-        if (detailsX + detailsPanel.width > gameMenu.parent.width - vpx(10)) {
-            detailsX = gameMenu.x - detailsPanel.width - vpx(5);
-        }
-
-        detailsY = Math.max(vpx(10), Math.min(detailsY, gameMenu.parent.height - detailsPanel.height - vpx(10)));
-
-        detailsPanel.x = detailsX;
-        detailsPanel.y = detailsY;
+    function openMenu() {
+        navSection = 0;
+        renameMode = false;
+        forceActiveFocus();
+        entryAnim.restart();
     }
 
     function saveRename() {
         var newName = renameInput.text.trim();
         if (newName !== "" && newName !== contextCollectionName) {
             if (Utils.renameCollection(contextCollectionId, newName)) {
-                renameCollection(contextCollectionId);
+                gameMenuRoot.renameCollection(contextCollectionId);
             }
         }
         cancelRename();
-        gameMenu.closeMenu();
+        gameMenuRoot.closeMenu();
     }
 
     function cancelRename() {
         renameMode = false;
-        currentMenuIndex = 0;
-        highlightedIndex = 0;
+        navSection = 0;
         normalMenu.forceActiveFocus();
+    }
+
+    Component.onCompleted: {
+        forceActiveFocus();
+        navSection = 0;
     }
 
     Keys.onPressed: function(event) {
         if (renameMode) {
-            if (api.keys.isCancel(event)) {
+            if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
                 cancelRename();
                 event.accepted = true;
-            } else {
-                event.accepted = false;
             }
             return;
         }
 
-        if (api.keys.isAccept(event)) {
-            if (showDetails && currentMenuIndex === 1) {
-                showDetails = false;
-                forceActiveFocus();
-                event.accepted = true;
+        if (api.keys.isDetails(event) || api.keys.isCancel(event)) {
+            gameMenuRoot.closeMenu();
+            event.accepted = true;
+            return;
+        }
+
+        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+            if (navSection === 0) {
+                renameMode = true;
+                renameInput.text = contextCollectionName;
+                renameInput.selectAll();
+                renameMenuArea.forceActiveFocus();
+            } else if (navSection === 1) {
+                gameMenuRoot.deleteCollection(contextCollectionId, contextCollectionName);
+                gameMenuRoot.closeMenu();
             } else {
-                activateCurrentItem();
-                event.accepted = true;
-            }
-        } else if (api.keys.isCancel(event)) {
-            if (showDetails) {
-                showDetails = false;
-                forceActiveFocus();
-            } else {
-                closeMenu();
+                gameMenuRoot.closeMenu();
             }
             event.accepted = true;
-        } else if (event.key === Qt.Key_Up) {
-            currentMenuIndex = Math.max(0, currentMenuIndex - 1);
-            highlightCurrentItem();
+            return;
+        }
+
+        if (event.key === Qt.Key_Up) {
+            if (navSection > 0) navSection--;
             event.accepted = true;
-        } else if (event.key === Qt.Key_Down) {
-            currentMenuIndex = Math.min(menuItemCount - 1, currentMenuIndex + 1);
-            highlightCurrentItem();
+            return;
+        }
+        if (event.key === Qt.Key_Down) {
+            if (navSection < 2) navSection++;
             event.accepted = true;
-        } else if (event.key === Qt.Key_Left && showDetails) {
-            showDetails = false;
-            forceActiveFocus();
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Right && !showDetails && currentMenuIndex === 1) {
-            gameMenu.showGameDetails();
-            event.accepted = true;
+            return;
         }
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            currentMenuIndex = 0;
-            highlightedIndex = -1;
-            showDetails = false;
-            renameMode = false;
-            forceActiveFocus();
-            Qt.callLater(function() {
-                highlightedIndex = 0;
-            });
-        } else {
-            highlightedIndex = -1;
-            showDetails = false;
-            renameMode = false;
-            if (gameDetailsLoader) {
-                gameDetailsLoader.active = false;
+    Rectangle {
+        id: panel
+        z: 1
+        anchors.centerIn: parent
+        width:  Math.min(vpx(380), parent.width  * 0.6)
+        height: renameMode ? Math.min(vpx(280), parent.height * 0.5)
+                           : Math.min(vpx(300), parent.height * 0.5)
+        color:  panelBg
+        radius: vpx(20)
+
+        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+        layer.enabled: true
+        layer.effect: DropShadow {
+            transparentBorder: true
+            horizontalOffset: 0
+            verticalOffset:   vpx(10)
+            radius:           vpx(18)
+            samples:          35
+            color:            "black"
+        }
+
+        scale:   0.88
+        opacity: 0.0
+
+        ParallelAnimation {
+            id: entryAnim
+            NumberAnimation { target: panel; property: "scale";   from: 0.88; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+            NumberAnimation { target: panel; property: "opacity"; from: 0.0;  to: 1.0; duration: 200; easing.type: Easing.OutQuad  }
+        }
+
+        Item {
+            id: headerArea
+            anchors.top:         parent.top
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.topMargin:   vpx(22)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            height: vpx(58)
+
+            Text {
+                id: titleTxt
+                width: parent.width
+                text: contextCollectionName
+                color: titleColor
+                font.pixelSize: vpx(22)
+                font.bold: true
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+            }
+
+            Text {
+                anchors.bottom: parent.bottom
+                text: "COLLECTION"
+                color: subtitleColor
+                font.pixelSize: vpx(10)
+                font.bold: true
+                font.capitalization: Font.AllUppercase
             }
         }
-    }
 
-    RadialGradientOverlay {
-        anchors.fill: parent
-        isDarkTheme: gameMenu.isDarkTheme
-        opacityMultiplier: 0.5
-        radius: gameMenu.radius
-        visible: gameMenu.isDarkTheme
-    }
-
-    Column {
-        id: menuColumn
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: vpx(10)
-        spacing: vpx(6)
+        Rectangle {
+            id: sep1
+            anchors.top:         headerArea.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.topMargin:   vpx(4)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            height: vpx(1)
+            color: separatorColor
+        }
 
         Item {
             id: normalMenu
             visible: !renameMode
-            width: parent.width
-            height: normalColumn.height
+            anchors.top:         sep1.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.bottom:      parent.bottom
+            anchors.topMargin:   vpx(14)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            anchors.bottomMargin:vpx(20)
+            focus: !renameMode
 
-            Column {
-                id: normalColumn
-                width: parent.width
-                spacing: vpx(6)
+            Rectangle {
+                id: renameBtn
+                anchors.top:    parent.top
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height: vpx(44)
+                radius: vpx(8)
 
-                Rectangle {
-                    width: parent.width
-                    height: vpx(35)
-                    color: "transparent"
+                readonly property bool padFocus: gameMenuRoot.navSection === 0
 
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: vpx(5)
-                        text: isCollectionContext ? contextCollectionName : gameMenu.gameTitle
-                        color: themeColors.text || "white"
-                        font.bold: true
-                        font.pixelSize: vpx(13)
-                        wrapMode: Text.Wrap
-                        elide: Text.ElideRight
-                        maximumLineCount: 2
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
+                color: renameMouse.containsMouse || padFocus
+                    ? (isDarkTheme ? "#22334455" : "#eaf2fb")
+                    : (isDarkTheme ? "#111114"   : "#ffffff")
+                border.color: renameMouse.containsMouse || padFocus
+                    ? accentColor
+                    : itemBorder
+                border.width: (renameMouse.containsMouse || padFocus) ? vpx(2) : vpx(1)
 
-                Rectangle {
-                    height: vpx(1)
-                    width: parent.width
-                    color: themeColors.separator || "#555"
-                    radius: vpx(1)
-                }
+                Behavior on color        { ColorAnimation { duration: 100 } }
+                Behavior on border.color { ColorAnimation { duration: 100 } }
 
-                Rectangle {
-                    id: launchGameBtn
-                    width: parent.width
-                    height: vpx(35)
-                    visible: !isCollectionContext
-                    color: mouseLaunch.containsMouse || highlightedIndex === 0 ?
-                    themeColors.success || "#4CAF50" : "transparent"
-                    radius: vpx(5)
-                    border.color: mouseLaunch.containsMouse || highlightedIndex === 0 ?
-                    themeColors.successLight || "#66BB6A" : "transparent"
-                    border.width: vpx(1)
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left:       parent.left
+                    anchors.leftMargin: vpx(12)
+                    spacing: vpx(10)
 
-                    Row {
+                    Item {
+                        width: vpx(22); height: vpx(22)
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
-                        spacing: vpx(8)
 
-                        Item {
-                            width: vpx(16)
-                            height: vpx(16)
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Image {
-                                id: launchIcon
-                                anchors.fill: parent
-                                source: "assets/icons/play.svg"
-                                fillMode: Image.PreserveAspectFit
-                                mipmap: true
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    visible: parent.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "▶"
-                                        color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
-                                        font.pixelSize: vpx(12)
-                                    }
-                                }
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: launchIcon
-                                source: launchIcon
-                                color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
-                            }
-                        }
-
-                        Text {
-                            text: "Launch Game"
-                            color: mouseLaunch.containsMouse ? "white" : themeColors.text || "white"
-                            font.pixelSize: vpx(12)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseLaunch
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: gameMenu.launchGame()
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                }
-
-                Rectangle {
-                    id: showDetailsBtn
-                    width: parent.width
-                    height: vpx(35)
-                    visible: !isCollectionContext
-                    color: mouseShowDetails.containsMouse || highlightedIndex === 1 || showDetails ?
-                    themeColors.primary || "#3a6ea5" : "transparent"
-                    radius: vpx(5)
-                    border.color: (mouseShowDetails.containsMouse || highlightedIndex === 1 || showDetails) ?
-                    themeColors.primaryHover || "#5a8ec5" : "transparent"
-                    border.width: vpx(1)
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
-                        spacing: vpx(8)
-
-                        Item {
-                            width: vpx(16)
-                            height: vpx(16)
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Image {
-                                id: detailsIcon
-                                anchors.fill: parent
-                                source: "assets/icons/info.svg"
-                                fillMode: Image.PreserveAspectFit
-                                mipmap: true
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    visible: parent.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: showDetails ? "ⓘ" : "ⓘ"
-                                        color: (mouseShowDetails.containsMouse || highlightedIndex === 1 || showDetails) ? "white" : themeColors.text || "white"
-                                        font.pixelSize: vpx(12)
-                                    }
-                                }
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: detailsIcon
-                                source: detailsIcon
-                                color: (mouseShowDetails.containsMouse || highlightedIndex === 1 || showDetails) ? "white" : themeColors.text || "white"
-                            }
-                        }
-
-                        Text {
-                            text: showDetails ? "Hide Details" : "Show Details"
-                            color: (mouseShowDetails.containsMouse || highlightedIndex === 1 || showDetails) ? "white" : themeColors.text || "white"
-                            font.pixelSize: vpx(12)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseShowDetails
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (showDetails) {
-                                gameMenu.showDetails = false;
-                            } else {
-                                gameMenu.showGameDetails();
-                            }
-                        }
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                }
-
-                Column {
-                    width: parent.width
-                    spacing: vpx(4)
-                    visible: customCollections.length > 0 && !isCollectionContext
-
-                    Text {
-                        text: {
-                            if (selectedCollectionId !== -1 && selectedSystemCollection === null) {
-                                return "Collections:";
-                            } else {
-                                return "Add to Collection:";
-                            }
-                        }
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(10)
-                        font.bold: true
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(5)
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: Math.min(customCollections.length * vpx(30), vpx(150))
-                        color: "transparent"
-
-                        ListView {
-                            id: collectionsListView
+                        Image {
+                            id: renameIcon
                             anchors.fill: parent
-                            model: customCollections
-                            clip: true
-                            spacing: vpx(3)
-                            boundsBehavior: Flickable.StopAtBounds
-
-                            delegate: Rectangle {
-                                width: parent.width - vpx(15)
-                                height: vpx(28)
-                                color: collectionMouse.containsMouse || isHighlighted ?
-                                themeColors.primary || "#3a6ea5" : "transparent"
-                                radius: vpx(4)
-                                anchors.margins: vpx(10)
-
-                                property bool isCurrentCollection: selectedCollectionId === modelData.id
-                                property bool hasGame: Utils.isGameInCollection(modelData.id, gameMenu.gameTitle)
-                                property bool isHighlighted: {
-                                    if (isCollectionContext) return false;
-                                    var baseIndex = 2;
-                                    var listIndex = baseIndex + index;
-                                    return highlightedIndex === listIndex;
-                                }
-
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                Row {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: vpx(8)
-                                    spacing: vpx(6)
-                                    width: parent.width - vpx(16)
-
-                                    Rectangle {
-                                        width: vpx(16)
-                                        height: vpx(16)
-                                        radius: vpx(8)
-                                        color: {
-                                            if (hasGame) return themeColors.success || "#4CAF50";
-                                            if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
-                                            return "transparent";
-                                        }
-                                        border.color: themeColors.inputBorder || "#555"
-                                        border.width: vpx(1)
-                                        anchors.verticalCenter: parent.verticalCenter
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: {
-                                                if (hasGame) return "✓";
-                                                if (isCurrentCollection) return "+";
-                                                return "+";
-                                            }
-                                            color: {
-                                                if (isHighlighted || collectionMouse.containsMouse) return "white";
-                                                if (hasGame) return "white";
-                                                if (isCurrentCollection) return "white";
-                                                return themeColors.text || "white";
-                                            }
-                                            font.pixelSize: vpx(10)
-                                            font.bold: true
-                                        }
-                                    }
-
-                                    Column {
-                                        width: parent.width - vpx(22)
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        spacing: vpx(0)
-
-                                        Text {
-                                            width: parent.width
-                                            text: modelData.name
-                                            color: {
-                                                if (isHighlighted || collectionMouse.containsMouse) return "white";
-                                                if (hasGame) return themeColors.success || "#4CAF50";
-                                                if (isCurrentCollection) return themeColors.primary || "#3a6ea5";
-                                                return themeColors.text || "white";
-                                            }
-                                            font.pixelSize: vpx(11)
-                                            font.bold: hasGame || isCurrentCollection
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            text: modelData.games.length + " games"
-                                            color: isHighlighted || collectionMouse.containsMouse ? "white" : themeColors.text || "#888"
-                                            font.pixelSize: vpx(8)
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: collectionMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: {
-                                        if (hasGame && !isCurrentCollection) return Qt.ForbiddenCursor;
-                                        if (hasGame && isCurrentCollection) return Qt.ForbiddenCursor;
-                                        return Qt.PointingHandCursor;
-                                    }
-                                    enabled: !hasGame
-                                    onClicked: {
-                                        if (!hasGame) {
-                                            var success = Utils.addGameToCollection(
-                                                modelData.id,
-                                                currentGame
-                                            );
-                                            if (success) {
-                                                gameMenu.gameAddedToCollection(modelData.id);
-                                            }
-                                        }
-                                    }
-                                    onEntered: if (enabled) parent.scale = 1.02
-                                    onExited: parent.scale = 1.0
-                                }
-
-                                Behavior on scale { NumberAnimation { duration: 150 } }
-                            }
+                            source: "assets/icons/rename.svg"
+                            fillMode: Image.PreserveAspectFit
+                            visible: status === Image.Ready
+                            mipmap: true
                         }
-
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            width: vpx(3)
-                            color: themeColors.inputBorder || "#555"
-                            radius: vpx(1)
-                            visible: collectionsListView.contentHeight > collectionsListView.height
-                            opacity: 0.5
+                        ColorOverlay {
+                            anchors.fill: renameIcon
+                            source: renameIcon
+                            color: renameMouse.containsMouse || renameBtn.padFocus
+                                ? accentColor
+                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            visible: renameIcon.visible
+                        }
+                        Text {
+                            anchors.centerIn: parent
+                            text: "✏"
+                            font.pixelSize: vpx(14)
+                            color: renameMouse.containsMouse || renameBtn.padFocus
+                                ? accentColor
+                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            visible: renameIcon.status !== Image.Ready
                         }
                     }
 
                     Text {
-                        width: parent.width
-                        height: vpx(30)
-                        text: "Create a collection first"
-                        color: themeColors.textTertiary || "#888"
-                        font.pixelSize: vpx(11)
-                        font.italic: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        visible: customCollections.length === 0
+                        text: "Rename"
+                        color: renameMouse.containsMouse || renameBtn.padFocus
+                            ? (isDarkTheme ? "#ffffff" : "#212121")
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
+                        font.pixelSize: vpx(16)
+                        font.bold: renameMouse.containsMouse || renameBtn.padFocus
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
 
-                Rectangle {
-                    id: removeFromCollectionBtn
-                    width: parent.width
-                    height: vpx(35)
-                    visible: !isCollectionContext &&
-                    selectedCollectionId !== -1 &&
-                    selectedSystemCollection === null &&
-                    isInCurrentCollection
-                    color: mouseRemoveFromCollection.containsMouse || isRemoveHighlighted ?
-                    themeColors.error || "#f44336" : "transparent"
-                    radius: vpx(5)
-                    border.color: mouseRemoveFromCollection.containsMouse || isRemoveHighlighted ?
-                    themeColors.errorLight || "#ef5350" : themeColors.error || "#f44336"
-                    border.width: vpx(1)
-
-                    property bool isRemoveHighlighted: {
-                        var idx = 2;
-                        if (!isCollectionContext && customCollections.length > 0) {
-                            idx += customCollections.length;
-                        }
-                        return highlightedIndex === idx;
+                MouseArea {
+                    id: renameMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered:  gameMenuRoot.navSection = 0
+                    onClicked: {
+                        renameMode = true;
+                        renameInput.text = contextCollectionName;
+                        renameInput.selectAll();
+                        renameMenuArea.forceActiveFocus();
                     }
+                }
+            }
 
-                    Row {
+            Rectangle {
+                id: deleteBtn
+                anchors.top:    renameBtn.bottom
+                anchors.topMargin: vpx(8)
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height: vpx(44)
+                radius: vpx(8)
+
+                readonly property bool padFocus: gameMenuRoot.navSection === 1
+
+                color: deleteMouse.containsMouse || padFocus
+                    ? (isDarkTheme ? "#2a1010" : "#fdecea")
+                    : (isDarkTheme ? "#111114" : "#ffffff")
+                border.color: deleteMouse.containsMouse || padFocus
+                    ? (themeColors.error || "#f44336")
+                    : itemBorder
+                border.width: (deleteMouse.containsMouse || padFocus) ? vpx(2) : vpx(1)
+
+                Behavior on color        { ColorAnimation { duration: 100 } }
+                Behavior on border.color { ColorAnimation { duration: 100 } }
+
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left:       parent.left
+                    anchors.leftMargin: vpx(12)
+                    spacing: vpx(10)
+
+                    Item {
+                        width: vpx(22); height: vpx(22)
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
-                        spacing: vpx(8)
 
-                        Text {
-                            text: "−"
-                            color: mouseRemoveFromCollection.containsMouse || removeFromCollectionBtn.isRemoveHighlighted ?
-                            "white" : themeColors.error || "#f44336"
-                            font.pixelSize: vpx(16)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
+                        Image {
+                            id: deleteIcon
+                            anchors.fill: parent
+                            source: "assets/icons/trash.svg"
+                            fillMode: Image.PreserveAspectFit
+                            visible: status === Image.Ready
+                            mipmap: true
                         }
-
+                        ColorOverlay {
+                            anchors.fill: deleteIcon
+                            source: deleteIcon
+                            color: deleteMouse.containsMouse || deleteBtn.padFocus
+                                ? (themeColors.error || "#f44336")
+                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            visible: deleteIcon.visible
+                        }
                         Text {
-                            text: "Remove from Collection"
-                            color: mouseRemoveFromCollection.containsMouse || removeFromCollectionBtn.isRemoveHighlighted ?
-                            "white" : themeColors.error || "#f44336"
+                            anchors.centerIn: parent
+                            text: "🗑"
                             font.pixelSize: vpx(12)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
+                            color: deleteMouse.containsMouse || deleteBtn.padFocus
+                                ? (themeColors.error || "#f44336")
+                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            visible: deleteIcon.status !== Image.Ready
                         }
                     }
 
-                    MouseArea {
-                        id: mouseRemoveFromCollection
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            var gamePath = Utils.getGamePath(currentGame);
-                            var success = Utils.removeGameFromCollection(
-                                selectedCollectionId,
-                                currentGame.title,
-                                gamePath
-                            );
-                            if (success) {
-                                gameMenu.gameRemovedFromCollection();
-                                gameMenu.closeMenu();
-                            }
-                        }
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
+                    Text {
+                        text: "Delete Collection"
+                        color: deleteMouse.containsMouse || deleteBtn.padFocus
+                            ? (themeColors.error || "#f44336")
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
+                        font.pixelSize: vpx(16)
+                        font.bold: deleteMouse.containsMouse || deleteBtn.padFocus
+                        anchors.verticalCenter: parent.verticalCenter
                     }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
                 }
 
-                Rectangle {
-                    id: renameCollectionBtn
-                    width: parent.width
-                    height: vpx(35)
-                    visible: isCollectionContext
-                    color: mouseRename.containsMouse || isRenameHighlighted ?
-                    themeColors.primary || "#3a6ea5" : "transparent"
-                    radius: vpx(5)
-                    border.color: mouseRename.containsMouse || isRenameHighlighted ?
-                    themeColors.primaryHover || "#5a8ec5" : "transparent"
-                    border.width: vpx(1)
+                MouseArea {
+                    id: deleteMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered: gameMenuRoot.navSection = 1
+                    onClicked: {
+                        gameMenuRoot.deleteCollection(contextCollectionId, contextCollectionName);
+                        gameMenuRoot.closeMenu();
+                    }
+                }
+            }
 
-                    property bool isRenameHighlighted: isCollectionContext && highlightedIndex === 0
+            Rectangle {
+                id: sep2
+                anchors.top:    deleteBtn.bottom
+                anchors.topMargin: vpx(12)
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height: vpx(1)
+                color: separatorColor
+            }
+
+            Item {
+                id: closeBtn
+                anchors.top:    sep2.bottom
+                anchors.topMargin: vpx(12)
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height: vpx(44)
+
+                readonly property bool padFocus: gameMenuRoot.navSection === 2
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: closeMouse.containsMouse ? "#33ffffff" : "#22000000"
+                    radius: vpx(10)
+                    border.color: closeBtn.padFocus ? accentColor : "#55ffffff"
+                    border.width: closeBtn.padFocus ? vpx(2) : vpx(1)
+                    scale: closeBtn.padFocus ? 1.03 : 1.0
+
+                    Behavior on scale       { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    Behavior on color       { ColorAnimation  { duration: 120 } }
+                    Behavior on border.color{ ColorAnimation  { duration: 150 } }
 
                     Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
+                        anchors.centerIn: parent
                         spacing: vpx(8)
 
                         Item {
-                            width: vpx(16)
-                            height: vpx(16)
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Image {
-                                id: renameIcon
-                                anchors.fill: parent
-                                source: "assets/icons/rename.svg"
-                                fillMode: Image.PreserveAspectFit
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    visible: parent.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "✏"
-                                        color: mouseRename.containsMouse || renameCollectionBtn.isRenameHighlighted ?
-                                        "white" : themeColors.text || "white"
-                                        font.pixelSize: vpx(14)
-                                    }
-                                }
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: renameIcon
-                                source: renameIcon
-                                color: mouseRename.containsMouse || renameCollectionBtn.isRenameHighlighted ?
-                                "white" : themeColors.text || "white"
-                            }
-                        }
-
-                        Text {
-                            text: "Rename"
-                            color: mouseRename.containsMouse || renameCollectionBtn.isRenameHighlighted ?
-                            "white" : themeColors.text || "white"
-                            font.pixelSize: vpx(12)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseRename
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            renameMode = true;
-                            renameInput.text = contextCollectionName;
-                            renameInput.selectAll();
-                            renameMenu.forceActiveFocus();
-                        }
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                }
-
-                Rectangle {
-                    id: deleteCollectionBtn
-                    width: parent.width
-                    height: vpx(35)
-                    visible: isCollectionContext
-                    color: mouseDeleteCollection.containsMouse || isDeleteHighlighted ?
-                    themeColors.error || "#f44336" : "transparent"
-                    radius: vpx(5)
-                    border.color: mouseDeleteCollection.containsMouse || isDeleteHighlighted ?
-                    themeColors.errorLight || "#ef5350" : themeColors.error || "#f44336"
-                    border.width: vpx(1)
-
-                    property bool isDeleteHighlighted: isCollectionContext && highlightedIndex === 1
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
-                        spacing: vpx(8)
-
-                        Item {
-                            width: vpx(14)
-                            height: vpx(14)
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            Image {
-                                id: deleteIcon
-                                anchors.fill: parent
-                                source: "assets/icons/trash.svg"
-                                fillMode: Image.PreserveAspectFit
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    visible: parent.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "🗑"
-                                        color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
-                                        "white" : themeColors.error || "#f44336"
-                                        font.pixelSize: vpx(12)
-                                    }
-                                }
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: deleteIcon
-                                source: deleteIcon
-                                color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
-                                "white" : themeColors.error || "#f44336"
-                            }
-                        }
-
-                        Text {
-                            text: "Delete Collection"
-                            color: mouseDeleteCollection.containsMouse || deleteCollectionBtn.isDeleteHighlighted ?
-                            "white" : themeColors.error || "#f44336"
-                            font.pixelSize: vpx(12)
-                            font.bold: true
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: mouseDeleteCollection
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            gameMenu.deleteCollection(contextCollectionId, contextCollectionName);
-                            gameMenu.closeMenu();
-                        }
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                }
-
-                Rectangle {
-                    height: vpx(1)
-                    width: parent.width
-                    color: themeColors.separator || "#555"
-                    radius: vpx(1)
-                    visible: isCollectionContext || (!isCollectionContext && selectedCollectionId !== -1 && selectedSystemCollection === null && isInCurrentCollection)
-                }
-
-                Rectangle {
-                    id: closeBtn
-                    width: parent.width
-                    height: vpx(35)
-                    color: mouseClose.containsMouse || isCloseHighlighted ?
-                    themeColors.error || "#f44336" : "transparent"
-                    radius: vpx(5)
-                    border.color: mouseClose.containsMouse || isCloseHighlighted ?
-                    themeColors.errorLight || "#ef5350" : themeColors.error || "#f44336"
-                    border.width: vpx(1)
-
-                    property bool isCloseHighlighted: highlightedIndex === menuItemCount - 1
-
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: vpx(8)
-                        spacing: vpx(8)
-
-                        Item {
-                            width: vpx(14)
-                            height: vpx(14)
+                            width: vpx(22); height: vpx(22)
                             anchors.verticalCenter: parent.verticalCenter
 
                             Image {
@@ -962,473 +400,174 @@ Rectangle {
                                 anchors.fill: parent
                                 source: "assets/icons/close.svg"
                                 fillMode: Image.PreserveAspectFit
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    visible: parent.status !== Image.Ready
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "✕"
-                                        color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
-                                        "white" : themeColors.error || "#f44336"
-                                        font.pixelSize: vpx(12)
-                                        font.bold: true
-                                    }
-                                }
+                                visible: status === Image.Ready
+                                mipmap: true
                             }
-
                             ColorOverlay {
                                 anchors.fill: closeIcon
                                 source: closeIcon
-                                color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
-                                "white" : themeColors.error || "#f44336"
+                                color: isDarkTheme ? "#ffffff" : "#212121"
+                                visible: closeIcon.visible
+                            }
+                            Text {
+                                anchors.centerIn: parent
+                                text: "✕"
+                                color: isDarkTheme ? "#ffffff" : "#212121"
+                                font.pixelSize: vpx(14)
+                                font.bold: true
+                                visible: closeIcon.status !== Image.Ready
                             }
                         }
 
                         Text {
                             text: "Close"
-                            color: mouseClose.containsMouse || closeBtn.isCloseHighlighted ?
-                            "white" : themeColors.error || "#f44336"
-                            font.pixelSize: vpx(12)
-                            font.bold: true
+                            color: isDarkTheme ? "#ffffff" : "#212121"
+                            font.pixelSize: vpx(16)
+                            font.bold: closeBtn.padFocus
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
                     MouseArea {
-                        id: mouseClose
+                        id: closeMouse
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: gameMenu.closeMenu()
-                        onEntered: parent.scale = 1.02
-                        onExited: parent.scale = 1.0
+                        onEntered: gameMenuRoot.navSection = 2
+                        onClicked: gameMenuRoot.closeMenu()
                     }
-
-                    Behavior on scale { NumberAnimation { duration: 150 } }
                 }
             }
         }
 
         Item {
-            id: renameMenu
+            id: renameMenuArea
             visible: renameMode
-            width: parent.width
-            height: renameColumn.height
-            focus: true
+            anchors.top:         sep1.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.bottom:      parent.bottom
+            anchors.topMargin:   vpx(14)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            anchors.bottomMargin:vpx(20)
+            focus: renameMode
 
             Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
+                if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
                     cancelRename();
                     event.accepted = true;
-                } else {
-                    event.accepted = false;
                 }
             }
 
-            Column {
-                id: renameColumn
-                width: parent.width
-                spacing: vpx(8)
+            Text {
+                id: renameSubTxt
+                anchors.top: parent.top
+                text: "ENTER A NEW NAME"
+                color: subtitleColor
+                font.pixelSize: vpx(9)
+                font.bold: true
+                font.capitalization: Font.AllUppercase
+            }
 
-                Text {
-                    text: "Rename Collection"
+            Rectangle {
+                id: renameInputBox
+                anchors.top:       renameSubTxt.bottom
+                anchors.topMargin: vpx(8)
+                anchors.left:  parent.left
+                anchors.right: parent.right
+                height: vpx(44)
+                radius: vpx(8)
+                color: itemBg
+                border.width: renameInput.activeFocus ? vpx(2) : vpx(1)
+                border.color: renameInput.activeFocus ? accentColor : itemBorder
+
+                Behavior on border.color { ColorAnimation { duration: 100 } }
+
+                TextInput {
+                    id: renameInput
+                    anchors.fill: parent
+                    anchors.margins: vpx(12)
+                    color: isDarkTheme ? "#ffffff" : "#212121"
+                    font.pixelSize: vpx(15)
                     font.bold: true
-                    font.pixelSize: vpx(14)
-                    color: themeColors.text
+                    selectByMouse: true
+                    verticalAlignment: TextInput.AlignVCenter
+                    focus: true
+                    onAccepted: saveRename()
                 }
+            }
+
+            Rectangle {
+                id: renameSep
+                anchors.top:       renameInputBox.bottom
+                anchors.topMargin: vpx(14)
+                anchors.left:  parent.left
+                anchors.right: parent.right
+                height: vpx(1)
+                color: separatorColor
+            }
+
+            Row {
+                anchors.top:       renameSep.bottom
+                anchors.topMargin: vpx(14)
+                anchors.left:  parent.left
+                anchors.right: parent.right
+                height: vpx(44)
+                spacing: vpx(10)
 
                 Rectangle {
-                    width: parent.width
-                    height: vpx(40)
-                    color: themeColors.inputBg
-                    border.color: themeColors.inputBorder
-                    border.width: vpx(2)
-                    radius: vpx(6)
+                    width:  parent.width - cancelRenameBtn.width - vpx(10)
+                    height: parent.height
+                    color:  saveMouse.containsMouse ? "#e0e0e0" : "#ffffff"
+                    radius: vpx(25)
+                    scale:  saveMouse.containsMouse ? 1.02 : 1.0
 
-                    TextInput {
-                        id: renameInput
-                        anchors.fill: parent
-                        anchors.margins: vpx(8)
-                        color: themeColors.text
-                        font.pixelSize: vpx(14)
-                        selectByMouse: true
-                        verticalAlignment: TextInput.AlignVCenter
-                        focus: true
-                        onAccepted: saveRename()
-                    }
-                }
-
-                Row {
-                    spacing: vpx(10)
-                    anchors.horizontalCenter: parent.horizontalCenter
-
-                    Rectangle {
-                        width: vpx(90)
-                        height: vpx(35)
-                        color: saveMouse.containsMouse ? themeColors.success : themeColors.successDark
-                        radius: vpx(6)
-                        border.color: themeColors.successLight
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Save"
-                            color: "white"
-                            font.bold: true
-                        }
-                        MouseArea {
-                            id: saveMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: saveRename()
-                        }
-                    }
-
-                    Rectangle {
-                        width: vpx(90)
-                        height: vpx(35)
-                        color: cancelMouse.containsMouse ? themeColors.error : themeColors.errorDark
-                        radius: vpx(6)
-                        border.color: themeColors.errorLight
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Cancel"
-                            color: "white"
-                            font.bold: true
-                        }
-                        MouseArea {
-                            id: cancelMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: cancelRename()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: detailsLoaderComponent
-        Loader {
-            id: detailsLoader
-            active: false
-            width: vpx(350)
-            height: vpx(580)
-            z: 21
-            sourceComponent: showDetails ? detailsComponent : null
-            onLoaded: {
-                if (item) {
-                    item.gameData = currentGame;
-                    gameMenu.positionDetailsPanel();
-                }
-            }
-            onActiveChanged: {
-                if (!active && item) {
-                    item.destroy();
-                }
-            }
-        }
-    }
-
-    Component {
-        id: detailsComponent
-        Rectangle {
-            property var gameData: null
-
-            function formatLastPlayed(lastPlayedStr) {
-                if (!lastPlayedStr || lastPlayedStr === "Never") return "Never";
-
-                var date = new Date(lastPlayedStr);
-                if (isNaN(date.getTime())) return "Never";
-
-                var day = date.getDate();
-                var month = date.getMonth() + 1;
-                var year = date.getFullYear().toString().slice(-2);
-
-                var hours = date.getHours();
-                var minutes = date.getMinutes();
-                var ampm = hours >= 12 ? 'p.m.' : 'a.m.';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
-                minutes = minutes < 10 ? '0' + minutes : minutes;
-
-                return day + "/" + month + "/" + year + " | " + hours + ":" + minutes + " " + ampm;
-            }
-
-            function formatReleaseDate(gameData) {
-                if (!gameData || !gameData.release) return "Unknown";
-
-                var date = gameData.release;
-                if (!date || !date.valueOf || isNaN(date.valueOf())) return "Unknown";
-
-                var day = date.getDate();
-                var month = date.getMonth() + 1;
-                var year = date.getFullYear();
-
-                return day + "/" + month + "/" + year;
-            }
-
-            function formatRating(ratingValue) {
-                if (ratingValue === undefined || ratingValue === null) return "N/A";
-
-                var numericRating = parseFloat(ratingValue);
-                if (isNaN(numericRating)) return "N/A";
-
-                var percentage = Math.round(numericRating * 100);
-                return percentage + "%";
-            }
-
-            function getFirstGenre(gameData) {
-                if (!gameData || !gameData.genre) return "Unknown";
-                var cleanedGenres = Utils.cleanAndSplitGenres(gameData.genre);
-                return cleanedGenres.length > 0 ? cleanedGenres[0] : "Unknown";
-            }
-
-            width: vpx(350)
-            height: {
-                var baseHeight = vpx(400);
-                if (gameData && gameData.description) {
-                    baseHeight += vpx(180);
-                }
-
-                return Math.min(baseHeight, parent ? parent.height * 0.85 : baseHeight);
-            }
-            color: themeColors.panel || "#1a1a1a"
-            border.color: themeColors.primary || "#3a6ea5"
-            border.width: vpx(3)
-            radius: vpx(12)
-            z: 21
-            clip: true
-
-            RadialGradientOverlay {
-                anchors.fill: parent
-                isDarkTheme: gameMenu.isDarkTheme
-                opacityMultiplier: 0.5
-                radius: parent.radius
-                visible: gameMenu.isDarkTheme
-            }
-
-            Column {
-                anchors.fill: parent
-                anchors.margins: vpx(15)
-                spacing: vpx(12)
-
-                Text {
-                    width: parent.width
-                    text: gameData ? gameData.title : ""
-                    color: themeColors.text || "white"
-                    font.bold: true
-                    font.pixelSize: vpx(18)
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
-                    elide: Text.ElideRight
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: vpx(1)
-                    color: themeColors.separator || "#555"
-                    radius: vpx(1)
-                }
-
-                Grid {
-                    width: parent.width
-                    columns: 2
-                    columnSpacing: vpx(15)
-                    rowSpacing: vpx(8)
-
-                    Text {
-                        width: parent.width * 0.4
-                        text: "Publisher:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        width: parent.width * 0.6
-                        text: gameData ? (gameData.publisher || "N/A") : "N/A"
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                        wrapMode: Text.Wrap
-                    }
-
-                    Text {
-                        text: "Developer:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: gameData ? (gameData.developer || "N/A") : "N/A"
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                        wrapMode: Text.Wrap
-                    }
-
-                    Text {
-                        text: "Release Date:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: formatReleaseDate(gameData)
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                    }
-
-                    Text {
-                        text: "Genre:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: getFirstGenre(gameData)
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                        wrapMode: Text.Wrap
-                    }
-
-                    Text {
-                        text: "Players:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: gameData ? (gameData.players || "N/A") : "N/A"
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                    }
-
-                    Text {
-                        text: "Rating:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: formatRating(gameData ? gameData.rating : null)
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                    }
-
-                    Text {
-                        text: "Play Count:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: gameData ? (gameData.playCount || "0") : "0"
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                    }
-
-                    Text {
-                        text: "Play Time:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: gameData && gameData.playTime ?
-                        Math.floor(gameData.playTime / 3600) + "h " +
-                        Math.floor((gameData.playTime % 3600) / 60) + "m" :
-                        "0h 0m"
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                    }
-
-                    Text {
-                        text: "Last Played:"
-                        color: themeColors.textSecondary || "#AAA"
-                        font.pixelSize: vpx(12)
-                        font.bold: true
-                    }
-
-                    Text {
-                        text: formatLastPlayed(gameData ? gameData.lastPlayed : null)
-                        color: themeColors.text || "white"
-                        font.pixelSize: vpx(12)
-                        wrapMode: Text.Wrap
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: vpx(1)
-                    color: themeColors.separator || "#555"
-                    radius: vpx(1)
-                    visible: gameData && gameData.description
-                }
-
-                Column {
-                    width: parent.width
-                    spacing: vpx(8)
-                    visible: gameData && gameData.description
-
-                    Text {
-                        text: "DESCRIPTION"
-                        color: themeColors.primary || "#3a6ea5"
-                        font.pixelSize: vpx(14)
-                        font.bold: true
-                    }
-
-                    Item {
-                        id: scrollContainer
-                        width: parent.width
-                        height: vpx(125)
-                        clip: true
-
-                        PegasusUtils.AutoScroll {
-                            id: autoscroll
-                            anchors.fill: parent
-                            pixelsPerSecond: 15
-                            scrollWaitDuration: 3000
-
-                            Item {
-                                width: autoscroll.width
-                                height: descripText.height
-
-                                Text {
-                                    id: descripText
-                                    width: parent.width
-                                    text: gameData ? gameData.description : ""
-                                    wrapMode: Text.WordWrap
-                                    lineHeight: 1.4
-                                    font.pixelSize: vpx(12)
-                                    color: themeColors.text || "white"
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Item {
-                    width: parent.width
-                    height: vpx(20)
-                    visible: !gameData || !gameData.description
+                    Behavior on color { ColorAnimation  { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent
-                        text: "No description available"
-                        color: themeColors.textTertiary || "#707070"
-                        font.pixelSize: vpx(12)
-                        font.italic: true
+                        text:  "Save"
+                        color: "#111111"
+                        font.pixelSize: vpx(15)
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: saveMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: saveRename()
+                    }
+                }
+
+                Rectangle {
+                    id: cancelRenameBtn
+                    width:  vpx(90)
+                    height: parent.height
+                    color:  cancelMouse.containsMouse ? "#33ffffff" : "#22000000"
+                    radius: vpx(10)
+                    border.color: isDarkTheme ? "#55ffffff" : "#aaaaaa"
+                    border.width: vpx(1)
+
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text:  "Cancel"
+                        color: isDarkTheme ? "#ffffff" : "#212121"
+                        font.pixelSize: vpx(13)
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: cancelMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: cancelRename()
                     }
                 }
             }

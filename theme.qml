@@ -309,13 +309,10 @@ FocusScope {
                         if (root.showGameMenu) {
                             root.showGameMenu = false;
                         } else {
-                            gameMenu.isCollectionContext = true;
-                            gameMenu.contextCollectionId = collectionId;
+                            gameMenu.contextCollectionId   = collectionId;
                             gameMenu.contextCollectionName = collectionName;
-                            root.currentGameForMenu = null;
-                            root.menuX = x;
-                            root.menuY = y;
                             root.showGameMenu = true;
+                            gameMenu.openMenu();
                         }
                     }
                 }
@@ -732,17 +729,7 @@ FocusScope {
                 }
 
                 onGameRightClicked: function(game, x, y) {
-                    if (root.showGameMenu) {
-                        root.showGameMenu = false;
-                    } else {
-                        gameMenu.isCollectionContext = false;
-                        gameMenu.contextCollectionId = -1;
-                        gameMenu.contextCollectionName = "";
-                        root.currentGameForMenu = game;
-                        root.menuX = x;
-                        root.menuY = y;
-                        root.showGameMenu = true;
-                    }
+                    gamesGrid.requestAddGame(game);
                 }
             }
         }
@@ -955,50 +942,9 @@ FocusScope {
         id: gameMenu
         visible: root.showGameMenu
         z: 10
-        currentGame: root.currentGameForMenu
-        selectedCollectionId: root.selectedCollectionId
-        selectedCollectionName: root.selectedCollectionName
-        selectedSystemCollection: root.selectedSystemCollection
-        customCollections: root.customCollections
-        menuX: root.menuX
-        menuY: root.menuY
-        themeColors: root.colors
-        isDarkTheme: root.isDarkTheme
+        themeColors:  root.colors
+        isDarkTheme:  root.isDarkTheme
         focusManager: focusManager
-
-        onGameAddedToCollection: function(collectionId) {
-            root.customCollections = Utils.loadCustomCollections();
-            if (root.selectedCollectionId === collectionId) {
-                for (var i = 0; i < root.customCollections.length; i++) {
-                    if (root.customCollections[i].id === collectionId) {
-                        var filePaths = [];
-                        for (var j = 0; j < root.customCollections[i].games.length; j++) {
-                            var fp = root.customCollections[i].games[j].filePath
-                            || root.customCollections[i].games[j].title;
-                            filePaths.push(fp);
-                        }
-                        root.currentCollectionGameTitles = filePaths;
-                        break;
-                    }
-                }
-            }
-        }
-
-        onGameRemovedFromCollection: function() {
-            root.customCollections = Utils.loadCustomCollections();
-            for (var i = 0; i < root.customCollections.length; i++) {
-                if (root.customCollections[i].id === root.selectedCollectionId) {
-                    var filePaths = [];
-                    for (var j = 0; j < root.customCollections[i].games.length; j++) {
-                        var fp = root.customCollections[i].games[j].filePath
-                        || root.customCollections[i].games[j].title;
-                        filePaths.push(fp);
-                    }
-                    root.currentCollectionGameTitles = filePaths;
-                    break;
-                }
-            }
-        }
 
         onRenameCollection: function(collectionId) {
             root.customCollections = Utils.loadCustomCollections();
@@ -1012,28 +958,10 @@ FocusScope {
             }
         }
 
-        onLaunchGame: function() {
-            if (root.currentGameForMenu) {
-                Utils.launchGameFromCollection(root.currentGameForMenu.title);
-                root.showGameMenu = false;
-            }
-        }
-
         onCloseMenu: function() {
             root.showGameMenu = false;
-            var wasCollectionContext = gameMenu.isCollectionContext;
-            gameMenu.isCollectionContext = false;
-            gameMenu.contextCollectionId = -1;
-            gameMenu.contextCollectionName = "";
-
-            if (focusManager) {
-                if (wasCollectionContext) {
-                    if (focusManager.customCollections) {
-                        focusManager.customCollections.forceActiveFocus();
-                    }
-                } else if (focusManager.gamesGrid) {
-                    focusManager.gamesGrid.forceActiveFocus();
-                }
+            if (focusManager && focusManager.customCollections) {
+                focusManager.customCollections.forceActiveFocus();
             }
         }
 
@@ -1042,31 +970,46 @@ FocusScope {
             root.collectionToDeleteName = collectionName;
             root.showDeleteConfirm = true;
         }
-
-        onShowGameDetails: function() {
-            gameMenu.showDetails = true;
-        }
     }
 
     Rectangle {
         id: deleteConfirm
-        width: parent.width * 0.25
-        height: parent.height * 0.20
+        width: Math.min(vpx(420), parent.width * 0.52)
+        height: Math.min(vpx(240), parent.height * 0.38)
         anchors.centerIn: parent
-        color: colors.panel
-        border.color: colors.error
-        border.width: vpx(3)
-        radius: vpx(12)
+        color: root.isDarkTheme ? "#1c1c20" : "#f2f2f4"
+        radius: vpx(20)
         visible: root.showDeleteConfirm
         z: 10
         focus: visible
 
+        scale: 0.88
+        opacity: 0.0
+
+        layer.enabled: true
+        layer.effect: DropShadow {
+            transparentBorder: true
+            horizontalOffset: 0
+            verticalOffset: vpx(10)
+            radius: vpx(18)
+            samples: 35
+            color: "black"
+        }
+
+        ParallelAnimation {
+            id: deleteEntryAnim
+            NumberAnimation { target: deleteConfirm; property: "scale";   from: 0.88; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+            NumberAnimation { target: deleteConfirm; property: "opacity"; from: 0.0;  to: 1.0; duration: 200; easing.type: Easing.OutQuad  }
+        }
+
         onVisibleChanged: {
             if (visible) {
+                deleteEntryAnim.stop();
+                deleteConfirm.scale   = 0.88;
+                deleteConfirm.opacity = 0.0;
+                deleteEntryAnim.start();
                 deleteConfirmIndex = 0;
-                Qt.callLater(function() {
-                    deleteConfirm.forceActiveFocus();
-                });
+                Qt.callLater(function() { deleteConfirm.forceActiveFocus(); });
             }
         }
 
@@ -1087,131 +1030,186 @@ FocusScope {
             }
         }
 
-        Column {
-            anchors.centerIn: parent
-            spacing: Math.max(vpx(15), deleteConfirm.height * 0.08)
-            width: parent.width * 0.85
+        Item {
+            id: deleteHeader
+            anchors.top:        parent.top
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            anchors.topMargin:  vpx(22)
+            anchors.leftMargin: vpx(22)
+            anchors.rightMargin:vpx(22)
+            height: vpx(52)
 
             Text {
-                width: parent.width
-                text: "Delete collection:\n\"" + root.collectionToDeleteName + "\"?"
-                color: colors.text
-                font.pixelSize: Math.max(vpx(14), deleteConfirm.height * 0.08)
+                text: "Delete Collection"
+                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                font.pixelSize: vpx(22)
                 font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
+                anchors.top: parent.top
             }
 
-            Row {
-                spacing: Math.max(vpx(12), deleteConfirm.width * 0.04)
-                anchors.horizontalCenter: parent.horizontalCenter
+            Text {
+                text: "\"" + root.collectionToDeleteName + "\""
+                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                font.pixelSize: vpx(12)
+                font.bold: true
+                font.capitalization: Font.AllUppercase
+                elide: Text.ElideRight
+                width: parent.width
+                anchors.bottom: parent.bottom
+            }
+        }
 
-                Rectangle {
-                    width: Math.max(vpx(100), deleteConfirm.width * 0.35)
-                    height: Math.max(vpx(40), deleteConfirm.height * 0.2)
-                    color: mouseDeleteYes.containsMouse || deleteConfirmIndex === 0 ?
-                    colors.error : colors.errorDark
-                    radius: vpx(8)
-                    border.color: colors.errorLight
-                    border.width: vpx(2)
+        Rectangle {
+            id: deleteSep1
+            anchors.top:         deleteHeader.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.topMargin:   vpx(6)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            height: vpx(1)
+            color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
+        }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Yes"
-                        color: "white"
-                        font.bold: true
-                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
-                    }
+        Text {
+            id: deleteBodyText
+            anchors.top:         deleteSep1.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.topMargin:   vpx(14)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            text: "This action cannot be undone. Are you sure?"
+            color: root.isDarkTheme ? "#a0a0a0" : "#616161"
+            font.pixelSize: vpx(13)
+            wrapMode: Text.Wrap
+        }
 
-                    MouseArea {
-                        id: mouseDeleteYes
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            var deletedIndex = -1;
-                            for (var i = 0; i < root.customCollections.length; i++) {
-                                if (root.customCollections[i].id === root.collectionToDelete) {
-                                    deletedIndex = i;
-                                    break;
-                                }
-                            }
+        Rectangle {
+            id: deleteSep2
+            anchors.bottom:      deleteBtnArea.top
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.bottomMargin:vpx(14)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            height: vpx(1)
+            color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
+        }
 
-                            Utils.removeCollection(root.collectionToDelete);
-                            root.customCollections = Utils.loadCustomCollections();
+        Item {
+            id: deleteBtnArea
+            anchors.bottom:      parent.bottom
+            anchors.left:        parent.left
+            anchors.right:       parent.right
+            anchors.bottomMargin:vpx(20)
+            anchors.leftMargin:  vpx(22)
+            anchors.rightMargin: vpx(22)
+            height: vpx(44)
 
-                            var wasSelectedCollection = root.selectedCollectionId === root.collectionToDelete;
+            Rectangle {
+                id: deleteYesBtn
+                anchors.left:   parent.left
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width - deleteNoBtn.width - vpx(10)
+                color: mouseDeleteYes.containsMouse || deleteConfirmIndex === 0 ? "#e0e0e0" : "#ffffff"
+                radius: vpx(25)
+                scale: mouseDeleteYes.containsMouse || deleteConfirmIndex === 0 ? 1.02 : 1.0
 
-                            if (wasSelectedCollection) {
-                                root.selectedCollectionId = -1;
-                                root.selectedCollectionName = "All Games";
-                                root.selectedSystemCollection = null;
-                                root.currentCollectionGameTitles = [];
-                            }
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                            root.showDeleteConfirm = false;
-                            root.collectionToDelete = -1;
-                            root.collectionToDeleteName = "";
-
-                            if (focusManager) {
-                                if (root.customCollections.length === 0) {
-                                    focusManager.selectAllGames();
-                                } else {
-                                    var newIndex = Math.min(deletedIndex, root.customCollections.length - 1);
-                                    focusManager.lastCustomIndex = newIndex;
-                                    if (focusManager.customCollections) {
-                                        focusManager.customCollections.currentIndex = newIndex;
-                                        focusManager.customCollections.forceActiveFocus();
-                                    }
-                                }
-                            }
-                        }
-                        onEntered: parent.scale = 1.05
-                        onExited: parent.scale = 1.0
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation { duration: 150 }
-                    }
+                Text {
+                    anchors.centerIn: parent
+                    text: "Yes, Delete"
+                    color: "#c62828"
+                    font.pixelSize: vpx(15)
+                    font.bold: true
                 }
 
-                Rectangle {
-                    width: Math.max(vpx(100), deleteConfirm.width * 0.35)
-                    height: Math.max(vpx(40), deleteConfirm.height * 0.2)
-                    color: mouseDeleteNo.containsMouse || deleteConfirmIndex === 1 ?
-                    colors.inputBorder : colors.panelBorder
-                    radius: vpx(8)
-                    border.color: colors.inputBorder
-                    border.width: vpx(2)
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "No"
-                        color: colors.text
-                        font.bold: true
-                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
-                    }
-
-                    MouseArea {
-                        id: mouseDeleteNo
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.showDeleteConfirm = false;
-                            root.collectionToDelete = -1;
-                            root.collectionToDeleteName = "";
-
-                            if (focusManager && focusManager.customCollections) {
-                                focusManager.customCollections.forceActiveFocus();
+                MouseArea {
+                    id: mouseDeleteYes
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var deletedIndex = -1;
+                        for (var i = 0; i < root.customCollections.length; i++) {
+                            if (root.customCollections[i].id === root.collectionToDelete) {
+                                deletedIndex = i;
+                                break;
                             }
                         }
-                        onEntered: parent.scale = 1.05
-                        onExited: parent.scale = 1.0
-                    }
 
-                    Behavior on scale {
-                        NumberAnimation { duration: 150 }
+                        Utils.removeCollection(root.collectionToDelete);
+                        root.customCollections = Utils.loadCustomCollections();
+
+                        var wasSelectedCollection = root.selectedCollectionId === root.collectionToDelete;
+
+                        if (wasSelectedCollection) {
+                            root.selectedCollectionId = -1;
+                            root.selectedCollectionName = "All Games";
+                            root.selectedSystemCollection = null;
+                            root.currentCollectionGameTitles = [];
+                        }
+
+                        root.showDeleteConfirm = false;
+                        root.collectionToDelete = -1;
+                        root.collectionToDeleteName = "";
+
+                        if (focusManager) {
+                            if (root.customCollections.length === 0) {
+                                focusManager.selectAllGames();
+                            } else {
+                                var newIndex = Math.min(deletedIndex, root.customCollections.length - 1);
+                                focusManager.lastCustomIndex = newIndex;
+                                if (focusManager.customCollections) {
+                                    focusManager.customCollections.currentIndex = newIndex;
+                                    focusManager.customCollections.forceActiveFocus();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                id: deleteNoBtn
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                width: vpx(100)
+                color: mouseDeleteNo.containsMouse || deleteConfirmIndex === 1
+                    ? "#33ffffff" : "#22000000"
+                radius: vpx(10)
+                border.color: root.isDarkTheme ? "#55ffffff" : "#aaaaaa"
+                border.width: deleteConfirmIndex === 1 ? vpx(2) : vpx(1)
+
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Keep it"
+                    color: root.isDarkTheme ? "#ffffff" : "#212121"
+                    font.pixelSize: vpx(14)
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: mouseDeleteNo
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.showDeleteConfirm = false;
+                        root.collectionToDelete = -1;
+                        root.collectionToDeleteName = "";
+
+                        if (focusManager && focusManager.customCollections) {
+                            focusManager.customCollections.forceActiveFocus();
+                        }
                     }
                 }
             }

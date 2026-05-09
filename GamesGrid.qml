@@ -258,8 +258,7 @@ Rectangle {
                 }
 
                 onRightClicked: function(game, x, y) {
-                    var globalPos = mapToItem(null, x, y);
-                    gridContainer.gameRightClicked(game, globalPos.x, globalPos.y);
+                    gridContainer.requestAddGame(game);
                 }
 
                 selectedBorderColor: {
