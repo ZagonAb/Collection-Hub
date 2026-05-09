@@ -9,7 +9,7 @@ Item {
 
     property bool isExpanded: false
     property int collapsedWidth: vpx(52)
-    property int expandedWidth: vpx(680)
+    property int expandedWidth: vpx(650)
 
     signal searchChanged(string text)
     signal moveToSortMenu()
