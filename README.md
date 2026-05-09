@@ -8,7 +8,6 @@
 
 
 ![screen0](https://github.com/ZagonAb/Collection-Hub/blob/c0c6a7e14904b9d21fcb4797acb746797eeea02c/.meta/screenshots/screen0.png)
-![screen1](https://github.com/ZagonAb/Collection-Hub/blob/1d1b05bae35be5ac685ee87fbff6002422dbf6fd/.meta/screenshots/screen1.png)
 ![screen2](https://github.com/ZagonAb/Collection-Hub/blob/4a237ded92827df534be07ee7ed75b6cd8c38300/.meta/screenshots/screen2.png)
 
 
