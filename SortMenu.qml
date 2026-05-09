@@ -30,7 +30,7 @@ Item {
         if (api.keys.isCancel(event)) {
             sortMenu.closeMenu();
             event.accepted = true;
-        } else if (api.keys.isAccept(event)) {
+        } else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
             sortMenu.sortOrderChangedOnly(highlightIndex);
             event.accepted = true;
         } else if (event.key === Qt.Key_Up) {
