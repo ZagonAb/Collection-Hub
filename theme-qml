@@ -750,202 +750,126 @@ FocusScope {
 
     Rectangle {
         id: collectionEditor
-        width: Math.min(vpx(440), parent.width * 0.55)
-        height: Math.min(vpx(280), parent.height * 0.42)
+        width: parent.width * 0.25
+        height: parent.height * 0.20
         anchors.centerIn: parent
-        color: root.isDarkTheme ? "#1c1c20" : "#f2f2f4"
-        radius: vpx(20)
+        color: colors.panel
+        border.color: colors.primary
+        border.width: vpx(3)
+        radius: vpx(12)
         visible: root.showCollectionEditor
         z: 10
 
-        scale: 0.88
-        opacity: 0.0
-
-        layer.enabled: true
-        layer.effect: DropShadow {
-            transparentBorder: true
-            horizontalOffset: 0
-            verticalOffset: vpx(10)
-            radius: vpx(18)
-            samples: 35
-            color: "black"
-        }
-
-        ParallelAnimation {
-            id: editorEntryAnim
-            NumberAnimation { target: collectionEditor; property: "scale";   from: 0.88; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
-            NumberAnimation { target: collectionEditor; property: "opacity"; from: 0.0;  to: 1.0; duration: 200; easing.type: Easing.OutQuad  }
-        }
-
         onVisibleChanged: {
             if (visible) {
-                editorEntryAnim.stop();
-                collectionEditor.scale   = 0.88;
-                collectionEditor.opacity = 0.0;
-                editorEntryAnim.start();
                 collectionNameInput.forceActiveFocus();
                 collectionNameInput.selectAll();
             }
         }
 
-        Item {
-            id: editorHeader
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            anchors.topMargin:  vpx(22)
-            anchors.leftMargin: vpx(22)
-            anchors.rightMargin:vpx(22)
-            height: vpx(52)
+        Column {
+            anchors.centerIn: parent
+            spacing: Math.max(vpx(15), collectionEditor.height * 0.06)
+            width: parent.width * 0.85
 
             Text {
-                id: editorTitle
                 text: "New Collection"
-                color: root.isDarkTheme ? "#ffffff" : "#212121"
-                font.pixelSize: vpx(22)
                 font.bold: true
-                anchors.top: parent.top
+                font.pixelSize: Math.max(vpx(16), collectionEditor.height * 0.08)
+                color: colors.text
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
-            Text {
-                text: "Choose a name for your collection"
-                color: root.isDarkTheme ? "#a0a0a0" : "#616161"
-                font.pixelSize: vpx(12)
-                font.bold: true
-                font.capitalization: Font.AllUppercase
-                anchors.bottom: parent.bottom
-            }
-        }
+            Rectangle {
+                width: parent.width
+                height: Math.max(vpx(40), collectionEditor.height * 0.18)
+                color: colors.inputBg
+                border.color: colors.inputBorder
+                border.width: vpx(2)
+                radius: vpx(6)
 
-        Rectangle {
-            id: editorSep1
-            anchors.top:         editorHeader.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(6)
-            anchors.leftMargin:  vpx(22)
-            anchors.rightMargin: vpx(22)
-            height: vpx(1)
-            color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
-        }
+                TextInput {
+                    id: collectionNameInput
+                    anchors.fill: parent
+                    anchors.margins: vpx(10)
+                    color: colors.text
+                    font.pixelSize: Math.max(vpx(14), parent.height * 0.35)
+                    selectByMouse: true
+                    focus: true
+                    verticalAlignment: TextInput.AlignVCenter
 
-        Rectangle {
-            id: editorInputArea
-            anchors.top:         editorSep1.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottom:      editorSep2.top
-            anchors.topMargin:   vpx(14)
-            anchors.leftMargin:  vpx(22)
-            anchors.rightMargin: vpx(22)
-            anchors.bottomMargin:vpx(14)
-            color: root.isDarkTheme ? "#111114" : "#ffffff"
-            radius: vpx(8)
-            border.width: collectionNameInput.activeFocus ? vpx(2) : vpx(1)
-            border.color: collectionNameInput.activeFocus
-                ? colors.primary
-                : (root.isDarkTheme ? "#303036" : "#e0e0e0")
-
-            Behavior on border.color { ColorAnimation { duration: 100 } }
-
-            TextInput {
-                id: collectionNameInput
-                anchors.fill: parent
-                anchors.margins: vpx(14)
-                color: root.isDarkTheme ? "#ffffff" : "#212121"
-                font.pixelSize: vpx(16)
-                font.bold: true
-                selectByMouse: true
-                focus: true
-                verticalAlignment: TextInput.AlignVCenter
-
-                onAccepted: {
-                    if (text.trim() !== "") {
-                        root.createNewCollection();
+                    onAccepted: {
+                        if (text.trim() !== "") {
+                            root.createNewCollection();
+                        }
                     }
                 }
             }
-        }
 
-        Rectangle {
-            id: editorSep2
-            anchors.bottom:      editorBtnArea.top
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottomMargin:vpx(14)
-            anchors.leftMargin:  vpx(22)
-            anchors.rightMargin: vpx(22)
-            height: vpx(1)
-            color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
-        }
+            Row {
+                spacing: Math.max(vpx(12), collectionEditor.width * 0.04)
+                anchors.horizontalCenter: parent.horizontalCenter
 
-        Item {
-            id: editorBtnArea
-            anchors.bottom:      parent.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottomMargin:vpx(20)
-            anchors.leftMargin:  vpx(22)
-            anchors.rightMargin: vpx(22)
-            height: vpx(44)
+                Rectangle {
+                    width: Math.max(vpx(100), collectionEditor.width * 0.35)
+                    height: Math.max(vpx(40), collectionEditor.height * 0.16)
+                    color: mouseCreateBtn.containsMouse ? colors.success : colors.successDark
+                    radius: vpx(8)
+                    border.color: colors.successLight
+                    border.width: vpx(2)
 
-            Rectangle {
-                id: editorCreateBtn
-                anchors.left:   parent.left
-                anchors.top:    parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width - editorCancelBtn.width - vpx(10)
-                color: mouseCreateBtn.containsMouse ? "#e0e0e0" : "#ffffff"
-                radius: vpx(25)
-                scale: mouseCreateBtn.containsMouse ? 1.02 : 1.0
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Create"
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
+                    }
 
-                Behavior on color { ColorAnimation { duration: 120 } }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    MouseArea {
+                        id: mouseCreateBtn
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.createNewCollection()
+                        onEntered: parent.scale = 1.05
+                        onExited: parent.scale = 1.0
+                    }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "Create"
-                    color: "#111111"
-                    font.pixelSize: vpx(16)
-                    font.bold: true
+                    Behavior on scale {
+                        NumberAnimation { duration: 150 }
+                    }
                 }
 
-                MouseArea {
-                    id: mouseCreateBtn
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createNewCollection()
-                }
-            }
+                Rectangle {
+                    width: Math.max(vpx(100), collectionEditor.width * 0.35)
+                    height: Math.max(vpx(40), collectionEditor.height * 0.16)
+                    color: mouseCancelBtn.containsMouse ? colors.error : colors.errorDark
+                    radius: vpx(8)
+                    border.color: colors.errorLight
+                    border.width: vpx(2)
 
-            Rectangle {
-                id: editorCancelBtn
-                anchors.right:  parent.right
-                anchors.top:    parent.top
-                anchors.bottom: parent.bottom
-                width: vpx(100)
-                color: mouseCancelBtn.containsMouse ? "#33ffffff" : "#22000000"
-                radius: vpx(10)
-                border.color: root.isDarkTheme ? "#55ffffff" : "#aaaaaa"
-                border.width: vpx(1)
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Cancel"
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: Math.max(vpx(13), parent.height * 0.32)
+                    }
 
-                Behavior on color { ColorAnimation { duration: 120 } }
+                    MouseArea {
+                        id: mouseCancelBtn
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.showCollectionEditor = false
+                        onEntered: parent.scale = 1.05
+                        onExited: parent.scale = 1.0
+                    }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "Cancel"
-                    color: root.isDarkTheme ? "#ffffff" : "#212121"
-                    font.pixelSize: vpx(14)
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: mouseCancelBtn
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.showCollectionEditor = false
+                    Behavior on scale {
+                        NumberAnimation { duration: 150 }
+                    }
                 }
             }
         }
