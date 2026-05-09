@@ -7,6 +7,8 @@ Item {
     property var systemCollections: null
     property var customCollections: null
     property var searchBar: null
+    property var sortBtn: null
+    property var themeBtn: null
 
     property int currentFocusArea: 0
     property int lastSystemIndex: 0
@@ -16,6 +18,8 @@ Item {
     readonly property int focusSystem: 1
     readonly property int focusCustom: 2
     readonly property int focusSearch: 3
+    readonly property int focusSortBtn: 4
+    readonly property int focusThemeBtn: 5
 
     signal selectAllGamesTriggered()
 
@@ -38,10 +42,18 @@ Item {
     }
 
     function moveFocusLeft() {
-        currentFocusArea = focusSystem;
-        if (systemCollections) {
-            systemCollections.currentIndex = lastSystemIndex;
-            systemCollections.forceActiveFocus();
+        if (currentFocusArea === focusThemeBtn) {
+            currentFocusArea = focusSortBtn;
+            if (sortBtn) sortBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusSortBtn) {
+            currentFocusArea = focusSearch;
+            if (searchBar) searchBar.forceActiveFocus();
+        } else {
+            currentFocusArea = focusSystem;
+            if (systemCollections) {
+                systemCollections.currentIndex = lastSystemIndex;
+                systemCollections.forceActiveFocus();
+            }
         }
     }
 
@@ -58,6 +70,12 @@ Item {
                 gamesGrid.currentIndex = 0;
                 gamesGrid.forceActiveFocus();
             }
+        } else if (currentFocusArea === focusSortBtn) {
+            currentFocusArea = focusThemeBtn;
+            if (themeBtn) themeBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusSearch) {
+            currentFocusArea = focusSortBtn;
+            if (sortBtn) sortBtn.forceActiveFocus();
         }
     }
 
@@ -78,7 +96,9 @@ Item {
     }
 
     function moveFocusDown() {
-        if (currentFocusArea === focusSearch) {
+        if (currentFocusArea === focusSearch ||
+            currentFocusArea === focusSortBtn ||
+            currentFocusArea === focusThemeBtn) {
             currentFocusArea = focusGrid;
             if (searchBar && searchBar.searchText === "") {
                 searchBar.collapse();
@@ -94,5 +114,10 @@ Item {
                 customCollections.forceActiveFocus();
             }
         }
+    }
+
+    function focusOnSortBtn() {
+        currentFocusArea = focusSortBtn;
+        if (sortBtn) sortBtn.forceActiveFocus();
     }
 }

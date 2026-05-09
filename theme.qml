@@ -139,6 +139,8 @@ FocusScope {
             focusManager.systemCollections = systemCollections.systemCollectionsList;
             focusManager.customCollections = customCollectionsView.customCollectionsList;
             focusManager.searchBar = searchBar;
+            focusManager.sortBtn = sortBtn;
+            focusManager.themeBtn = themeBtnScope;
             focusManager.setInitialFocus();
         });
     }
@@ -171,7 +173,8 @@ FocusScope {
                     spacing: vpx(8)
 
                     Rectangle {
-                        width: parent.width - vpx(48)
+                        id: allGames
+                        width: parent.width
                         height: vpx(40)
                         color: root.selectedCollectionId === -1 && root.selectedSystemCollection === null ? colors.primary : "transparent"
                         border.color: colors.primary
@@ -246,65 +249,7 @@ FocusScope {
                         }
                     }
 
-                    Rectangle {
-                        width: vpx(40)
-                        height: vpx(40)
-                        color: themeToggleMouseArea.containsMouse ? colors.primary : "transparent"
-                        border.color: colors.panelBorder
-                        border.width: vpx(1)
-                        radius: vpx(10)
 
-                        Item {
-                            id: iconContainer
-                            width: vpx(24)
-                            height: vpx(24)
-                            anchors.centerIn: parent
-
-                            Image {
-                                id: lightIcon
-                                anchors.fill: parent
-                                mipmap: true
-                                source: "assets/icons/light.svg"
-                                visible: root.isDarkTheme
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: lightIcon
-                                source: lightIcon
-                                color: "#ffffff"
-                                visible: lightIcon.visible
-                            }
-
-                            Image {
-                                id: darkIcon
-                                anchors.fill: parent
-                                mipmap: true
-                                source: "assets/icons/dark.svg"
-                                visible: !root.isDarkTheme
-                            }
-
-                            ColorOverlay {
-                                anchors.fill: darkIcon
-                                source: darkIcon
-                                color: "#212121"
-                                visible: darkIcon.visible
-                            }
-                        }
-
-                        MouseArea {
-                            id: themeToggleMouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.toggleTheme()
-                            onEntered: parent.scale = 1.05
-                            onExited: parent.scale = 1.0
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation { duration: 150 }
-                        }
-                    }
                 }
 
                 SystemCollections {
@@ -455,12 +400,100 @@ FocusScope {
                     }
 
                     onMoveToSortMenu: {
-                        root.showSortMenu = true;
+                        focusManager.focusOnSortBtn();
                     }
                 }
 
-                Rectangle {
+                FocusScope {
                     id: sortBtn
+                    anchors {
+                        right: themeBtnScope.left
+                        rightMargin: vpx(6)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: vpx(44)
+                    height: vpx(44)
+
+                    property bool keyboardFocused: activeFocus &&
+                        focusManager.currentFocusArea === focusManager.focusSortBtn
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: root.showSortMenu
+                            ? colors.primary
+                            : (sortBtnMouse.containsMouse || parent.keyboardFocused
+                               ? colors.primary : "transparent")
+                        border.color: root.showSortMenu || parent.keyboardFocused
+                            ? colors.primary : colors.inputBorder
+                        border.width: vpx(2)
+                        radius: vpx(10)
+
+                        Item {
+                            width: vpx(22)
+                            height: vpx(22)
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: sortIcon
+                                anchors.fill: parent
+                                source: "assets/icons/menu.svg"
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: sortIcon
+                                source: sortIcon
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                            }
+                        }
+
+                        MouseArea {
+                            id: sortBtnMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.showSortMenu = !root.showSortMenu;
+                                if (root.showSortMenu) {
+                                    root.showGameMenu = false;
+                                    sortMenuPopup.highlightIndex = root.sortOrder;
+                                    sortMenuPopup.forceActiveFocus();
+                                }
+                            }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if (root.showSortMenu) { return; }
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            root.showSortMenu = true;
+                            root.showGameMenu = false;
+                            sortMenuPopup.highlightIndex = root.sortOrder;
+                            sortMenuPopup.forceActiveFocus();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Right) {
+                            focusManager.moveFocusRight();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Left) {
+                            focusManager.moveFocusLeft();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
+                            focusManager.moveFocusDown();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            focusManager.moveFocusUp();
+                            event.accepted = true;
+                        }
+                    }
+                }
+
+                FocusScope {
+                    id: themeBtnScope
                     anchors {
                         right: parent.right
                         rightMargin: vpx(10)
@@ -468,46 +501,91 @@ FocusScope {
                     }
                     width: vpx(44)
                     height: vpx(44)
-                    color: root.showSortMenu ? colors.primary : (sortBtnMouse.containsMouse ? colors.primary : "transparent")
-                    border.color: root.showSortMenu ? colors.primary : colors.panelBorder
-                    border.width: vpx(2)
-                    radius: vpx(10)
 
-                    Item {
-                        width: vpx(22)
-                        height: vpx(22)
-                        anchors.centerIn: parent
+                    property bool keyboardFocused: activeFocus &&
+                        focusManager.currentFocusArea === focusManager.focusThemeBtn
 
-                        Image {
-                            id: sortIcon
-                            anchors.fill: parent
-                            source: "assets/icons/menu.svg"
-                            fillMode: Image.PreserveAspectFit
-                            mipmap: true
-                        }
-
-                        ColorOverlay {
-                            anchors.fill: sortIcon
-                            source: sortIcon
-                            color: root.isDarkTheme ? "#ffffff" : "#212121"
-                        }
-                    }
-
-                    MouseArea {
-                        id: sortBtnMouse
+                    Rectangle {
+                        id: themeIconRect
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.showSortMenu = !root.showSortMenu;
-                            if (root.showSortMenu) {
-                                root.showGameMenu = false;
+                        color: themeToggleMouseArea.containsMouse || parent.keyboardFocused
+                            ? colors.primary : "transparent"
+                        border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
+                        border.width: vpx(2)
+                        radius: vpx(10)
+
+                        Item {
+                            id: iconContainer
+                            width: vpx(24)
+                            height: vpx(24)
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: lightIcon
+                                anchors.fill: parent
+                                mipmap: true
+                                source: "assets/icons/light.svg"
+                                visible: root.isDarkTheme
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: lightIcon
+                                source: lightIcon
+                                color: "#ffffff"
+                                visible: lightIcon.visible
+                            }
+
+                            Image {
+                                id: darkIcon
+                                anchors.fill: parent
+                                mipmap: true
+                                source: "assets/icons/dark.svg"
+                                visible: !root.isDarkTheme
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: darkIcon
+                                source: darkIcon
+                                color: "#212121"
+                                visible: darkIcon.visible
                             }
                         }
+
+                        MouseArea {
+                            id: themeToggleMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.toggleTheme()
+                            onEntered: themeIconRect.scale = 1.05
+                            onExited: themeIconRect.scale = 1.0
+                        }
+
+                        Behavior on scale {
+                            NumberAnimation { duration: 150 }
+                        }
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
                     }
 
-                    Behavior on color {
-                        ColorAnimation { duration: 120 }
+                    Keys.onPressed: function(event) {
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            root.toggleTheme();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Right) {
+                            focusManager.moveFocusRight();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Left) {
+                            focusManager.moveFocusLeft();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
+                            focusManager.moveFocusDown();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            focusManager.moveFocusUp();
+                            event.accepted = true;
+                        }
                     }
                 }
             }
@@ -1070,7 +1148,7 @@ FocusScope {
 
         onCloseMenu: {
             root.showSortMenu = false;
-            searchBar.forceActiveFocus();
+            sortBtn.forceActiveFocus();
         }
     }
 

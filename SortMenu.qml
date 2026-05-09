@@ -17,14 +17,7 @@ Item {
     height: bubble.height + tail.height
     visible: false
 
-    onVisibleChanged: {
-        if (visible) {
-            highlightIndex = currentSort;
-            forceActiveFocus();
-        }
-    }
-
-    focus: true
+    focus: false
 
     Keys.onPressed: function(event) {
         if (api.keys.isCancel(event)) {
