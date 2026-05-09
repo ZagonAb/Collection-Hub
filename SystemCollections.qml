@@ -144,9 +144,10 @@ Rectangle {
                                 color: systemCollectionsContainer.selectedCollectionIndex === index ?
                                 (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
                                 font.pixelSize: vpx(13)
-                                font.bold: systemCollectionsContainer.selectedCollectionIndex === index
+                                font.bold: true
                                 elide: Text.ElideRight
                                 width: parent.width
+
                             }
 
                             Text {

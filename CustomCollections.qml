@@ -179,7 +179,7 @@ Rectangle {
                                 color: customCollectionsContainer.selectedCollectionId === modelData.id ?
                                 "white" : themeColors.text || "white"
                                 font.pixelSize: vpx(13)
-                                font.bold: customCollectionsContainer.selectedCollectionId === modelData.id
+                                font.bold: true
                                 elide: Text.ElideRight
                                 width: parent.width
                             }
