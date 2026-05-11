@@ -39,8 +39,8 @@ Item {
         id: tail
         width: vpx(16)
         height: vpx(10)
-        anchors.right: parent.right
-        anchors.rightMargin: vpx(12)
+        anchors.left: parent.left
+        anchors.leftMargin: vpx(62)
         anchors.top: parent.top
         z: 2
 
