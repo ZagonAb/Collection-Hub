@@ -339,24 +339,29 @@ FocusScope {
                     }
                     spacing: vpx(16)
 
+                    Component {
+                        id: iconOverlay
+                        ColorOverlay {
+                            color: root.isDarkTheme ? "#ffffff" : "#212121"
+                        }
+                    }
+
                     Row {
                         spacing: vpx(4)
                         Image {
-                            width: vpx(22)
-                            height: vpx(22)
+                            width: vpx(22); height: vpx(22)
                             source: "assets/icons/x.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
-                            layer.effect: ColorOverlay {
-                                color: root.isDarkTheme ? "#ffffff" : "#212121"
-                            }
+                            layer.effect: iconOverlay
                             mipmap: true
                         }
                         Text {
                             text: "Menu"
                             color: colors.text
                             font.pixelSize: vpx(12)
-                            font.bold: false
+                            font.bold: true
+                            font.capitalization: Font.AllUppercase
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -364,22 +369,48 @@ FocusScope {
                     Row {
                         spacing: vpx(4)
                         Image {
-                            width: vpx(22)
-                            height: vpx(22)
+                            width: vpx(22); height: vpx(22)
                             source: "assets/icons/a.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
-                            layer.effect: ColorOverlay {
-                                color: root.isDarkTheme ? "#ffffff" : "#212121"
-                            }
+                            layer.effect: iconOverlay
                             mipmap: true
                         }
                         Text {
                             text: "Details"
                             color: colors.text
                             font.pixelSize: vpx(12)
-                            font.bold: false
+                            font.bold: true
+                            font.capitalization: Font.AllUppercase
                             anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    Row {
+                        spacing: vpx(4)
+                        Image {
+                            width: vpx(24); height: vpx(24)
+                            source: "assets/icons/lb.svg"
+                            fillMode: Image.PreserveAspectFit
+                            layer.enabled: true
+                            layer.effect: iconOverlay
+                            mipmap: true
+                        }
+                        Text {
+                            text: "Filter by letter"
+                            color: colors.text
+                            font.pixelSize: vpx(12)
+                            font.bold: true
+                            font.capitalization: Font.AllUppercase
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Image {
+                            width: vpx(24); height: vpx(24)
+                            source: "assets/icons/rb.svg"
+                            fillMode: Image.PreserveAspectFit
+                            layer.enabled: true
+                            layer.effect: iconOverlay
+                            mipmap: true
                         }
                     }
                 }
