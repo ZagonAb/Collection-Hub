@@ -743,6 +743,7 @@ FocusScope {
         color: root.isDarkTheme ? "#1c1c20" : "#f2f2f4"
         radius: vpx(20)
         visible: root.showCollectionEditor
+        focus: true
         z: 10
 
         scale: 0.88
@@ -777,12 +778,12 @@ FocusScope {
 
         Item {
             id: editorHeader
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            anchors.topMargin:  vpx(22)
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(22)
             anchors.leftMargin: vpx(22)
-            anchors.rightMargin:vpx(22)
+            anchors.rightMargin: vpx(22)
             height: vpx(52)
 
             Text {
@@ -806,11 +807,11 @@ FocusScope {
 
         Rectangle {
             id: editorSep1
-            anchors.top:         editorHeader.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(6)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: editorHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(6)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(1)
             color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
@@ -818,14 +819,14 @@ FocusScope {
 
         Rectangle {
             id: editorInputArea
-            anchors.top:         editorSep1.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottom:      editorSep2.top
-            anchors.topMargin:   vpx(14)
-            anchors.leftMargin:  vpx(22)
+            anchors.top:  editorSep1.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: editorSep2.top
+            anchors.topMargin: vpx(14)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
-            anchors.bottomMargin:vpx(14)
+            anchors.bottomMargin: vpx(14)
             color: root.isDarkTheme ? "#111114" : "#ffffff"
             radius: vpx(8)
             border.width: collectionNameInput.activeFocus ? vpx(2) : vpx(1)
@@ -856,11 +857,11 @@ FocusScope {
 
         Rectangle {
             id: editorSep2
-            anchors.bottom:      editorBtnArea.top
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottomMargin:vpx(14)
-            anchors.leftMargin:  vpx(22)
+            anchors.bottom: editorBtnArea.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottomMargin: vpx(14)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(1)
             color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
@@ -868,18 +869,18 @@ FocusScope {
 
         Item {
             id: editorBtnArea
-            anchors.bottom:      parent.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottomMargin:vpx(20)
-            anchors.leftMargin:  vpx(22)
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottomMargin: vpx(20)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(44)
 
             Rectangle {
                 id: editorCreateBtn
-                anchors.left:   parent.left
-                anchors.top:    parent.top
+                anchors.left: parent.left
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: parent.width - editorCancelBtn.width - vpx(10)
                 color: mouseCreateBtn.containsMouse ? "#e0e0e0" : "#ffffff"
@@ -908,8 +909,8 @@ FocusScope {
 
             Rectangle {
                 id: editorCancelBtn
-                anchors.right:  parent.right
-                anchors.top:    parent.top
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: vpx(100)
                 color: mouseCancelBtn.containsMouse ? "#33ffffff" : "#22000000"
@@ -936,14 +937,22 @@ FocusScope {
                 }
             }
         }
+
+        Keys.onPressed: function(event) {
+            if (api.keys.isCancel(event)) {
+                root.showCollectionEditor = false;
+                createCollectionTopBtn.forceActiveFocus();
+                event.accepted = true;
+            }
+        }
     }
 
     GameMenu {
         id: gameMenu
         visible: root.showGameMenu
         z: 10
-        themeColors:  root.colors
-        isDarkTheme:  root.isDarkTheme
+        themeColors: root.colors
+        isDarkTheme: root.isDarkTheme
         focusManager: focusManager
 
         onRenameCollection: function(collectionId) {
@@ -1032,12 +1041,12 @@ FocusScope {
 
         Item {
             id: deleteHeader
-            anchors.top:        parent.top
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            anchors.topMargin:  vpx(22)
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(22)
             anchors.leftMargin: vpx(22)
-            anchors.rightMargin:vpx(22)
+            anchors.rightMargin: vpx(22)
             height: vpx(52)
 
             Text {
@@ -1062,11 +1071,11 @@ FocusScope {
 
         Rectangle {
             id: deleteSep1
-            anchors.top:         deleteHeader.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(6)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: deleteHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(6)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(1)
             color: root.isDarkTheme ? "#2a2a2e" : "#e0e0e0"
@@ -1074,11 +1083,11 @@ FocusScope {
 
         Text {
             id: deleteBodyText
-            anchors.top:         deleteSep1.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(14)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: deleteSep1.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(14)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             text: "This action cannot be undone. Are you sure?"
             color: root.isDarkTheme ? "#a0a0a0" : "#616161"
@@ -1088,9 +1097,9 @@ FocusScope {
 
         Rectangle {
             id: deleteSep2
-            anchors.bottom:      deleteBtnArea.top
-            anchors.left:        parent.left
-            anchors.right:       parent.right
+            anchors.bottom: deleteBtnArea.top
+            anchors.left: parent.left
+            anchors.right: parent.right
             anchors.bottomMargin:vpx(14)
             anchors.leftMargin:  vpx(22)
             anchors.rightMargin: vpx(22)
@@ -1100,18 +1109,18 @@ FocusScope {
 
         Item {
             id: deleteBtnArea
-            anchors.bottom:      parent.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottomMargin:vpx(20)
-            anchors.leftMargin:  vpx(22)
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottomMargin: vpx(20)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(44)
 
             Rectangle {
                 id: deleteYesBtn
-                anchors.left:   parent.left
-                anchors.top:    parent.top
+                anchors.left: parent.left
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: parent.width - deleteNoBtn.width - vpx(10)
                 color: mouseDeleteYes.containsMouse || deleteConfirmIndex === 0 ? "#e0e0e0" : "#ffffff"
@@ -1177,8 +1186,8 @@ FocusScope {
 
             Rectangle {
                 id: deleteNoBtn
-                anchors.right:  parent.right
-                anchors.top:    parent.top
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: vpx(100)
                 color: mouseDeleteNo.containsMouse || deleteConfirmIndex === 1
