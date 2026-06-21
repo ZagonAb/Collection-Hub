@@ -271,7 +271,7 @@ Rectangle {
             property int desiredColumns: 3
             property int spacing: vpx(10)
             property int calculatedCellWidth: Math.floor((parent.width - vpx(20) - (desiredColumns + 1) * spacing) / desiredColumns)
-            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 1.0)
+            property int calculatedCellHeight: Math.floor(calculatedCellWidth * 0.85)
 
             width: desiredColumns * calculatedCellWidth + (desiredColumns + 1) * spacing
 

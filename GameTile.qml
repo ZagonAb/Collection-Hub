@@ -5,13 +5,12 @@ import "utils.js" as Utils
 Rectangle {
     id: tile
     color: "transparent"
-    radius: vpx(12)
+    radius: vpx(15)
 
     property bool isCurrent: GridView.isCurrentItem
     property bool gridHasFocus: GridView.view ? GridView.view.activeFocus : false
     property bool isSelected: false
     property color selectedBorderColor: tileColors.primary
-
 
     onIsCurrentChanged: {
         if (isCurrent) {
@@ -22,7 +21,7 @@ Rectangle {
         }
     }
 
-    border.width: vpx(3)
+    border.width: vpx(5)
     border.color: (isCurrent && (gridHasFocus || isSelected)) ? selectedBorderColor :
     (isDarkMode ? "transparent" : tileColors.tileBorder || "#e0e0e0")
 
@@ -39,13 +38,13 @@ Rectangle {
     Column {
         anchors.fill: parent
         anchors.margins: vpx(5)
-        spacing: vpx(8)
+        spacing: vpx(0)
         z: 2
 
         Rectangle {
             id: imageContainer
             width: parent.width
-            height: parent.height * 0.80
+            height: parent.height
             color: tileColors.tileImageBg
             radius: vpx(10)
             clip: true
@@ -234,52 +233,59 @@ Rectangle {
                     visible: source !== "" && status === Image.Ready
                 }
 
-                Item {
-                    id: defaultIconContainer
+                Column {
                     anchors.centerIn: parent
-                    width: vpx(86)
-                    height: vpx(86)
+                    spacing: vpx(8)
+                    width: parent.width - vpx(10)
                     visible: gameImage.source === "" || gameImage.status !== Image.Ready
 
-                    Image {
-                        id: systemFallbackIcon
-                        anchors.fill: parent
+                    Item {
+                        id: defaultIconContainer
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: vpx(86)
+                        height: vpx(86)
 
-                        source: {
-                            if (gameData.collections && gameData.collections.count > 0) {
-                                var firstColl = gameData.collections.get(0);
-                                var shortName = firstColl.shortName || firstColl.name;
-                                if (shortName) {
-                                    return "assets/systems/" + shortName.toLowerCase() + ".png";
+                        Image {
+                            id: systemFallbackIcon
+                            anchors.fill: parent
+
+                            source: {
+                                if (gameData.collections && gameData.collections.count > 0) {
+                                    var firstColl = gameData.collections.get(0);
+                                    var shortName = firstColl.shortName || firstColl.name;
+                                    if (shortName) {
+                                        return "assets/systems/" + shortName.toLowerCase() + ".png";
+                                    }
                                 }
+                                return "";
                             }
-                            return "";
+                            fillMode: Image.PreserveAspectFit
+                            visible: source !== "" && status === Image.Ready
+                            mipmap: true
                         }
-                        fillMode: Image.PreserveAspectFit
-                        visible: source !== "" && status === Image.Ready
-                        mipmap: true
+
+                        ColorOverlay {
+                            anchors.fill: systemFallbackIcon
+                            source: systemFallbackIcon
+                            visible: systemFallbackIcon.visible
+                            color: tile.isDarkMode ? "white" : (tileColors.text || "#212121")
+                        }
                     }
 
-                    ColorOverlay {
-                        anchors.fill: systemFallbackIcon
-                        source: systemFallbackIcon
-                        visible: systemFallbackIcon.visible
-                        color: tile.isDarkMode ? "white" : (tileColors.text || "#212121")
+                    Text {
+                        id: gameTitleText
+                        width: parent.width
+                        text: gameData.title
+                        color: tileColors.text
+                        font.pixelSize: vpx(13)
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
             }
-        }
-
-        Text {
-            width: parent.width
-            text: gameData.title
-            color: tileColors.text
-            font.pixelSize: vpx(13)
-            font.bold: true
-            wrapMode: Text.Wrap
-            maximumLineCount: 2
-            elide: Text.ElideRight
-            horizontalAlignment: Text.AlignHCenter
         }
 
     }

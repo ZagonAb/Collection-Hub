@@ -139,15 +139,83 @@ Rectangle {
                             spacing: vpx(2)
                             width: parent.width - vpx(40)
 
-                            Text {
-                                text: modelData.name || modelData.shortName
-                                color: systemCollectionsContainer.selectedCollectionIndex === index ?
-                                (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
-                                font.pixelSize: vpx(13)
-                                font.bold: true
-                                elide: Text.ElideRight
+                            Item {
+                                id: marqueeContainer
                                 width: parent.width
+                                height: marqueeText1.height
+                                clip: true
 
+                                property bool isActive: isCurrent && systemCollectionsList.activeFocus
+                                property bool needsScroll: marqueeText1.implicitWidth > marqueeContainer.width
+                                property real scrollOffset: 0
+                                property real cycleWidth: marqueeText1.implicitWidth + marqueeSep.implicitWidth
+                                property color textColor: systemCollectionsContainer.selectedCollectionIndex === index ?
+                                    (isDarkTheme ? "white" : themeColors.text) : themeColors.text || "white"
+
+                                Text {
+                                    id: marqueeText1
+                                    text: modelData.name || modelData.shortName
+                                    color: marqueeContainer.textColor
+                                    font.pixelSize: vpx(13)
+                                    font.bold: true
+                                    elide: marqueeContainer.isActive ? Text.ElideNone : Text.ElideRight
+                                    width: marqueeContainer.isActive ? implicitWidth : marqueeContainer.width
+                                    x: -marqueeContainer.scrollOffset
+                                    y: 0
+                                }
+
+                                Text {
+                                    id: marqueeSep
+                                    text: "  •  "
+                                    color: marqueeContainer.textColor
+                                    font.pixelSize: vpx(13)
+                                    elide: Text.ElideNone
+                                    x: marqueeText1.implicitWidth - marqueeContainer.scrollOffset
+                                    y: 0
+                                    visible: marqueeContainer.needsScroll && marqueeContainer.isActive
+                                }
+
+                                Text {
+                                    id: marqueeText2
+                                    text: modelData.name || modelData.shortName
+                                    color: marqueeContainer.textColor
+                                    font.pixelSize: vpx(13)
+                                    font.bold: true
+                                    elide: Text.ElideNone
+                                    x: marqueeText1.implicitWidth + marqueeSep.implicitWidth - marqueeContainer.scrollOffset
+                                    y: 0
+                                    visible: marqueeContainer.needsScroll && marqueeContainer.isActive
+                                }
+
+                                NumberAnimation {
+                                    id: marqueeAnim
+                                    target: marqueeContainer
+                                    property: "scrollOffset"
+                                    from: 0
+                                    to: marqueeContainer.cycleWidth
+                                    duration: marqueeContainer.cycleWidth * 22
+                                    easing.type: Easing.Linear
+                                    loops: Animation.Infinite
+                                    running: false
+                                }
+
+                                onIsActiveChanged: {
+                                    scrollOffset = 0;
+                                    marqueeAnim.stop();
+                                    if (isActive && needsScroll) {
+                                        marqueeAnim.start();
+                                    }
+                                }
+
+                                onNeedsScrollChanged: {
+                                    if (isActive && needsScroll) {
+                                        scrollOffset = 0;
+                                        marqueeAnim.start();
+                                    } else {
+                                        marqueeAnim.stop();
+                                        scrollOffset = 0;
+                                    }
+                                }
                             }
 
                             Text {
