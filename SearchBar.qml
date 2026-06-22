@@ -9,7 +9,7 @@ Item {
 
     property bool isExpanded: false
     property int collapsedWidth: vpx(52)
-    property int expandedWidth: vpx(490)
+    property int expandedWidth: vpx(450)
 
     signal searchChanged(string text)
     signal moveToSortMenu()
@@ -58,7 +58,7 @@ Item {
 
             Text {
                 anchors.fill: parent
-                text: "Search here..."
+                text: "Title, Publisher, Developer, Genre..."
                 color: searchColors.textTertiary || "#707070"
                 font.pixelSize: vpx(15)
                 verticalAlignment: Text.AlignVCenter
