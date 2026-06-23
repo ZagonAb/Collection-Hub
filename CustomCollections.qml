@@ -32,7 +32,7 @@ Rectangle {
         Text {
             text: "My Collections"
             font.bold: true
-            font.pixelSize: vpx(18)
+            font.pixelSize: vpx(20)
             color: themeColors.text || "white"
         }
 
