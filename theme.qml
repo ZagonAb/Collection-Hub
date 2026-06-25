@@ -1363,15 +1363,14 @@ FocusScope {
             onClose: root.closeGameDetail()
             onLaunchRequested: {
                 if (root.currentDetailGame) {
-                    Utils.launchGameFromCollection(root.currentDetailGame.title)
+                    root.currentDetailGame.launch()
                 }
                 root.closeGameDetail()
             }
+
             onFavoriteToggled: {
                 if (root.currentDetailGame) {
-                    var newState = Utils.toggleGameFavorite(root.currentDetailGame.title)
-                    if (newState !== null)
-                        root.currentDetailGame.favorite = newState
+                    root.currentDetailGame.favorite = !root.currentDetailGame.favorite
                 }
             }
         }

@@ -27,6 +27,9 @@ Rectangle {
     property string activeLetter: ""
     property var letterIndex: []
 
+    property var filteredRealRefs: []
+    property var displayRealRefs: []
+
     signal gameRightClicked(var game, int x, int y)
     signal showGameDetail(var game)
     signal requestAddGame(var game)
@@ -75,12 +78,15 @@ Rectangle {
 
     function applyLetterFilter() {
         displayModel.clear();
+        var newDisplayRefs = [];
 
         if (!letterFilterActive || activeLetterIdx < 0 || activeLetterIdx >= letterIndex.length) {
             for (var i = 0; i < filteredModel.count; i++) {
                 displayModel.append(filteredModel.get(i));
+                newDisplayRefs.push(filteredRealRefs[i]);
             }
             activeLetter = "";
+            displayRealRefs = newDisplayRefs;
             return;
         }
 
@@ -97,8 +103,10 @@ Rectangle {
             .replace(/[UÚÙÜÛ]/g, "U");
             if (ch === target) {
                 displayModel.append(item);
+                newDisplayRefs.push(filteredRealRefs[i]);
             }
         }
+        displayRealRefs = newDisplayRefs;
     }
 
     function goNextLetter() {
@@ -135,6 +143,7 @@ Rectangle {
 
     function updateFilteredModel() {
         filteredModel.clear();
+        var newFilteredRefs = [];
 
         var sourceGames = [];
         var seenTitles = {};
@@ -238,7 +247,9 @@ Rectangle {
 
         for (var i = 0; i < sourceGames.length; i++) {
             filteredModel.append(sourceGames[i]);
+            newFilteredRefs.push(sourceGames[i]);
         }
+        filteredRealRefs = newFilteredRefs;
 
         activeLetterIdx = -1;
         letterFilterActive = false;
@@ -302,7 +313,10 @@ Rectangle {
                 gridContainer.searchFilter !== "" ||
                 (gridContainer.selectedCollectionId !== -1 && gridContainer.systemCollection === null)
 
-                onShowDetailRequested: function(game) { gridContainer.showGameDetail(game); }
+                onShowDetailRequested: function(game) {
+                    var realGame = gridContainer.displayRealRefs[index];
+                    gridContainer.showGameDetail(realGame || game);
+                }
 
                 isGameInUserCollection: {
                     if (gridContainer.selectedCollectionId === -1) return false;
@@ -314,8 +328,10 @@ Rectangle {
 
                 onIsSelectedChanged: { if (isSelected) gamesGrid.currentIndex = index; }
 
-                onRightClicked: function(game, x, y) { gridContainer.requestAddGame(game); }
-
+                onRightClicked: function(game, x, y) {
+                    var realGame = gridContainer.displayRealRefs[index];
+                    gridContainer.requestAddGame(realGame || game);
+                }
                 selectedBorderColor: {
                     if (gridContainer.systemCollection && gridContainer.systemCollection.shortName) {
                         var mc = colorMapper.getColor(gridContainer.systemCollection.shortName);
@@ -338,14 +354,16 @@ Rectangle {
                 }
                 if (api.keys.isDetails(event)) {
                     if (currentItem && currentItem.gameData) {
-                        gridContainer.requestAddGame(currentItem.gameData);
+                        var realGame = gridContainer.displayRealRefs[currentIndex];
+                        gridContainer.requestAddGame(realGame || currentItem.gameData);
                         event.accepted = true;
                     }
                     return;
                 }
                 if (!event.isAutoRepeat && api.keys.isAccept(event)) {
                     if (currentItem && currentItem.gameData) {
-                        gridContainer.showGameDetail(currentItem.gameData);
+                        var realGame = gridContainer.displayRealRefs[currentIndex];
+                        gridContainer.showGameDetail(realGame || currentItem.gameData);
                         event.accepted = true;
                     }
                 } else if (api.keys.isCancel(event)) {
