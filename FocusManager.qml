@@ -22,8 +22,44 @@ Item {
     readonly property int focusSortBtn: 4
     readonly property int focusThemeBtn: 5
     readonly property int focusCreateBtn: 6
+    property int lastGridIndex: 0
 
     signal selectAllGamesTriggered()
+    signal focusAreaReported(int area)
+
+    onFocusAreaReported: function(area) {
+        currentFocusArea = area;
+    }
+
+    property var _gamesGridWatcher: Connections {
+        target: focusManager.gamesGrid
+        enabled: focusManager.gamesGrid !== null
+        function onActiveFocusChanged() {
+            if (focusManager.gamesGrid && focusManager.gamesGrid.activeFocus) {
+                focusManager.currentFocusArea = focusManager.focusGrid;
+            }
+        }
+    }
+
+    property var _systemWatcher: Connections {
+        target: focusManager.systemCollections
+        enabled: focusManager.systemCollections !== null
+        function onActiveFocusChanged() {
+            if (focusManager.systemCollections && focusManager.systemCollections.activeFocus) {
+                focusManager.currentFocusArea = focusManager.focusSystem;
+            }
+        }
+    }
+
+    property var _customWatcher: Connections {
+        target: focusManager.customCollections
+        enabled: focusManager.customCollections !== null
+        function onActiveFocusChanged() {
+            if (focusManager.customCollections && focusManager.customCollections.activeFocus) {
+                focusManager.currentFocusArea = focusManager.focusCustom;
+            }
+        }
+    }
 
     function selectAllGames() {
         lastSystemIndex = 0;

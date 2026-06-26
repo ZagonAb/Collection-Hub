@@ -299,6 +299,12 @@ Rectangle {
             preferredHighlightBegin: topMargin
             preferredHighlightEnd: height - topMargin - cellHeight
 
+            onActiveFocusChanged: {
+                if (activeFocus && gridContainer.focusManager) {
+                    gridContainer.focusManager.currentFocusArea = gridContainer.focusManager.focusGrid;
+                }
+            }
+
             Component.onCompleted: {
                 currentIndex = 0;
                 forceActiveFocus();

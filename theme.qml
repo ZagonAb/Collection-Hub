@@ -6,6 +6,7 @@ import "utils.js" as Utils
 
 FocusScope {
     id: root
+    focus: true
 
     property var customCollections: []
     property var currentCollectionGameTitles: []
@@ -17,6 +18,39 @@ FocusScope {
     property int sortOrder: 0
     property bool showSortMenu: false
     property var currentDetailGame: null
+    property bool _gameWasLaunched: false
+
+
+    Connections {
+        target: Qt.application
+        function onStateChanged() {
+            if (Qt.application.state === Qt.ApplicationActive) {
+                Qt.callLater(function() {
+                    restoreFocusAfterGame();
+                });
+            }
+        }
+    }
+
+    function restoreFocusAfterGame() {
+        if (!_gameWasLaunched) return;
+        _gameWasLaunched = false;
+
+        if (gameDetailLoader.active) {
+            gameDetailLoader.active = false;
+            currentDetailGame = null;
+        }
+
+        if (focusManager && focusManager.gamesGrid) {
+            focusManager.currentFocusArea = focusManager.focusGrid;
+            focusManager.gamesGrid.currentIndex = focusManager.lastGridIndex;
+            focusManager.gamesGrid.positionViewAtIndex(
+                focusManager.lastGridIndex,
+                GridView.Contain
+            );
+            focusManager.gamesGrid.forceActiveFocus();
+        }
+    }
 
     function openGameDetail(game) {
         currentDetailGame = game;
@@ -24,11 +58,20 @@ FocusScope {
     }
 
     function closeGameDetail() {
+        var savedIndex = focusManager && focusManager.gamesGrid
+        ? focusManager.gamesGrid.currentIndex
+        : 0;
+
         gameDetailLoader.active = false;
         currentDetailGame = null;
-        if (focusManager && focusManager.gamesGrid) {
-            focusManager.gamesGrid.forceActiveFocus();
-        }
+
+        Qt.callLater(function() {
+            if (focusManager && focusManager.gamesGrid) {
+                focusManager.currentFocusArea = focusManager.focusGrid;
+                focusManager.gamesGrid.currentIndex = savedIndex;
+                focusManager.gamesGrid.forceActiveFocus();
+            }
+        });
     }
 
     onShowSortMenuChanged: {
@@ -1361,11 +1404,24 @@ FocusScope {
             isDarkTheme: root.isDarkTheme
 
             onClose: root.closeGameDetail()
+
             onLaunchRequested: {
-                if (root.currentDetailGame) {
-                    root.currentDetailGame.launch()
+                var savedIndex = focusManager.gamesGrid
+                ? focusManager.gamesGrid.currentIndex
+                : 0;
+                root._gameWasLaunched = true;
+                var gameToLaunch = root.currentDetailGame;
+
+                gameDetailLoader.active = false;
+                currentDetailGame = null;
+
+                if (focusManager) {
+                    focusManager.lastGridIndex = savedIndex;
                 }
-                root.closeGameDetail()
+
+                if (gameToLaunch) {
+                    gameToLaunch.launch();
+                }
             }
 
             onFavoriteToggled: {
