@@ -10,7 +10,6 @@ Rectangle {
     property int selectedCollectionId: -1
     property var themeColors: ({})
     property bool isDarkTheme: true
-    property bool scrollbarReady: false
     property var focusManager: null
     property alias customCollectionsList: customCollectionsList
 
@@ -44,7 +43,7 @@ Rectangle {
                 id: customCollectionsList
                 anchors.fill: parent
                 leftMargin: vpx(4)
-                rightMargin: vpx(10)
+                rightMargin: vpx(15)
                 topMargin: vpx(1)
                 bottomMargin: vpx(1)
                 model: customCollectionsContainer.customCollections
@@ -53,12 +52,6 @@ Rectangle {
                 focus: true
                 keyNavigationWraps: false
                 highlightFollowsCurrentItem: true
-
-                Component.onCompleted: {
-                    Qt.callLater(function() {
-                        customCollectionsContainer.scrollbarReady = true;
-                    });
-                }
 
                 Keys.onPressed: function(event) {
                     if (!activeFocus) return;
@@ -321,23 +314,10 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                anchors.right: parent.right
-                anchors.rightMargin: vpx(2)
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: vpx(3)
-                color: "transparent"
-                visible: scrollbarReady && customCollectionsList.contentHeight > customCollectionsList.height
-
-                Rectangle {
-                    width: parent.width
-                    height: Math.max(vpx(20), (customCollectionsList.height / customCollectionsList.contentHeight) * parent.height)
-                    y: (customCollectionsList.contentY / customCollectionsList.contentHeight) * parent.height
-                    color: themeColors.primaryHover || "#5a8ec5"
-                    radius: vpx(1.5)
-                    opacity: 1.0
-                }
+            CustomScrollBar {
+                id: scrollBarCus
+                listView: customCollectionsList
+                thumbColor: themeColors.primaryHover || "#5a8ec5"
             }
         }
 

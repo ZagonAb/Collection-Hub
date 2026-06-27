@@ -17,18 +17,25 @@ Rectangle {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var focusManager: null
-    property alias gridView: gamesGrid
+    property alias gridView: gamesGridView
     property bool scrollbarReady: false
     property var customCollections: []
     property var addGameLoaderRef: null
-
     property int activeLetterIdx: -1
     property bool letterFilterActive: false
     property string activeLetter: ""
     property var letterIndex: []
-
     property var filteredRealRefs: []
     property var displayRealRefs: []
+
+    property color scrollbarColor: {
+        if (systemCollection && systemCollection.shortName) {
+            var mapped = colorMapper.getColor(systemCollection.shortName);
+            if (mapped !== "#000000" && mapped !== "")
+                return mapped;
+        }
+        return themeColors.primaryHover || "#5a8ec5";
+    }
 
     signal gameRightClicked(var game, int x, int y)
     signal showGameDetail(var game)
@@ -121,7 +128,7 @@ Rectangle {
             activeLetterIdx = activeLetterIdx + 1;
         }
         applyLetterFilter();
-        gamesGrid.currentIndex = 0;
+        gamesGridView.currentIndex = 0;
         letterHud.triggerShow();
     }
 
@@ -137,7 +144,7 @@ Rectangle {
             activeLetterIdx = activeLetterIdx - 1;
         }
         applyLetterFilter();
-        gamesGrid.currentIndex = 0;
+        gamesGridView.currentIndex = 0;
         letterHud.triggerShow();
     }
 
@@ -273,7 +280,7 @@ Rectangle {
         anchors.fill: parent
 
         GridView {
-            id: gamesGrid
+            id: gamesGridView
             focus: true
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
@@ -299,6 +306,24 @@ Rectangle {
             preferredHighlightBegin: topMargin
             preferredHighlightEnd: height - topMargin - cellHeight
 
+            MouseArea {
+                anchors.fill: parent
+                propagateComposedEvents: true
+                onWheel: {
+                    var delta = wheel.angleDelta.y;
+                    var step = gamesGridView.cellHeight;
+                    if (delta > 0 && gamesGridView.currentIndex > 0) {
+                        gamesGridView.currentIndex = Math.max(0, gamesGridView.currentIndex - gamesGridView.desiredColumns);
+                    } else if (delta < 0) {
+                        gamesGridView.currentIndex = Math.min(gamesGridView.count - 1, gamesGridView.currentIndex + gamesGridView.desiredColumns);
+                    }
+                    wheel.accepted = true;
+                }
+                onClicked: mouse.accepted = false
+                onPressed: mouse.accepted = false
+                onReleased: mouse.accepted = false
+            }
+
             onActiveFocusChanged: {
                 if (activeFocus && gridContainer.focusManager) {
                     gridContainer.focusManager.currentFocusArea = gridContainer.focusManager.focusGrid;
@@ -313,8 +338,8 @@ Rectangle {
 
             delegate: GameTile {
                 gameData: model
-                width: gamesGrid.calculatedCellWidth
-                height: gamesGrid.calculatedCellHeight
+                width: gamesGridView.calculatedCellWidth
+                height: gamesGridView.calculatedCellHeight
                 showCollectionsInfo: gridContainer.isAllGamesSelected ||
                 gridContainer.searchFilter !== "" ||
                 (gridContainer.selectedCollectionId !== -1 && gridContainer.systemCollection === null)
@@ -332,7 +357,7 @@ Rectangle {
                 tileColors: gridContainer.themeColors
                 isDarkMode: gridContainer.isDarkTheme
 
-                onIsSelectedChanged: { if (isSelected) gamesGrid.currentIndex = index; }
+                onIsSelectedChanged: { if (isSelected) gamesGridView.currentIndex = index; }
 
                 onRightClicked: function(game, x, y) {
                     var realGame = gridContainer.displayRealRefs[index];
@@ -387,7 +412,7 @@ Rectangle {
                 height: vpx(100)
                 color: gridContainer.themeColors.panel
                 radius: vpx(10)
-                visible: gamesGrid.count === 0
+                visible: gamesGridView.count === 0
 
                 Column {
                     anchors.centerIn: parent
@@ -422,29 +447,29 @@ Rectangle {
 
         Rectangle {
             anchors.right: parent.right
-            anchors.rightMargin: vpx(10)
+            anchors.rightMargin: vpx(5)
             anchors.top: parent.top
-            anchors.topMargin: gamesGrid.topMargin
+            anchors.topMargin: gamesGridView.topMargin
             anchors.bottom: parent.bottom
             anchors.bottomMargin: vpx(25)
-            width: vpx(3)
+            width: vpx(8)
             color: "transparent"
-            visible: gridContainer.scrollbarReady && gamesGrid.contentHeight > gamesGrid.height
+            visible: gridContainer.scrollbarReady && gamesGridView.contentHeight > gamesGridView.height
 
             Rectangle {
                 width: parent.width
-                height: Math.max(vpx(30), (gamesGrid.height / gamesGrid.contentHeight) * parent.height)
-                y: (gamesGrid.contentY / gamesGrid.contentHeight) * parent.height
-                color: gridContainer.themeColors.primaryHover || "#5a8ec5"
-                radius: vpx(1.5)
+                height: Math.max(vpx(30), (gamesGridView.height / gamesGridView.contentHeight) * parent.height)
+                y: (gamesGridView.contentY / gamesGridView.contentHeight) * parent.height
+                color: gridContainer.scrollbarColor
+                radius: vpx(4)
                 opacity: 0.5
             }
         }
 
         FastBlur {
             id: gridBlur
-            anchors.fill: gamesGrid
-            source: gamesGrid
+            anchors.fill: gamesGridView
+            source: gamesGridView
             radius: 0
             visible: radius > 0
             z: 9
@@ -455,7 +480,7 @@ Rectangle {
         }
 
         Rectangle {
-            anchors.fill: gamesGrid
+            anchors.fill: gamesGridView
             color: gridContainer.isDarkTheme ? "#B3000000" : "#B3F2F2F4"
             opacity: gridBlur.radius > 0 ? 1.0 : 0.0
             visible: opacity > 0
@@ -469,7 +494,7 @@ Rectangle {
 
         Item {
             id: letterHud
-            anchors.centerIn: gamesGrid
+            anchors.centerIn: gamesGridView
             width: hudCard.width
             height: hudCard.height
             z: 11
@@ -612,7 +637,7 @@ Rectangle {
 
                     addGameLoader.item.closed.connect(function() {
                         addGameLoader.active = false;
-                        gamesGrid.forceActiveFocus();
+                        gamesGridView.forceActiveFocus();
                     });
                     addGameLoader.item.launchGame.connect(function() {
                         if (addGameLoader._pendingGame)

@@ -89,6 +89,10 @@ Item {
         } else if (currentFocusArea === focusSortBtn) {
             currentFocusArea = focusSearch;
             if (searchBar) searchBar.forceActiveFocus();
+        } else if (currentFocusArea === focusSearch && searchBar && searchBar.searchText === "") {
+            searchBar.collapse();
+            currentFocusArea = focusGrid;
+            if (gamesGrid) gamesGrid.forceActiveFocus();
         } else {
             currentFocusArea = focusSystem;
             if (systemCollections) {

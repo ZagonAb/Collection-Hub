@@ -57,7 +57,7 @@ Rectangle {
                 spacing: vpx(5)
                 clip: true
                 leftMargin: vpx(4)
-                rightMargin: vpx(10)
+                rightMargin: vpx(15)
                 topMargin: vpx(1)
                 bottomMargin: vpx(1)
                 focus: true
@@ -282,23 +282,10 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                anchors.right: parent.right
-                anchors.rightMargin: vpx(1)
-                anchors.top: systemCollectionsList.top
-                anchors.bottom: systemCollectionsList.bottom
-                width: vpx(3)
-                color: "transparent"
-                visible: systemCollectionsList.contentHeight > systemCollectionsList.height
-
-                Rectangle {
-                    width: parent.width
-                    height: Math.max(vpx(20), (systemCollectionsList.height / systemCollectionsList.contentHeight) * parent.height)
-                    y: (systemCollectionsList.contentY / systemCollectionsList.contentHeight) * parent.height
-                    color: systemCollectionsContainer.scrollbarColor
-                    radius: vpx(1.5)
-                    opacity: 1.0
-                }
+            CustomScrollBar {
+                id: scrollBarSys
+                listView: systemCollectionsList
+                thumbColor: systemCollectionsContainer.scrollbarColor
             }
         }
     }

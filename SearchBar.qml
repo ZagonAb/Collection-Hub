@@ -13,6 +13,7 @@ Item {
 
     signal searchChanged(string text)
     signal moveToSortMenu()
+    signal moveToGrid()
 
     width: isExpanded ? expandedWidth : collapsedWidth
     height: vpx(44)
@@ -71,6 +72,12 @@ Item {
                         searchBar.moveToSortMenu();
                         event.accepted = true;
                         return;
+                    }
+                }
+                else if (event.key === Qt.Key_Left) {
+                    if (text.length === 0 || cursorPosition === 0) {
+                        event.accepted = true;
+                        searchBar.moveToGrid();
                     }
                 }
                 else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {

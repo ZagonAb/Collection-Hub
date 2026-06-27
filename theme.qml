@@ -225,48 +225,63 @@ FocusScope {
                         border.width: vpx(1)
                         radius: vpx(10)
 
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: vpx(8)
+                        Item {
+                            anchors.fill: parent
+                            anchors.leftMargin: vpx(10)
+                            anchors.rightMargin: vpx(10)
 
-                            Item {
-                                width: vpx(28)
-                                height: vpx(28)
+                            Row {
+                                anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
+                                spacing: vpx(8)
 
-                                Image {
-                                    id: allGamesIcon
-                                    anchors.fill: parent
-                                    source: "assets/icons/allgames.svg"
-                                    fillMode: Image.PreserveAspectFit
+                                Item {
+                                    width: vpx(28)
+                                    height: vpx(28)
+                                    anchors.verticalCenter: parent.verticalCenter
 
-                                    Rectangle {
+                                    Image {
+                                        id: allGamesIcon
                                         anchors.fill: parent
-                                        color: colors.panel
-                                        visible: parent.status !== Image.Ready
+                                        source: "assets/icons/allgames.svg"
+                                        fillMode: Image.PreserveAspectFit
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "🎮"
-                                            font.pixelSize: vpx(14)
-                                            color: colors.text
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: colors.panel
+                                            visible: parent.status !== Image.Ready
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "🎮"
+                                                font.pixelSize: vpx(14)
+                                                color: colors.text
+                                            }
                                         }
+                                    }
+
+                                    ColorOverlay {
+                                        anchors.fill: allGamesIcon
+                                        source: allGamesIcon
+                                        color: root.isDarkTheme ? "white" : "#212121"
                                     }
                                 }
 
-                                ColorOverlay {
-                                    anchors.fill: allGamesIcon
-                                    source: allGamesIcon
-                                    color: root.isDarkTheme ? "white" : "#212121"
+                                Text {
+                                    text: "All Games"
+                                    color: colors.text
+                                    font.pixelSize: vpx(15)
+                                    font.bold: root.selectedCollectionId === -1 && root.selectedSystemCollection === null
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
 
                             Text {
-                                text: "All Games (" + api.allGames.count + ")"
-                                color: colors.text
-                                font.pixelSize: vpx(13)
-                                font.bold: root.selectedCollectionId === -1 && root.selectedSystemCollection === null
+                                anchors.right: parent.right
                                 anchors.verticalCenter: parent.verticalCenter
+                                text: "(" + api.allGames.count + ")"
+                                color: colors.textSecondary
+                                font.pixelSize: vpx(15)
                             }
                         }
 
@@ -292,8 +307,6 @@ FocusScope {
                             NumberAnimation { duration: 150 }
                         }
                     }
-
-
                 }
 
                 SystemCollections {
@@ -466,13 +479,14 @@ FocusScope {
                         verticalCenter: parent.verticalCenter
                     }
                     searchColors: root.colors
-
                     onSearchChanged: function(text) {
                         gamesGrid.searchFilter = text;
                     }
-
                     onMoveToSortMenu: {
                         focusManager.focusOnSortBtn();
+                    }
+                    onMoveToGrid: {
+                        focusManager.moveFocusLeft();
                     }
                 }
 
