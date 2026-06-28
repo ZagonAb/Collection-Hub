@@ -8,7 +8,7 @@
 ![screen1](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen1.png)
 ![screen2](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen2.png)
 ![screen3](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen3.png)
-![screen4]()
+![screen4](https://github.com/ZagonAb/Collection-Hub/blob/bf21b0bfdca0e42294c1a57d5723f0cb5fd65c16/.meta/screenshots/screen4.png)
 
 
 ## Installation
