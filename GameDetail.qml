@@ -1,3 +1,10 @@
+// Collection Hub Theme
+// Copyright (C) 2026 Gonzalo
+//
+// Licensed under Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International.
+//
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
 import "utils.js" as Utils
@@ -149,8 +156,8 @@ FocusScope {
 
         } else if (event.key === Qt.Key_Right) {
             var next = currentButton + 1
-            while (next < 4 && root.isButtonDisabled(next)) next++
-            currentButton = Math.min(4, next)
+            while (next < 5 && root.isButtonDisabled(next)) next++
+            currentButton = Math.min(5, next)
             event.accepted = true
 
         } else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
@@ -158,7 +165,8 @@ FocusScope {
             else if (currentButton === 1) { root.favoriteToggled() }
             else if (currentButton === 2 && root.galleryAvailable) { openGallery() }
             else if (currentButton === 3 && root.infoAvailable)    { openInfo() }
-            else if (currentButton === 4) { root.close() }
+            else if (currentButton === 4) { openRaInfo() }
+            else if (currentButton === 5) { root.close() }
             event.accepted = true
 
         } else if (api.keys.isCancel(event)) {
@@ -182,6 +190,15 @@ FocusScope {
 
     function closeInfo() {
         infoLoader.active = false
+        root.forceActiveFocus()
+    }
+
+    function openRaInfo() {
+        raInfoLoader.active = true
+    }
+
+    function closeRaInfo() {
+        raInfoLoader.active = false
         root.forceActiveFocus()
     }
 
@@ -226,8 +243,8 @@ FocusScope {
         anchors.centerIn: parent
         spacing: vpx(52)
         z: 2
-        visible: !infoLoader.active
-        opacity: infoLoader.active ? 0 : 1
+        visible: !infoLoader.active && !raInfoLoader.active
+        opacity: (infoLoader.active || raInfoLoader.active) ? 0 : 1
         Behavior on opacity { NumberAnimation { duration: 180 } }
 
         Item {
@@ -313,7 +330,7 @@ FocusScope {
         }
 
         Column {
-            width: vpx(360)
+            width: vpx(460)
             anchors.verticalCenter: parent.verticalCenter
             spacing: vpx(12)
 
@@ -321,7 +338,7 @@ FocusScope {
                 width: parent.width
                 text: root.gameData ? root.gameData.title : ""
                 color: "#ffffff"
-                font.pixelSize: vpx(32)
+                font.pixelSize: vpx(42)
                 font.bold: true
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
@@ -537,14 +554,58 @@ FocusScope {
                 }
 
                 Rectangle {
+                    id: raBtn
                     width: vpx(46)
                     height: vpx(46)
-                    color: backMouse.containsMouse ? "#33ffffff" : "#22000000"
+                    color: raMouse.containsMouse ? "#33ffffff" : "#22000000"
                     radius: vpx(10)
                     border.color: root.currentButton === 4 ? "#ffffff" : "#55ffffff"
                     border.width: root.currentButton === 4 ? vpx(2) : vpx(1)
 
                     scale: root.currentButton === 4 ? 1.08 : 1.0
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    Item {
+                        anchors.centerIn: parent
+                        width: vpx(32)
+                        height: vpx(32)
+
+                        Image {
+                            id: raIcon
+                            anchors.fill: parent
+                            source: "assets/icons/ra.svg"
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+                        }
+
+                        ColorOverlay {
+                            anchors.fill: raIcon
+                            source: raIcon
+                            color: "#ffffff"
+                        }
+                    }
+
+                    MouseArea {
+                        id: raMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: root.currentButton = 4
+                        onClicked: root.openRaInfo()
+                    }
+                }
+
+                Rectangle {
+                    width: vpx(46)
+                    height: vpx(46)
+                    color: backMouse.containsMouse ? "#33ffffff" : "#22000000"
+                    radius: vpx(10)
+                    border.color: root.currentButton === 5 ? "#ffffff" : "#55ffffff"
+                    border.width: root.currentButton === 5 ? vpx(2) : vpx(1)
+
+                    scale: root.currentButton === 5 ? 1.08 : 1.0
                     Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -574,7 +635,7 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.currentButton = 4
+                        onEntered: root.currentButton = 5
                         onClicked: root.close()
                     }
                 }
@@ -630,6 +691,32 @@ FocusScope {
                 Qt.callLater(function() {
                     if (infoLoader.item)
                         infoLoader.item.forceActiveFocus()
+                })
+            }
+        }
+    }
+
+    Loader {
+        id: raInfoLoader
+        anchors.fill: parent
+        active: false
+        z: 12
+
+        sourceComponent: Component {
+            RAGameInfoSection {
+                anchors.fill: parent
+                gameData: root.gameData
+                themeColors: root.detailColors
+                isDarkTheme: root.isDarkTheme
+                onCloseRequested: root.closeRaInfo()
+            }
+        }
+
+        onActiveChanged: {
+            if (active) {
+                Qt.callLater(function() {
+                    if (raInfoLoader.item)
+                        raInfoLoader.item.forceActiveFocus()
                 })
             }
         }

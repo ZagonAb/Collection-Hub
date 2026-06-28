@@ -1,3 +1,10 @@
+// Collection Hub Theme
+// Copyright (C) 2026 Gonzalo
+//
+// Licensed under Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International.
+//
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 import QtQuick 2.15
 import SortFilterProxyModel 0.2
 import QtGraphicalEffects 1.12
@@ -17,6 +24,7 @@ FocusScope {
     property bool showGameMenu: false
     property int sortOrder: 0
     property bool showSortMenu: false
+    property bool showRaPopup: false
     property var currentDetailGame: null
     property bool _gameWasLaunched: false
 
@@ -182,6 +190,7 @@ FocusScope {
             focusManager.systemCollections = systemCollections.systemCollectionsList;
             focusManager.customCollections = customCollectionsView.customCollectionsList;
             focusManager.searchBar = searchBar;
+            focusManager.raBtn = raBtnScope;
             focusManager.sortBtn = sortBtn;
             focusManager.themeBtn = themeBtnScope;
             focusManager.createBtn = createCollectionTopBtn;
@@ -474,7 +483,7 @@ FocusScope {
                 SearchBar {
                     id: searchBar
                     anchors {
-                        right: sortBtn.left
+                        right: raBtnScope.left
                         rightMargin: vpx(8)
                         verticalCenter: parent.verticalCenter
                     }
@@ -483,10 +492,97 @@ FocusScope {
                         gamesGrid.searchFilter = text;
                     }
                     onMoveToSortMenu: {
-                        focusManager.focusOnSortBtn();
+                        focusManager.moveFocusRight();
                     }
                     onMoveToGrid: {
                         focusManager.moveFocusLeft();
+                    }
+                }
+
+                FocusScope {
+                    id: raBtnScope
+                    anchors {
+                        right: sortBtn.left
+                        rightMargin: vpx(6)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: vpx(44)
+                    height: vpx(44)
+
+                    property bool keyboardFocused: activeFocus &&
+                        focusManager.currentFocusArea === focusManager.focusRaBtn
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: root.showRaPopup
+                            ? colors.primary
+                            : (raBtnMouse.containsMouse || parent.keyboardFocused
+                               ? colors.primary : "transparent")
+                        radius: vpx(10)
+
+                        Item {
+                            width: vpx(22)
+                            height: vpx(22)
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: raIcon
+                                anchors.fill: parent
+                                source: "assets/icons/ra.svg"
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: raIcon
+                                source: raIcon
+                                color: "#ffffff"
+                            }
+                        }
+
+                        MouseArea {
+                            id: raBtnMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.showRaPopup = !root.showRaPopup;
+                                if (root.showRaPopup) {
+                                    root.showSortMenu = false;
+                                    raCredentialsPopup.open();
+                                    raBtnScope.forceActiveFocus();
+                                } else {
+                                    raCredentialsPopup.close();
+                                }
+                            }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if (root.showRaPopup) { return; }
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            root.showRaPopup = true;
+                            root.showSortMenu = false;
+                            raCredentialsPopup.open();
+                            raCredentialsPopup.forceActiveFocus();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Right) {
+                            focusManager.moveFocusRight();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Left) {
+                            focusManager.moveFocusLeft();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
+                            focusManager.moveFocusDown();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            focusManager.moveFocusUp();
+                            event.accepted = true;
+                        }
                     }
                 }
 
@@ -1316,7 +1412,7 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         color: colors.overlay
-        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || gameDetailLoader.active
+        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || gameDetailLoader.active || root.showRaPopup
         z: 9
         opacity: 1
 
@@ -1334,6 +1430,10 @@ FocusScope {
                     if (focusManager && focusManager.customCollections) {
                         focusManager.customCollections.forceActiveFocus();
                     }
+                } else if (root.showRaPopup) {
+                    root.showRaPopup = false;
+                    raCredentialsPopup.close();
+                    raBtnScope.forceActiveFocus();
                 } else {
                     root.showCollectionEditor = false;
                     root.showGameMenu = false;
@@ -1348,7 +1448,7 @@ FocusScope {
 
     Keys.onPressed: function(event) {
         if (gameDetailLoader.active) { return; }
-        if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || root.showSortMenu) {
+        if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || root.showSortMenu || root.showRaPopup) {
             return;
         }
 
@@ -1404,6 +1504,25 @@ FocusScope {
         onCloseMenu: {
             root.showSortMenu = false;
             sortBtn.forceActiveFocus();
+        }
+    }
+
+    RACredentialsPopup {
+        id: raCredentialsPopup
+        anchors.right: root.right
+        anchors.rightMargin: vpx(10)
+        anchors.top: root.top
+        anchors.topMargin: vpx(66)
+        themeColors: root.colors
+        z: 30
+
+        onPopupClosed: {
+            root.showRaPopup = false;
+            raBtnScope.forceActiveFocus();
+        }
+
+        onCredentialsSaved: {
+            root.showRaPopup = false;
         }
     }
 

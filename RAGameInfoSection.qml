@@ -1,0 +1,1245 @@
+// Collection Hub Theme
+// Copyright (C) 2026 Gonzalo
+//
+// Licensed under Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International.
+//
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
+import QtQuick 2.15
+import QtGraphicalEffects 1.12
+
+FocusScope {
+    id: root
+
+    property var gameData: null
+    property var themeColors: ({})
+    property bool isDarkTheme: true
+
+    readonly property var game: gameData
+    readonly property bool lightTheme: !isDarkTheme
+
+    readonly property color _textPrimary: themeColors.text || (lightTheme ? "#0d1117" : "#f0f4f8")
+    readonly property color _textSecondary: themeColors.textSecondary || (lightTheme ? "#2a6080" : "#c8d8e8")
+    readonly property color _textMuted: themeColors.textTertiary || (lightTheme ? "#5a6472" : "#b8bcbf")
+    readonly property color _textDim: themeColors.textTertiary || (lightTheme ? "#8b929a" : "#585a60")
+    readonly property color _bgCard: themeColors.tileBg || (lightTheme ? "#f8f9fc" : "#1c2533")
+    readonly property color _bgHighlight: themeColors.inputBg || (lightTheme ? "#e9ecef" : "#3d4450")
+    readonly property color _progressBg: themeColors.inputBorder || (lightTheme ? "#d1d5db" : "#585a60")
+    readonly property color _progressFill: themeColors.primary || (lightTheme ? "#1a6b7a" : "#1a9fff")
+    readonly property color _progressFull: themeColors.success || (lightTheme ? "#0d9488" : "#f5a623")
+    readonly property color _borderColor: themeColors.panelBorder || (lightTheme ? "#cbd5e1" : "#2a3a48")
+    readonly property color _buttonBg: themeColors.inputBg || (lightTheme ? "#e2e8f0" : "#1e2d3a")
+    readonly property color _buttonBorder: themeColors.inputBorder || (lightTheme ? "#94a3b8" : "#2e3e50")
+    readonly property color _buttonFocusBg: themeColors.primary || (lightTheme ? "#0d1117" : "#f5a623")
+    readonly property color _buttonFocusText: themeColors.text || (lightTheme ? "#ffffff" : "#0b1117")
+    readonly property color _debugBg: themeColors.background || (lightTheme ? "#eef2f5" : "#050b12")
+    readonly property color _debugText: themeColors.success || (lightTheme ? "#1a6b7a" : "#3a7a5a")
+    readonly property color _iconColor: themeColors.text || (lightTheme ? "#0d1117" : "#ffffff")
+
+    signal closeRequested()
+
+    readonly property bool gridActiveFocus: _achGrid.activeFocus
+    readonly property bool hasGrid: true
+    readonly property var currentGame: null
+
+    function gridFocusAtZero() {
+        _achGrid.currentIndex = 0
+        _achGrid.forceActiveFocus()
+    }
+
+    property string _apiKey: api.memory.has("ra_api_key") ? api.memory.get("ra_api_key") : ""
+    property string _apiUser: api.memory.has("ra_api_user") ? api.memory.get("ra_api_user") : ""
+    readonly property string _base: "https://retroachievements.org/API/"
+    readonly property string _media: "https://media.retroachievements.org"
+
+    readonly property bool _hasCredentials: _apiKey !== "" && _apiUser !== ""
+    property bool _searching: false
+    property bool _loading: false
+    property bool _notFound: false
+    property bool _noAchievementsYet: false
+
+    property string _errorMsg: ""
+    property string _debugLog: ""
+    property string _raGameId: ""
+    property string _raTitle: ""
+    property string _raConsole: ""
+    property string _raImgIcon: ""
+
+    property int _raNumAch: 0
+    property int _raPoints: 0
+    property int _numEarned: 0
+    property var _achievements: []
+    property int _selIdx: 0
+    property int _raPlayers: 0
+
+    function _log(msg) {
+        root._debugLog = root._debugLog + "\n" + msg;
+    }
+
+    function _apiUrl(endpoint, params) {
+        var url = _base + endpoint + "?y=" + _apiKey;
+        for (var k in params) url += "&" + k + "=" + encodeURIComponent(params[k]);
+        return url;
+    }
+
+    function _get(url, cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            if (xhr.status === 200) {
+                try { cb(null, JSON.parse(xhr.responseText)); }
+                catch(e) { cb("JSON parse error: " + e, null); }
+            } else {
+                cb("HTTP " + xhr.status, null);
+            }
+        };
+        xhr.send();
+    }
+
+    function _normalize(str) {
+        if (!str) return "";
+        return str.toLowerCase()
+        .replace(/\b(the|a|an)\b\s*/g, "")
+        .replace(/[:\-\u2013_',\.\!?®™©\(\)\[\]\/\\]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function _words(norm) {
+        return norm.split(" ").filter(function(w){ return w.length >= 2; });
+    }
+
+    function _matchScore(pegTitle, raTitle) {
+        var pNorm = _normalize(pegTitle);
+        var rNorm = _normalize(raTitle);
+
+        if (pNorm === rNorm) return 2.0;
+
+        var pWords = _words(pNorm);
+        var rWords = _words(rNorm);
+        if (pWords.length === 0) return 0.0;
+
+        var hitsP = 0;
+        for (var i = 0; i < pWords.length; i++) {
+            if (rNorm.indexOf(pWords[i]) !== -1) hitsP++;
+        }
+        var precision = hitsP / pWords.length;
+
+        var hitsR = 0;
+        for (var j = 0; j < rWords.length; j++) {
+            if (pNorm.indexOf(rWords[j]) !== -1) hitsR++;
+        }
+        var recall = rWords.length > 0 ? hitsR / rWords.length : 0;
+
+        if (precision + recall === 0) return 0.0;
+        return 2.0 * precision * recall / (precision + recall);
+    }
+
+    readonly property var _consoleMappings: ({
+        "snes": ["SNES/Super Famicom"],
+        "superfamicom": ["SNES/Super Famicom"],
+        "nes": ["NES/Famicom"],
+        "famicom": ["NES/Famicom"],
+        "fds": ["Famicom Disk System"],
+        "famicomdisksystem": ["Famicom Disk System"],
+        "n64": ["Nintendo 64"],
+        "nintendo64": ["Nintendo 64"],
+        "gb": ["Game Boy"],
+        "gameboy": ["Game Boy"],
+        "gbc": ["Game Boy Color"],
+        "gameboycolor": ["Game Boy Color"],
+        "gba": ["Game Boy Advance"],
+        "gameboyadvance": ["Game Boy Advance"],
+        "nds": ["Nintendo DS"],
+        "nintendods": ["Nintendo DS"],
+        "ndsi": ["Nintendo DSi"],
+        "nintendodsi": ["Nintendo DSi"],
+        "3ds": ["Nintendo 3DS"],
+        "nintendo3ds": ["Nintendo 3DS"],
+        "gamecube": ["GameCube"],
+        "gc": ["GameCube"],
+        "wii": ["Wii"],
+        "wiiu": ["Wii U"],
+        "virtualboy": ["Virtual Boy"],
+        "pokemini": ["Pokemon Mini"],
+        "genesis": ["Genesis/Mega Drive"],
+        "megadrive": ["Genesis/Mega Drive"],
+        "mastersystem": ["Master System"],
+        "sms": ["Master System"],
+        "gamegear": ["Game Gear"],
+        "gg": ["Game Gear"],
+        "saturn": ["Saturn"],
+        "dreamcast": ["Dreamcast"],
+        "segacd": ["Sega CD"],
+        "megacd": ["Sega CD"],
+        "32x": ["32X"],
+        "sega32x": ["32X"],
+        "segapico": ["Sega Pico"],
+        "sg1000": ["SG-1000"],
+        "psx": ["PlayStation"],
+        "ps1": ["PlayStation"],
+        "playstation": ["PlayStation"],
+        "ps2": ["PlayStation 2"],
+        "playstation2": ["PlayStation 2"],
+        "psp": ["PlayStation Portable"],
+        "atari2600": ["Atari 2600"],
+        "atari5200": ["Atari 5200"],
+        "atari7800": ["Atari 7800"],
+        "lynx": ["Atari Lynx"],
+        "atarilynx": ["Atari Lynx"],
+        "jaguar": ["Atari Jaguar"],
+        "atarijaguar": ["Atari Jaguar"],
+        "jaguarcd": ["Atari Jaguar CD"],
+        "atarijaguarcd": ["Atari Jaguar CD"],
+        "atarist": ["Atari ST"],
+        "pcengine": ["PC Engine/TurboGrafx-16"],
+        "turbografx": ["PC Engine/TurboGrafx-16"],
+        "tg16": ["PC Engine/TurboGrafx-16"],
+        "pcenginecd": ["PC Engine CD/TurboGrafx-CD"],
+        "turbografxcd": ["PC Engine CD/TurboGrafx-CD"],
+        "pcfx": ["PC-FX"],
+        "pc8800": ["PC-8000/8800"],
+        "pc9800": ["PC-9800"],
+        "pc6000": ["PC-6000"],
+        "ngp": ["Neo Geo Pocket"],
+        "neogeopocket": ["Neo Geo Pocket"],
+        "neogeocd": ["Neo Geo CD"],
+        "arcade": ["Arcade"],
+        "mame": ["Arcade"],
+        "wonderswan": ["WonderSwan"],
+        "msx": ["MSX"],
+        "colecovision": ["ColecoVision"],
+        "intellivision": ["Intellivision"],
+        "vectrex": ["Vectrex"],
+        "3do": ["3DO Interactive Multiplayer"],
+        "amiga": ["Amiga"],
+        "amstradcpc": ["Amstrad CPC"],
+        "appleii": ["Apple II"],
+        "c64": ["Commodore 64"],
+        "commodore64": ["Commodore 64"],
+        "dos": ["DOS"],
+        "vic20": ["VIC-20"],
+        "zxspectrum": ["ZX Spectrum"],
+        "zx81": ["ZX81"],
+        "fmtowns": ["FM Towns"],
+        "sharpx1": ["Sharp X1"],
+        "sharpx68000": ["Sharp X68000"],
+        "x68000": ["Sharp X68000"],
+        "philipscdi": ["Philips CD-i"],
+        "cdi": ["Philips CD-i"],
+        "thomsonto8": ["Thomson TO8"],
+        "oric": ["Oric"],
+        "nokiangage": ["Nokia N-Gage"],
+        "ngage": ["Nokia N-Gage"],
+        "gameandwatch": ["Game & Watch"],
+        "uzebox": ["Uzebox"],
+        "arduboy": ["Arduboy"],
+        "ti83": ["TI-83"],
+        "tic80": ["TIC-80"],
+        "wasm4": ["WASM-4"],
+        "watarasupervision": ["Watara Supervision"],
+        "supervision": ["Watara Supervision"],
+        "megaduck": ["Mega Duck"],
+        "zeebo": ["Zeebo"],
+        "xbox": ["Xbox"]
+    })
+
+    readonly property var _consoleIds: ({
+        "snes": 3, "superfamicom": 3,
+        "nes": 7, "famicom": 7,
+        "fds": 81, "famicomdisksystem": 81,
+        "n64": 2, "nintendo64": 2,
+        "gb": 4, "gameboy": 4,
+        "gbc": 6, "gameboycolor": 6,
+        "gba": 5, "gameboyadvance": 5,
+        "nds": 18, "nintendods": 18,
+        "ndsi": 78, "nintendodsi": 78,
+        "3ds": 62, "nintendo3ds": 62,
+        "gamecube": 16, "gc": 16,
+        "wii": 19,
+        "wiiu": 20,
+        "virtualboy": 28,
+        "pokemini": 24,
+        "genesis": 1, "megadrive": 1,
+        "mastersystem": 11, "sms": 11,
+        "gamegear": 15, "gg": 15,
+        "saturn": 39,
+        "dreamcast": 40,
+        "segacd": 9, "megacd": 9,
+        "32x": 10, "sega32x": 10,
+        "segapico": 68,
+        "sg1000": 33,
+        "psx": 12, "ps1": 12, "playstation": 12,
+        "ps2": 21, "playstation2": 21,
+        "psp": 41,
+        "atari2600": 25,
+        "atari5200": 50,
+        "atari7800": 51,
+        "lynx": 13, "atarilynx": 13,
+        "jaguar": 17, "atarijaguar": 17,
+        "jaguarcd": 77, "atarijaguarcd": 77,
+        "atarist": 36,
+        "pcengine": 8, "turbografx": 8, "tg16": 8,
+        "pcenginecd": 76, "turbografxcd": 76,
+        "pcfx": 49,
+        "pc8800": 47,
+        "pc9800": 48,
+        "pc6000": 67,
+        "ngp": 14, "neogeopocket": 14,
+        "neogeocd": 56,
+        "arcade": 27, "mame": 27,
+        "wonderswan": 53,
+        "msx": 29,
+        "colecovision": 44,
+        "intellivision": 45,
+        "vectrex": 46,
+        "3do": 43,
+        "amiga": 35,
+        "amstradcpc": 37,
+        "appleii": 38,
+        "c64": 30, "commodore64": 30,
+        "dos": 26,
+        "vic20": 34,
+        "zxspectrum": 59,
+        "zx81": 31,
+        "fmtowns": 58,
+        "sharpx1": 64,
+        "sharpx68000": 52, "x68000": 52,
+        "philipscdi": 42, "cdi": 42,
+        "thomsonto8": 66,
+        "oric": 32,
+        "nokiangage": 61, "ngage": 61,
+        "gameandwatch": 60,
+        "uzebox": 80,
+        "arduboy": 71,
+        "ti83": 79,
+        "tic80": 65,
+        "wasm4": 72,
+        "watarasupervision": 63, "supervision": 63,
+        "megaduck": 69,
+        "zeebo": 70,
+        "xbox": 22
+    })
+
+    function _getCollectionShortName() {
+        if (!game) return "";
+        try {
+            if (game.collections && game.collections.count > 0) {
+                var col = game.collections.get(0);
+                var name = col.name || "";
+                var shortName = col.shortName || "";
+                _log("Collection[0] name='" + name + "'  shortName='" + shortName + "'");
+                var sn = shortName !== ""
+                ? shortName.toLowerCase().replace(/[\s\-_]/g, "")
+                : name.toLowerCase().replace(/[\s\-_]/g, "");
+                return sn;
+            } else {
+                _log("game.collections: empty or unavailable");
+            }
+        } catch(e) {
+            _log("game.collections read error: " + e);
+        }
+        return "";
+    }
+
+    function load() {
+        _apiKey = api.memory.has("ra_api_key") ? api.memory.get("ra_api_key") : "";
+        _apiUser = api.memory.has("ra_api_user") ? api.memory.get("ra_api_user") : "";
+
+        _raGameId = ""; _raTitle = ""; _raConsole = ""; _raImgIcon = "";
+        _raNumAch = 0; _raPoints = 0; _numEarned = 0;
+        _achievements = []; _selIdx = 0;
+        _notFound = false;
+        _noAchievementsYet = false;
+        _errorMsg = ""; _debugLog = "";
+        _searching = false; _loading = false;
+
+        _log("=== load() ===");
+
+        if (!game) {
+            _log("ERROR: game is null");
+            _errorMsg = "No game selected.";
+            return;
+        }
+
+        _log("game.title       = '" + (game.title || "") + "'");
+        _log("game.developer   = '" + (game.developer || "") + "'");
+        _log("game.publisher   = '" + (game.publisher || "") + "'");
+        _log("game.genre       = '" + (game.genre || "") + "'");
+        _log("game.releaseYear = '" + (game.releaseYear || "") + "'");
+
+        var directId = "";
+        try {
+            if (typeof game.extraData !== "undefined" && game.extraData) {
+                directId = game.extraData["x-id"]
+                || game.extraData["ra_id"]
+                || game.extraData["ra_game_id"]
+                || game.extraData["retroachievements_id"]
+                || "";
+                _log("game.extraData ra_id = '" + directId + "'");
+            } else {
+                _log("game.extraData: not available");
+            }
+        } catch(e) {
+            _log("game.extraData error: " + e);
+        }
+
+        var colShort = _getCollectionShortName();
+
+        if (!_hasCredentials) {
+            _log("No credentials (ra_api_key / ra_api_user missing)");
+            _errorMsg = "Connect your RetroAchievements account\nto see your progress here.";
+            return;
+        }
+        _log("Credentials OK: user='" + _apiUser + "', key=" + _apiKey.substring(0,4) + "****");
+
+        if (directId !== "") {
+            _log("Using direct RA ID from extraData: " + directId);
+            _raGameId = directId;
+            _fetchProgress(directId);
+        } else {
+            _searchForGame(colShort);
+        }
+    }
+
+    function _searchForGame(colShort) {
+        _searching = true;
+        _log("Fetching API_GetUserCompletionProgress (c=500)...");
+
+        var url = _apiUrl("API_GetUserCompletionProgress.php",
+                          { u: _apiUser, c: 500, o: 0 });
+        _get(url, function(err, data) {
+            _searching = false;
+
+            if (err || !data) {
+                _log("API error: " + (err || "empty response"));
+                _errorMsg = "Could not reach RetroAchievements.\n(" + (err || "empty") + ")";
+                return;
+            }
+
+            var list = data.Results || (Array.isArray(data) ? data : []);
+            _log("Received " + list.length + " games in user library");
+
+            var pegTitle = game ? (game.title || "") : "";
+            var pegNorm = _normalize(pegTitle);
+            var raConsoles = _consoleMappings[colShort] || [];
+
+            _log("Pegasus title (raw):        '" + pegTitle + "'");
+            _log("Pegasus title (normalized): '" + pegNorm + "'");
+            _log("Collection shortName key:   '" + colShort + "'");
+            _log("Expected RA consoles:       " + JSON.stringify(raConsoles));
+
+            var scored = [];
+            for (var i = 0; i < list.length; i++) {
+                var g = list[i];
+                var sc = _matchScore(pegTitle, g.Title || "");
+
+                if (raConsoles.length > 0 && (g.ConsoleName || "") !== "") {
+                    var consoleMatch = false;
+                    for (var ci = 0; ci < raConsoles.length; ci++) {
+                        if ((g.ConsoleName || "").indexOf(raConsoles[ci]) !== -1) {
+                            consoleMatch = true;
+                            break;
+                        }
+                    }
+                    sc = consoleMatch ? sc + 0.5 : sc - 0.2;
+                }
+                scored.push({ g: g, score: sc });
+            }
+
+            scored.sort(function(a, b){ return b.score - a.score; });
+
+            _log("--- Top 8 candidates ---");
+            for (var ti = 0; ti < Math.min(8, scored.length); ti++) {
+                var s = scored[ti];
+                _log("  [" + s.score.toFixed(3) + "] '" + (s.g.Title || "?")
+                + "' | " + (s.g.ConsoleName || "?")
+                + " | ID=" + (s.g.GameID || "?"));
+            }
+            _log("------------------------");
+
+            var best = scored.length > 0 ? scored[0] : null;
+            var bestF1Base = best ? _matchScore(pegTitle, best.g.Title || "") : 0;
+            var THRESHOLD = 0.60;
+
+            var bestConsoleMatch = false;
+            if (best && raConsoles.length > 0 && (best.g.ConsoleName || "") !== "") {
+                for (var cj = 0; cj < raConsoles.length; cj++) {
+                    if ((best.g.ConsoleName || "").indexOf(raConsoles[cj]) !== -1) {
+                        bestConsoleMatch = true;
+                        break;
+                    }
+                }
+            }
+            var consoleCheckRequired = raConsoles.length > 0;
+            var consoleOk = !consoleCheckRequired || bestConsoleMatch || (bestF1Base >= 2.0);
+
+            var accepted = best
+            && bestF1Base > 0.0
+            && best.score >= THRESHOLD
+            && consoleOk;
+
+            _log("Acceptance check: f1=" + bestF1Base.toFixed(3)
+            + " total=" + (best ? best.score.toFixed(3) : "n/a")
+            + " consoleOk=" + consoleOk
+            + " consoleCheckRequired=" + consoleCheckRequired
+            + " bestConsoleMatch=" + bestConsoleMatch);
+
+            if (accepted) {
+                _log("MATCH ACCEPTED: f1=" + bestF1Base.toFixed(3)
+                + " total=" + best.score.toFixed(3)
+                + " title='" + best.g.Title + "' ID=" + best.g.GameID);
+                _raGameId = String(best.g.GameID || "");
+                _fetchProgress(_raGameId);
+            } else {
+                if (best) {
+                    _log("MATCH REJECTED: f1=" + bestF1Base.toFixed(3)
+                    + " total=" + best.score.toFixed(3)
+                    + " consoleOk=" + consoleOk
+                    + "  title='" + best.g.Title + "' console='" + (best.g.ConsoleName||"") + "'");
+                } else {
+                    _log("MATCH REJECTED: list was empty");
+                }
+                _log("Trying GetGameList fallback...");
+                _searchByGameList(pegTitle, colShort);
+            }
+        });
+    }
+
+    function _searchByGameList(pegTitle, colShort) {
+        var cid = _consoleIds[colShort] || 0;
+        if (cid === 0) {
+            _log("No console ID mapping for '" + colShort + "' – cannot use GetGameList");
+            _showNotFound(pegTitle);
+            return;
+        }
+
+        _log("Fetching API_GetGameList consoleId=" + cid + " ('" + colShort + "')...");
+        var url = _apiUrl("API_GetGameList.php", { i: cid });
+        _get(url, function(err, data) {
+            if (err || !Array.isArray(data)) {
+                _log("GetGameList error: " + (err || "not an array"));
+                _showNotFound(pegTitle);
+                return;
+            }
+            _log("GetGameList returned " + data.length + " games");
+
+            var scored = [];
+            for (var i = 0; i < data.length; i++) {
+                var g = data[i];
+                var sc = _matchScore(pegTitle, g.Title || "");
+                scored.push({ g: g, score: sc });
+            }
+            scored.sort(function(a,b){ return b.score - a.score; });
+
+            _log("--- GetGameList Top 8 ---");
+            for (var ti = 0; ti < Math.min(8, scored.length); ti++) {
+                var s = scored[ti];
+                _log("  [" + s.score.toFixed(3) + "] '" + (s.g.Title || "?")
+                + "' ID=" + (s.g.ID || s.g.GameID || "?"));
+            }
+            _log("------------------------");
+
+            var THRESHOLD = 0.55;
+            var best = scored.length > 0 ? scored[0] : null;
+
+            if (best && best.score >= THRESHOLD) {
+                var gid = String(best.g.ID || best.g.GameID || "");
+                _log("FALLBACK MATCH ACCEPTED: '" + best.g.Title + "' ID=" + gid);
+                _raGameId = gid;
+                _fetchProgress(gid);
+            } else {
+                _log("FALLBACK MATCH REJECTED"
+                + (best ? ": best=" + best.score.toFixed(3) + " '" + best.g.Title + "'" : ""));
+                _showNotFound(pegTitle);
+            }
+        });
+    }
+
+    function _showNotFound(pegTitle) {
+        _log("=== NOT FOUND: '" + pegTitle + "' ===");
+        _notFound = true;
+    }
+
+    function _fetchProgress(gid) {
+        _loading = true;
+        _log("Fetching API_GetGameInfoAndUserProgress ID=" + gid + " user=" + _apiUser + "...");
+
+        var url = _apiUrl("API_GetGameInfoAndUserProgress.php",
+                          { u: _apiUser, g: gid });
+        _get(url, function(err, data) {
+            _loading = false;
+
+            if (err || !data) {
+                _log("GetGameInfoAndUserProgress error: " + (err || "empty"));
+                _errorMsg = "Could not load game data.\n(" + (err || "empty") + ")";
+                return;
+            }
+
+            _raTitle = data.Title || "";
+            _raConsole = data.ConsoleName || "";
+            _raImgIcon = data.ImageIcon ? (_media + data.ImageIcon) : "";
+            _raNumAch = parseInt(data.NumAchievements) || 0;
+            _raPoints = parseInt(data.Points) || 0;
+            _numEarned = parseInt(data.NumAwardedToUser) || 0;
+            _raPlayers = parseInt(data.NumDistinctPlayersCasual) || 0;
+
+            _log("Loaded: '" + _raTitle + "' / " + _raConsole);
+            _log("Achievements: " + _numEarned + "/" + _raNumAch + "  Points: " + _raPoints);
+
+            var ach = [];
+            var achMap = data.Achievements || {};
+            for (var id in achMap) {
+                var a = achMap[id];
+                var earned = (a.DateEarned && a.DateEarned !== "");
+                ach.push({
+                    id: id,
+                    title: a.Title || "",
+                    description: a.Description || "",
+                    points: parseInt(a.Points) || 0,
+                         badgeUrl: a.BadgeName ? (_media + "/Badge/" + a.BadgeName + ".png") : "",
+                         badgeLocked: a.BadgeName ? (_media + "/Badge/" + a.BadgeName + "_lock.png") : "",
+                         earned: earned,
+                         dateEarned: earned ? a.DateEarned : "",
+                         numAwarded: parseInt(a.NumAwarded) || 0,
+                         trueRatio: parseInt(a.TrueRatio) || 0
+                });
+            }
+            ach.sort(function(a, b) {
+                if (a.earned !== b.earned) return a.earned ? -1 : 1;
+                return b.points - a.points;
+            });
+            _achievements = ach;
+            _earnedIdx = 0;
+            _lockedIdx = 0;
+            _activeSection = _earnedList.length > 0 ? "earned" : "locked";
+            _log("Done. " + ach.length + " achievements loaded.");
+            if (_raNumAch === 0) _noAchievementsYet = true;
+        });
+    }
+
+    Component.onCompleted: load()
+    onGameChanged: load()
+    onGameDataChanged: load()
+
+    readonly property var _earnedList: {
+        var r = []
+        for (var i = 0; i < _achievements.length; i++)
+            if (_achievements[i].earned) r.push(_achievements[i])
+                return r
+    }
+    readonly property var _lockedList: {
+        var r = []
+        for (var i = 0; i < _achievements.length; i++)
+            if (!_achievements[i].earned) r.push(_achievements[i])
+                return r
+    }
+
+    property string _activeSection: "locked"
+    property int _earnedIdx: 0
+    property int _lockedIdx: 0
+
+    readonly property var _activeAch: {
+        if (_activeSection === "earned" && _earnedList.length > 0)
+            return _earnedList[_earnedIdx]
+            if (_lockedList.length > 0)
+                return _lockedList[_lockedIdx]
+                return {}
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#CC000000"
+    }
+
+    Rectangle {
+        id: refreshBtn
+        anchors.top: parent.top
+        anchors.right: closeBtn.left
+        anchors.topMargin: vpx(16)
+        anchors.rightMargin: vpx(8)
+        width: vpx(42)
+        height: vpx(42)
+        radius: vpx(8)
+        color: refreshBtnMouse.containsMouse ? "#33ffffff" : "#22000000"
+        border.color: "#55ffffff"
+        border.width: vpx(1)
+        z: 10
+        Behavior on color { ColorAnimation { duration: 120 } }
+
+        Item {
+            anchors.centerIn: parent
+            width: vpx(22); height: vpx(22)
+
+            Image {
+                id: _refreshIcon
+                anchors.fill: parent
+                source: "assets/icons/refresh.svg"
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+                visible: false
+            }
+            ColorOverlay {
+                anchors.fill: _refreshIcon
+                source: _refreshIcon
+                color: "#ffffff"
+            }
+        }
+
+        MouseArea {
+            id: refreshBtnMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.load()
+        }
+    }
+
+    Rectangle {
+        id: closeBtn
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: vpx(16)
+        anchors.rightMargin: vpx(16)
+        width: vpx(42)
+        height: vpx(42)
+        radius: vpx(8)
+        color: closeBtnMouse.containsMouse ? "#33ffffff" : "#22000000"
+        border.color: "#55ffffff"
+        border.width: vpx(1)
+        z: 10
+        Behavior on color { ColorAnimation { duration: 120 } }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\xd7"
+            color: "#ffffff"
+            font.pixelSize: vpx(24)
+            font.bold: true
+        }
+
+        MouseArea {
+            id: closeBtnMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.closeRequested()
+        }
+    }
+
+    Item {
+        id: _mainContainer
+        anchors {
+            top: parent.top
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+            topMargin: vpx(24)
+            bottomMargin: vpx(24)
+            leftMargin: vpx(48)
+            rightMargin: vpx(48)
+        }
+
+        Item {
+            id: _errorState
+            anchors.fill: parent
+            visible: !_searching && !_loading && _errorMsg !== ""
+
+            onVisibleChanged: {
+                if (visible && root._hasCredentials) {
+                    Qt.callLater(function() { _retryBtn.forceActiveFocus() })
+                }
+            }
+
+            Column {
+                anchors.centerIn: parent
+                spacing: vpx(16)
+
+                Item {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: vpx(48); height: vpx(48)
+
+                    Image {
+                        id: _errIcon
+                        anchors.fill: parent
+                        source: "assets/icons/ra.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: _errIcon
+                        source: _errIcon
+                        color: _iconColor
+                        opacity: 0.4
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: root._errorMsg
+                    color: _textMuted
+                    font.pixelSize: vpx(15)
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    width: vpx(420)
+                }
+
+                Item {
+                    id: _retryBtn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: vpx(110); height: vpx(34)
+                    visible: root._hasCredentials
+                    focus: true
+
+                    Keys.onPressed: function(event) {
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            event.accepted = true
+                            root.load()
+                        } else if (api.keys.isCancel(event)) {
+                            event.accepted = true
+                            root.closeRequested()
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: vpx(17)
+                        color: (_retryBtn.activeFocus || _retryArea.containsMouse)
+                        ? _progressFill : _buttonBg
+                        border.color: (_retryBtn.activeFocus || _retryArea.containsMouse)
+                        ? _progressFill : _buttonBorder
+                        border.width: _retryBtn.activeFocus ? vpx(2) : vpx(1)
+                        Behavior on color       { ColorAnimation { duration: 150 } }
+                        Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Retry"
+                            color: (_retryBtn.activeFocus || _retryArea.containsMouse)
+                            ? "#ffffff" : _textSecondary
+                            font.pixelSize: vpx(13)
+                            font.bold: true
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+                    }
+
+                    MouseArea {
+                        id: _retryArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { _retryBtn.forceActiveFocus(); root.load() }
+                    }
+                }
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            visible: (_searching || _loading) && _errorMsg === ""
+
+            Column {
+                anchors.centerIn: parent
+                spacing: vpx(18)
+
+                Item {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: vpx(64); height: vpx(64)
+
+                    Image {
+                        id: _loadIconSrc
+                        anchors.fill: parent
+                        source: "assets/icons/ra.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: _loadIconSrc
+                        source: _loadIconSrc
+                        color: _iconColor
+                        SequentialAnimation on scale {
+                            running: _searching || _loading
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 1.2; duration: 400; easing.type: Easing.InOutQuad }
+                            NumberAnimation { to: 0.85; duration: 400; easing.type: Easing.InOutQuad }
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: _searching ? "Searching…" : "Loading achievements…"
+                    color: _textSecondary
+                    font.pixelSize: vpx(16)
+                }
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            visible: !_searching && !_loading && _errorMsg === ""
+            && (_notFound || _noAchievementsYet
+            || (!_notFound && _raGameId !== "" && _raNumAch === 0 && !_noAchievementsYet))
+
+            Column {
+                anchors.centerIn: parent
+                spacing: vpx(12)
+
+                Item {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: vpx(64); height: vpx(64)
+
+                    Image {
+                        id: _noAchIconSrc
+                        anchors.fill: parent
+                        source: "assets/icons/ra.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: _noAchIconSrc
+                        source: _noAchIconSrc
+                        color: _iconColor
+                        opacity: 0.35
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: _notFound
+                    ? "This game was not found on RetroAchievements"
+                    : "No achievements available for this game yet"
+                    color: _textMuted
+                    font.pixelSize: vpx(15)
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+        }
+
+        Item {
+            id: _dataState
+            anchors.fill: parent
+            visible: !_searching && !_loading && _errorMsg === ""
+            && !_notFound && _raNumAch > 0
+
+            readonly property var _selAch: {
+                var idx = _achGrid.currentIndex
+                if (idx < 0 || idx >= _achGrid.model) return {}
+                if (idx < root._earnedList.length)
+                    return root._earnedList[idx] || {}
+                    return root._lockedList[idx - root._earnedList.length] || {}
+            }
+
+            onVisibleChanged: {
+                if (visible) {
+                    Qt.callLater(function() { _achGrid.forceActiveFocus() })
+                }
+            }
+
+            Item {
+                id: _header
+                anchors { top: parent.top; left: parent.left; right: parent.right }
+                height: vpx(72)
+
+                Row {
+                    anchors.fill: parent
+                    spacing: vpx(16)
+
+                    Item {
+                        width: vpx(64); height: vpx(64)
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: vpx(8)
+                            color: _bgCard
+                            border.color: _borderColor
+                            border.width: vpx(1)
+                            visible: _headerIcon.status !== Image.Ready
+                        }
+                        Image {
+                            id: _headerIcon
+                            anchors.fill: parent
+                            source: root._raImgIcon
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            mipmap: true
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - vpx(80)
+                        spacing: vpx(6)
+
+                        Row {
+                            width: parent.width
+                            spacing: vpx(10)
+
+                            Text {
+                                text: root._raTitle || (root.gameData ? root.gameData.title : "")
+                                color: _textPrimary
+                                font.pixelSize: vpx(26)
+                                font.bold: true
+                                elide: Text.ElideRight
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(
+                                    implicitWidth,
+                                    parent.width - _consoleBadge.width - _progressBadge.width - vpx(24)
+                                )
+                            }
+
+                            Rectangle {
+                                id: _progressBadge
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: vpx(22)
+                                width: _progressBadgeText.implicitWidth + vpx(16)
+                                radius: vpx(11)
+                                color: root._numEarned === root._raNumAch ? _progressFull : _progressFill
+                                opacity: 0.85
+
+                                Text {
+                                    id: _progressBadgeText
+                                    anchors.centerIn: parent
+                                    text: root._numEarned + " of " + root._raNumAch + " completed"
+                                    color: "#ffffff"
+                                    font.pixelSize: vpx(16)
+                                    font.bold: true
+                                }
+                            }
+
+                            Rectangle {
+                                id: _consoleBadge
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: root._raConsole !== ""
+                                height: vpx(22)
+                                width: _consoleBadgeText.implicitWidth + vpx(16)
+                                radius: vpx(11)
+                                color: "#22ffffff"
+                                border.color: "#33ffffff"
+                                border.width: vpx(1)
+
+                                Text {
+                                    id: _consoleBadgeText
+                                    anchors.centerIn: parent
+                                    text: root._raConsole
+                                    color: _textSecondary
+                                    font.pixelSize: vpx(16)
+                                }
+                            }
+                        }
+
+                        Item {
+                            width: parent.width; height: vpx(6)
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: vpx(3)
+                                color: _progressBg
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                                radius: vpx(3)
+                                color: root._numEarned === root._raNumAch ? _progressFull : _progressFill
+                                width: root._raNumAch > 0
+                                ? parent.width * root._numEarned / root._raNumAch : 0
+                                Behavior on width  { NumberAnimation { duration: 800; easing.type: Easing.OutQuad } }
+                                Behavior on color  { ColorAnimation  { duration: 300 } }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                id: _infoPanel
+                anchors {
+                    top: _header.bottom
+                    left: parent.left
+                    right: parent.right
+                    topMargin: vpx(10)
+                }
+                height: _descText.lineCount > 1 ? vpx(120) : vpx(75)
+                Behavior on height { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                radius: vpx(8)
+                color: "#16ffffff"
+                border.color: "#22ffffff"
+                border.width: vpx(1)
+
+                Row {
+                    anchors {
+                        left: parent.left; right: parent.right
+                        verticalCenter: parent.verticalCenter
+                        leftMargin: vpx(14); rightMargin: vpx(14)
+                    }
+                    spacing: vpx(12)
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - _infoPts.width - _infoDate.width
+                        - (_infoPts.visible ? vpx(12) : 0)
+                        - (_infoDate.visible ? vpx(12) : 0)
+                        spacing: vpx(2)
+
+                        Text {
+                            width: parent.width
+                            text: _dataState._selAch.title || "—"
+                            color: _textPrimary
+                            font.pixelSize: vpx(23)
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            id: _descText
+                            width: parent.width
+                            text: _dataState._selAch.description || ""
+                            color: _textSecondary
+                            font.pixelSize: vpx(18)
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                            visible: text !== ""
+                        }
+                    }
+
+                    Text {
+                        id: _infoPts
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: (_dataState._selAch.points || 0) > 0
+                        text: (_dataState._selAch.points || 0) + " pts"
+                        color: _progressFull
+                        font.pixelSize: vpx(20)
+                        font.bold: true
+                    }
+
+                    Text {
+                        id: _infoDate
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: (_dataState._selAch.dateEarned || "") !== ""
+                        text: (_dataState._selAch.dateEarned || "") !== ""
+                        ? "✔ " + _dataState._selAch.dateEarned
+                        : ""
+                        color: _textMuted
+                        font.pixelSize: vpx(15)
+                    }
+                }
+            }
+
+            GridView {
+                id: _achGrid
+                anchors {
+                    top: _infoPanel.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                    topMargin: vpx(10)
+                    leftMargin: Math.floor((_dataState.width % vpx(110)) / 2)
+                    rightMargin: Math.floor((_dataState.width % vpx(110)) / 2)
+                }
+                clip: true
+                focus: true
+                keyNavigationWraps: false
+
+                model: root._earnedList.length + root._lockedList.length
+
+                readonly property int _totalEarned: root._earnedList.length
+
+                cellWidth: vpx(110)
+                cellHeight: vpx(110)
+
+                Keys.onPressed: function(event) {
+                    if (api.keys.isCancel(event)) {
+                        event.accepted = true
+                        root.closeRequested()
+                    }
+                }
+
+                delegate: Item {
+                    id: _cell
+                    width: _achGrid.cellWidth
+                    height: _achGrid.cellHeight
+
+                    readonly property bool _isEarned: index < _achGrid._totalEarned
+                    readonly property var _ach: _isEarned
+                    ? (root._earnedList[index] || {})
+                    : (root._lockedList[index - _achGrid._totalEarned] || {})
+                    readonly property bool _selected: _achGrid.currentIndex === index
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: vpx(4)
+                        radius: vpx(10)
+                        color: _cell._selected ? "#1affffff" : "transparent"
+                        border.color: {
+                            if (_cell._selected) return "#ffffff"
+                                if (_cell._isEarned) return _progressFill
+                                    return "#33ffffff"
+                        }
+                        border.width: _cell._selected ? vpx(2) : vpx(1.5)
+                        Behavior on border.color { ColorAnimation { duration: 150 } }
+                        Behavior on color        { ColorAnimation { duration: 150 } }
+
+                        Item {
+                            anchors.fill: parent
+                            anchors.margins: vpx(6)
+
+                            Image {
+                                id: _badgeImg
+                                anchors.fill: parent
+                                source: _cell._isEarned
+                                ? (_cell._ach.badgeUrl    || "")
+                                : (_cell._ach.badgeLocked || "")
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                mipmap: true
+
+                                layer.enabled: !_cell._isEarned
+                                layer.effect: Desaturate { desaturation: 0.9 }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: _bgCard
+                                    visible: parent.status !== Image.Ready
+                                    Behavior on color { ColorAnimation { duration: 300 } }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            anchors.bottomMargin: vpx(4)
+                            anchors.rightMargin: vpx(4)
+                            visible: _cell._isEarned && (_cell._ach.points || 0) > 0
+                            width: _ptsTxt.implicitWidth + vpx(8)
+                            height: vpx(16)
+                            radius: vpx(4)
+                            color: "#CC000000"
+
+                            Text {
+                                id: _ptsTxt
+                                anchors.centerIn: parent
+                                text: (_cell._ach.points || 0) + "pts"
+                                color: _progressFull
+                                font.pixelSize: vpx(9)
+                                font.bold: true
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: _achGrid.currentIndex = index
+                        onClicked: { _achGrid.currentIndex = index; _achGrid.forceActiveFocus() }
+                    }
+                }
+            }
+        }
+    }
+}

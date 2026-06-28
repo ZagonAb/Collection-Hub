@@ -1,3 +1,10 @@
+// Collection Hub Theme
+// Copyright (C) 2026 Gonzalo
+//
+// Licensed under Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International.
+//
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 import QtQuick 2.15
 
 Item {
@@ -10,6 +17,7 @@ Item {
     property var sortBtn: null
     property var themeBtn: null
     property var createBtn: null
+    property var raBtn: null
 
     property int currentFocusArea: 0
     property int lastSystemIndex: 0
@@ -19,9 +27,10 @@ Item {
     readonly property int focusSystem: 1
     readonly property int focusCustom: 2
     readonly property int focusSearch: 3
-    readonly property int focusSortBtn: 4
-    readonly property int focusThemeBtn: 5
-    readonly property int focusCreateBtn: 6
+    readonly property int focusRaBtn: 4
+    readonly property int focusSortBtn: 5
+    readonly property int focusThemeBtn: 6
+    readonly property int focusCreateBtn: 7
     property int lastGridIndex: 0
 
     signal selectAllGamesTriggered()
@@ -87,6 +96,9 @@ Item {
             currentFocusArea = focusSortBtn;
             if (sortBtn) sortBtn.forceActiveFocus();
         } else if (currentFocusArea === focusSortBtn) {
+            currentFocusArea = focusRaBtn;
+            if (raBtn) raBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusRaBtn) {
             currentFocusArea = focusSearch;
             if (searchBar) searchBar.forceActiveFocus();
         } else if (currentFocusArea === focusSearch && searchBar && searchBar.searchText === "") {
@@ -115,15 +127,18 @@ Item {
                 gamesGrid.currentIndex = 0;
                 gamesGrid.forceActiveFocus();
             }
+        } else if (currentFocusArea === focusSearch) {
+            currentFocusArea = focusRaBtn;
+            if (raBtn) raBtn.forceActiveFocus();
+        } else if (currentFocusArea === focusRaBtn) {
+            currentFocusArea = focusSortBtn;
+            if (sortBtn) sortBtn.forceActiveFocus();
         } else if (currentFocusArea === focusSortBtn) {
             currentFocusArea = focusThemeBtn;
             if (themeBtn) themeBtn.forceActiveFocus();
         } else if (currentFocusArea === focusThemeBtn) {
             currentFocusArea = focusCreateBtn;
             if (createBtn) createBtn.forceActiveFocus();
-        } else if (currentFocusArea === focusSearch) {
-            currentFocusArea = focusSortBtn;
-            if (sortBtn) sortBtn.forceActiveFocus();
         }
     }
 
@@ -145,6 +160,7 @@ Item {
 
     function moveFocusDown() {
         if (currentFocusArea === focusSearch ||
+            currentFocusArea === focusRaBtn ||
             currentFocusArea === focusSortBtn ||
             currentFocusArea === focusThemeBtn ||
             currentFocusArea === focusCreateBtn) {
