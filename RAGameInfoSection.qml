@@ -982,7 +982,7 @@ FocusScope {
 
                             Text {
                                 text: root._raTitle || (root.gameData ? root.gameData.title : "")
-                                color: _textPrimary
+                                color: "white"
                                 font.pixelSize: vpx(26)
                                 font.bold: true
                                 elide: Text.ElideRight
@@ -1088,7 +1088,7 @@ FocusScope {
                         Text {
                             width: parent.width
                             text: _dataState._selAch.title || "—"
-                            color: _textPrimary
+                            color: "white"
                             font.pixelSize: vpx(23)
                             font.bold: true
                             elide: Text.ElideRight

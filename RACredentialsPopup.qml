@@ -241,11 +241,6 @@ FocusScope {
             color: "#99000000"
         }
 
-        Rectangle {
-            anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: vpx(3); color: _accentColor; radius: vpx(3)
-        }
-
         Column {
             id: _col
             anchors {
