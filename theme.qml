@@ -536,7 +536,7 @@ FocusScope {
                             ColorOverlay {
                                 anchors.fill: raIcon
                                 source: raIcon
-                                color: "#ffffff"
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
                             }
                         }
 
