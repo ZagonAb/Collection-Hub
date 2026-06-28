@@ -49,12 +49,12 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: vpx(62)
         anchors.top: parent.top
-        z: 2
+        z: 100
 
         onPaint: {
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
-            var bg = sortMenu.isDarkTheme ? "#28282c" : "#f2f2f4";
+            var bg = sortMenu.isDarkTheme ? "#111111" : "#f2f2f4";
             ctx.fillStyle = bg;
             ctx.beginPath();
             ctx.moveTo(width, height);
@@ -76,7 +76,7 @@ Item {
         anchors.topMargin: vpx(-1)
         width: parent.width
         height: titleRow.height + optionsList.height + vpx(24)
-        color: isDarkTheme ? "#28282c" : "#f2f2f4"
+        color: isDarkTheme ? "#111111" : "#f2f2f4"
         radius: vpx(10)
 
         layer.enabled: true

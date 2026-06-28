@@ -1412,7 +1412,7 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         color: colors.overlay
-        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || gameDetailLoader.active || root.showRaPopup
+        visible: root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || gameDetailLoader.active || root.showRaPopup || root.showSortMenu
         z: 9
         opacity: 1
 
@@ -1430,6 +1430,8 @@ FocusScope {
                     if (focusManager && focusManager.customCollections) {
                         focusManager.customCollections.forceActiveFocus();
                     }
+                } else if (root.showSortMenu) {
+                    root.showSortMenu = false;
                 } else if (root.showRaPopup) {
                     root.showRaPopup = false;
                     raCredentialsPopup.close();
