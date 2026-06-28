@@ -5,9 +5,10 @@
 
 
 ![screen0](https://github.com/ZagonAb/Collection-Hub/blob/fa24d4208f563c15012fc63938d446a55bf70fd1/.meta/screenshots/screen0.png)
-![screen1](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen1.png)
-![screen2](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen2.png)
-![screen3](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen3.png)
+![screen0](https://github.com/ZagonAb/Collection-Hub/blob/6df2c1b7c58725040e597bd39ee4e80fea26b8b6/.meta/screenshots/screen0.png)
+![screen1](https://github.com/ZagonAb/Collection-Hub/blob/6df2c1b7c58725040e597bd39ee4e80fea26b8b6/.meta/screenshots/screen1.png)
+![screen2](https://github.com/ZagonAb/Collection-Hub/blob/6df2c1b7c58725040e597bd39ee4e80fea26b8b6/.meta/screenshots/screen2.png)
+![screen4](https://github.com/ZagonAb/Collection-Hub/blob/5530ea97d225da6f7c68ee7d80ec8153e4144ea1/.meta/screenshots/screen3.png)
 ![screen4](https://github.com/ZagonAb/Collection-Hub/blob/bf21b0bfdca0e42294c1a57d5723f0cb5fd65c16/.meta/screenshots/screen4.png)
 
 
