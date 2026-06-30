@@ -356,8 +356,6 @@ FocusScope {
         _searching = false; _loading = false;
 
         _log("=== load() ===");
-        console.log("[RA:load] ==========================================");
-        console.log("[RA:load] game.title =", game ? (game.title || "(sin título)") : "NULL — gameData no llegó");
 
         if (!game) {
             _log("ERROR: game is null");
@@ -388,8 +386,6 @@ FocusScope {
         }
 
         var colShort = _getCollectionShortName();
-
-        console.log("[RA:load] colShort =", colShort, "| directId =", directId !== "" ? directId : "(ninguno — irá a búsqueda)");
 
         if (!_hasCredentials) {
             _log("No credentials (ra_api_key / ra_api_user missing)");
@@ -429,11 +425,6 @@ FocusScope {
             var pegNorm = _normalize(pegTitle);
             var raConsoles = _consoleMappings[colShort] || [];
 
-            console.log("[RA:search] pegTitle (raw) =", pegTitle);
-            console.log("[RA:search] pegTitle (normalizado) =", pegNorm);
-            console.log("[RA:search] colShort =", colShort, "| raConsoles =", JSON.stringify(raConsoles));
-            console.log("[RA:search] total juegos en librería RA =", list.length);
-
             _log("Pegasus title (raw):        '" + pegTitle + "'");
             _log("Pegasus title (normalized): '" + pegNorm + "'");
             _log("Collection shortName key:   '" + colShort + "'");
@@ -465,11 +456,6 @@ FocusScope {
                 _log("  [" + s.score.toFixed(3) + "] '" + (s.g.Title || "?")
                 + "' | " + (s.g.ConsoleName || "?")
                 + " | ID=" + (s.g.GameID || "?"));
-                console.log("[RA:top8] #" + (ti+1),
-                            "score=" + s.score.toFixed(3),
-                            "| title='" + (s.g.Title || "?") + "'",
-                            "| console='" + (s.g.ConsoleName || "?") + "'",
-                            "| ID=" + (s.g.GameID || "?"));
             }
             _log("------------------------");
 
@@ -489,24 +475,16 @@ FocusScope {
             var consoleCheckRequired = raConsoles.length > 0;
             var consoleOk = !consoleCheckRequired || bestConsoleMatch || (bestF1Base >= 2.0);
 
-            var F1_MIN = 0.50;
             var accepted = best
-            && bestF1Base >= F1_MIN
+            && bestF1Base > 0.0
             && best.score >= THRESHOLD
             && consoleOk;
 
             _log("Acceptance check: f1=" + bestF1Base.toFixed(3)
             + " total=" + (best ? best.score.toFixed(3) : "n/a")
-            + " f1Min=" + F1_MIN
             + " consoleOk=" + consoleOk
             + " consoleCheckRequired=" + consoleCheckRequired
             + " bestConsoleMatch=" + bestConsoleMatch);
-
-            console.log("[RA:accept] best.title =", best ? ("'" + best.g.Title + "'") : "NULL",
-                        "| f1 =", bestF1Base.toFixed(3),
-                        "| total =", best ? best.score.toFixed(3) : "n/a",
-                        "| consoleOk =", consoleOk,
-                        "| ACCEPTED =", accepted);
 
             if (accepted) {
                 _log("MATCH ACCEPTED: f1=" + bestF1Base.toFixed(3)
@@ -587,7 +565,6 @@ FocusScope {
     function _fetchProgress(gid) {
         _loading = true;
         _log("Fetching API_GetGameInfoAndUserProgress ID=" + gid + " user=" + _apiUser + "...");
-        console.log("[RA:fetchProgress] ► Solicitando game ID =", gid, "— este es el juego que se va a mostrar");
 
         var url = _apiUrl("API_GetGameInfoAndUserProgress.php",
                           { u: _apiUser, g: gid });
@@ -610,8 +587,6 @@ FocusScope {
 
             _log("Loaded: '" + _raTitle + "' / " + _raConsole);
             _log("Achievements: " + _numEarned + "/" + _raNumAch + "  Points: " + _raPoints);
-            console.log("[RA:fetchProgress] ✔ CARGADO:", _raTitle, "| consola:", _raConsole, "| ID solicitado:", gid);
-            console.log("[RA:fetchProgress] logros:", _numEarned + "/" + _raNumAch, "| puntos:", _raPoints);
 
             var ach = [];
             var achMap = data.Achievements || {};
@@ -646,11 +621,7 @@ FocusScope {
 
     Component.onCompleted: load()
     onGameChanged: load()
-    onGameDataChanged: {
-        console.log("[RA:onGameDataChanged] ► gameData cambió — nuevo title =",
-                    gameData ? (gameData.title || "(sin título)") : "NULL");
-        load();
-    }
+    onGameDataChanged: load()
 
     readonly property var _earnedList: {
         var r = []
