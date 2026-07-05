@@ -13,6 +13,7 @@ FocusScope {
 
     property bool isOpen: false
     property var themeColors: ({})
+    property var soundManager: null
     readonly property bool buttonFocused: _okBtn.activeFocus || _cancelBtn.activeFocus
     readonly property bool credentialsHasText: _userInput.text.length > 0 || _keyInput.text.length > 0
 
@@ -192,7 +193,7 @@ FocusScope {
         width: vpx(16)
         height: vpx(10)
         anchors.right: parent.right
-        anchors.rightMargin: vpx(164)
+        anchors.rightMargin: vpx(215)
         anchors.top: parent.top
         z: 2
 
@@ -306,7 +307,7 @@ FocusScope {
                         return
                     }
                 }
-                Keys.onDownPressed: { event.accepted = true; _keyFieldScope.forceActiveFocus() }
+                Keys.onDownPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _keyFieldScope.forceActiveFocus() }
 
                 Column {
                     id: _userFieldCol
@@ -404,8 +405,8 @@ FocusScope {
                         return
                     }
                 }
-                Keys.onUpPressed: { event.accepted = true; _userFieldScope.forceActiveFocus() }
-                Keys.onDownPressed: { event.accepted = true; _okBtn.forceActiveFocus() }
+                Keys.onUpPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _userFieldScope.forceActiveFocus() }
+                Keys.onDownPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _okBtn.forceActiveFocus() }
 
                 Column {
                     id: _keyFieldCol
@@ -583,21 +584,21 @@ FocusScope {
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
-                    Keys.onUpPressed: { event.accepted = true; _keyFieldScope.forceActiveFocus() }
-                    Keys.onRightPressed: { event.accepted = true; _cancelBtn.forceActiveFocus() }
+                    Keys.onUpPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _keyFieldScope.forceActiveFocus() }
+                    Keys.onRightPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _cancelBtn.forceActiveFocus() }
                     Keys.onPressed: {
                         if (_okBtn._busy) { event.accepted = true; return }
                         if (api.keys.isCancel(event)) { event.accepted = true; root.close(); return }
                         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
-                            event.accepted = true; root._save(); return
+                            event.accepted = true; if (root.soundManager) root.soundManager.playNav(); root._save(); return
                         }
                         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            event.accepted = true; root._save()
+                            event.accepted = true; if (root.soundManager) root.soundManager.playNav(); root._save()
                         }
                     }
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                        onClicked: { if (!_okBtn._busy) root._save() }
+                        onClicked: { if (!_okBtn._busy) { if (root.soundManager) root.soundManager.playNav(); root._save() } }
                     }
                 }
 
@@ -621,8 +622,8 @@ FocusScope {
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
-                    Keys.onUpPressed: { event.accepted = true; _keyFieldScope.forceActiveFocus() }
-                    Keys.onLeftPressed: { event.accepted = true; _okBtn.forceActiveFocus() }
+                    Keys.onUpPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _keyFieldScope.forceActiveFocus() }
+                    Keys.onLeftPressed: { event.accepted = true; if (root.soundManager) root.soundManager.playNav(); _okBtn.forceActiveFocus() }
                     Keys.onPressed: {
                         if (root._testState === "testing") { event.accepted = true; return }
                         if (api.keys.isCancel(event) || api.keys.isAccept(event)

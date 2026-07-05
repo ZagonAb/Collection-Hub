@@ -19,14 +19,15 @@ FocusScope {
     property int contextCollectionId: -1
     property string contextCollectionName: ""
     property var focusManager: null
+    property var soundManager: null
 
-    readonly property color panelBg:        isDarkTheme ? "#1c1c20" : "#f2f2f4"
-    readonly property color titleColor:     isDarkTheme ? "#ffffff" : "#212121"
-    readonly property color subtitleColor:  isDarkTheme ? "#a0a0a0" : "#616161"
+    readonly property color panelBg: isDarkTheme ? "#1c1c20" : "#f2f2f4"
+    readonly property color titleColor: isDarkTheme ? "#ffffff" : "#212121"
+    readonly property color subtitleColor: isDarkTheme ? "#a0a0a0" : "#616161"
     readonly property color separatorColor: isDarkTheme ? "#2a2a2e" : "#e0e0e0"
-    readonly property color itemBg:         isDarkTheme ? "#111114" : "#ffffff"
-    readonly property color itemBorder:     isDarkTheme ? "#303036" : "#e0e0e0"
-    readonly property color accentColor:    themeColors.primary || "#3a6ea5"
+    readonly property color itemBg: isDarkTheme ? "#111114" : "#ffffff"
+    readonly property color itemBorder: isDarkTheme ? "#303036" : "#e0e0e0"
+    readonly property color accentColor: themeColors.primary || "#3a6ea5"
 
     property int navSection: 0
     property bool renameMode: false
@@ -49,11 +50,13 @@ FocusScope {
                 gameMenuRoot.renameCollection(contextCollectionId);
             }
         }
+        if (soundManager) soundManager.playNav();
         cancelRename();
         gameMenuRoot.closeMenu();
     }
 
     function cancelRename() {
+        if (soundManager) soundManager.playBack();
         renameMode = false;
         navSection = 0;
         normalMenu.forceActiveFocus();
@@ -67,6 +70,7 @@ FocusScope {
     Keys.onPressed: function(event) {
         if (renameMode) {
             if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
+                if (soundManager) soundManager.playBack();
                 cancelRename();
                 event.accepted = true;
             }
@@ -74,6 +78,7 @@ FocusScope {
         }
 
         if (api.keys.isDetails(event) || api.keys.isCancel(event)) {
+            if (soundManager) soundManager.playBack();
             gameMenuRoot.closeMenu();
             event.accepted = true;
             return;
@@ -81,14 +86,17 @@ FocusScope {
 
         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
             if (navSection === 0) {
+                if (soundManager) soundManager.playNav();
                 renameMode = true;
                 renameInput.text = contextCollectionName;
                 renameInput.selectAll();
                 renameMenuArea.forceActiveFocus();
             } else if (navSection === 1) {
+                if (soundManager) soundManager.playNav();
                 gameMenuRoot.deleteCollection(contextCollectionId, contextCollectionName);
                 gameMenuRoot.closeMenu();
             } else {
+                if (soundManager) soundManager.playBack();
                 gameMenuRoot.closeMenu();
             }
             event.accepted = true;
@@ -96,11 +104,13 @@ FocusScope {
         }
 
         if (event.key === Qt.Key_Up) {
+            if (soundManager) soundManager.playNav();
             if (navSection > 0) navSection--;
             event.accepted = true;
             return;
         }
         if (event.key === Qt.Key_Down) {
+            if (soundManager) soundManager.playNav();
             if (navSection < 2) navSection++;
             event.accepted = true;
             return;
@@ -111,40 +121,42 @@ FocusScope {
         id: panel
         z: 1
         anchors.centerIn: parent
-        width:  Math.min(vpx(380), parent.width  * 0.6)
+        width: Math.min(vpx(380), parent.width * 0.6)
         height: renameMode ? Math.min(vpx(280), parent.height * 0.5)
-                           : Math.min(vpx(300), parent.height * 0.5)
-        color:  panelBg
+        : Math.min(vpx(300), parent.height * 0.5)
+        color: panelBg
         radius: vpx(20)
 
-        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on height {
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+        }
 
         layer.enabled: true
         layer.effect: DropShadow {
             transparentBorder: true
             horizontalOffset: 0
-            verticalOffset:   vpx(10)
-            radius:           vpx(18)
-            samples:          35
-            color:            "black"
+            verticalOffset: vpx(10)
+            radius: vpx(18)
+            samples: 35
+            color: "black"
         }
 
-        scale:   0.88
+        scale: 0.88
         opacity: 0.0
 
         ParallelAnimation {
             id: entryAnim
-            NumberAnimation { target: panel; property: "scale";   from: 0.88; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
-            NumberAnimation { target: panel; property: "opacity"; from: 0.0;  to: 1.0; duration: 200; easing.type: Easing.OutQuad  }
+            NumberAnimation { target: panel; property: "scale"; from: 0.88; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+            NumberAnimation { target: panel; property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutQuad }
         }
 
         Item {
             id: headerArea
-            anchors.top:         parent.top
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(22)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(22)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(58)
 
@@ -172,11 +184,11 @@ FocusScope {
 
         Rectangle {
             id: sep1
-            anchors.top:         headerArea.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.topMargin:   vpx(4)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: headerArea.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: vpx(4)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
             height: vpx(1)
             color: separatorColor
@@ -185,45 +197,46 @@ FocusScope {
         Item {
             id: normalMenu
             visible: !renameMode
-            anchors.top:         sep1.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottom:      parent.bottom
-            anchors.topMargin:   vpx(14)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: sep1.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.topMargin: vpx(14)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
-            anchors.bottomMargin:vpx(20)
+            anchors.bottomMargin: vpx(20)
             focus: !renameMode
 
             Rectangle {
                 id: renameBtn
-                anchors.top:    parent.top
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
                 height: vpx(44)
                 radius: vpx(8)
 
                 readonly property bool padFocus: gameMenuRoot.navSection === 0
 
                 color: renameMouse.containsMouse || padFocus
-                    ? (isDarkTheme ? "#22334455" : "#eaf2fb")
-                    : (isDarkTheme ? "#111114"   : "#ffffff")
+                ? (isDarkTheme ? "#22334455" : "#eaf2fb")
+                : (isDarkTheme ? "#111114" : "#ffffff")
                 border.color: renameMouse.containsMouse || padFocus
-                    ? accentColor
-                    : itemBorder
+                ? accentColor
+                : itemBorder
                 border.width: (renameMouse.containsMouse || padFocus) ? vpx(2) : vpx(1)
 
-                Behavior on color        { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation { duration: 100 } }
                 Behavior on border.color { ColorAnimation { duration: 100 } }
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.left:       parent.left
+                    anchors.left: parent.left
                     anchors.leftMargin: vpx(12)
                     spacing: vpx(10)
 
                     Item {
-                        width: vpx(22); height: vpx(22)
+                        width: vpx(22)
+                        height: vpx(22)
                         anchors.verticalCenter: parent.verticalCenter
 
                         Image {
@@ -238,8 +251,8 @@ FocusScope {
                             anchors.fill: renameIcon
                             source: renameIcon
                             color: renameMouse.containsMouse || renameBtn.padFocus
-                                ? accentColor
-                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            ? accentColor
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
                             visible: renameIcon.visible
                         }
                         Text {
@@ -247,8 +260,8 @@ FocusScope {
                             text: "✏"
                             font.pixelSize: vpx(14)
                             color: renameMouse.containsMouse || renameBtn.padFocus
-                                ? accentColor
-                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            ? accentColor
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
                             visible: renameIcon.status !== Image.Ready
                         }
                     }
@@ -256,8 +269,8 @@ FocusScope {
                     Text {
                         text: "Rename"
                         color: renameMouse.containsMouse || renameBtn.padFocus
-                            ? (isDarkTheme ? "#ffffff" : "#212121")
-                            : (isDarkTheme ? "#a0a0a0" : "#616161")
+                        ? (isDarkTheme ? "#ffffff" : "#212121")
+                        : (isDarkTheme ? "#a0a0a0" : "#616161")
                         font.pixelSize: vpx(16)
                         font.bold: renameMouse.containsMouse || renameBtn.padFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -269,8 +282,9 @@ FocusScope {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered:  gameMenuRoot.navSection = 0
+                    onEntered: gameMenuRoot.navSection = 0
                     onClicked: {
+                        if (soundManager) soundManager.playNav();
                         renameMode = true;
                         renameInput.text = contextCollectionName;
                         renameInput.selectAll();
@@ -281,34 +295,35 @@ FocusScope {
 
             Rectangle {
                 id: deleteBtn
-                anchors.top:    renameBtn.bottom
+                anchors.top: renameBtn.bottom
                 anchors.topMargin: vpx(8)
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                anchors.left: parent.left
+                anchors.right: parent.right
                 height: vpx(44)
                 radius: vpx(8)
 
                 readonly property bool padFocus: gameMenuRoot.navSection === 1
 
                 color: deleteMouse.containsMouse || padFocus
-                    ? (isDarkTheme ? "#2a1010" : "#fdecea")
-                    : (isDarkTheme ? "#111114" : "#ffffff")
+                ? (isDarkTheme ? "#2a1010" : "#fdecea")
+                : (isDarkTheme ? "#111114" : "#ffffff")
                 border.color: deleteMouse.containsMouse || padFocus
-                    ? (themeColors.error || "#f44336")
-                    : itemBorder
+                ? (themeColors.error || "#f44336")
+                : itemBorder
                 border.width: (deleteMouse.containsMouse || padFocus) ? vpx(2) : vpx(1)
 
-                Behavior on color        { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation { duration: 100 } }
                 Behavior on border.color { ColorAnimation { duration: 100 } }
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.left:       parent.left
+                    anchors.left: parent.left
                     anchors.leftMargin: vpx(12)
                     spacing: vpx(10)
 
                     Item {
-                        width: vpx(22); height: vpx(22)
+                        width: vpx(22)
+                        height: vpx(22)
                         anchors.verticalCenter: parent.verticalCenter
 
                         Image {
@@ -323,8 +338,8 @@ FocusScope {
                             anchors.fill: deleteIcon
                             source: deleteIcon
                             color: deleteMouse.containsMouse || deleteBtn.padFocus
-                                ? (themeColors.error || "#f44336")
-                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            ? (themeColors.error || "#f44336")
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
                             visible: deleteIcon.visible
                         }
                         Text {
@@ -332,8 +347,8 @@ FocusScope {
                             text: "🗑"
                             font.pixelSize: vpx(12)
                             color: deleteMouse.containsMouse || deleteBtn.padFocus
-                                ? (themeColors.error || "#f44336")
-                                : (isDarkTheme ? "#a0a0a0" : "#616161")
+                            ? (themeColors.error || "#f44336")
+                            : (isDarkTheme ? "#a0a0a0" : "#616161")
                             visible: deleteIcon.status !== Image.Ready
                         }
                     }
@@ -341,8 +356,8 @@ FocusScope {
                     Text {
                         text: "Delete Collection"
                         color: deleteMouse.containsMouse || deleteBtn.padFocus
-                            ? (themeColors.error || "#f44336")
-                            : (isDarkTheme ? "#a0a0a0" : "#616161")
+                        ? (themeColors.error || "#f44336")
+                        : (isDarkTheme ? "#a0a0a0" : "#616161")
                         font.pixelSize: vpx(16)
                         font.bold: deleteMouse.containsMouse || deleteBtn.padFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -356,6 +371,7 @@ FocusScope {
                     cursorShape: Qt.PointingHandCursor
                     onEntered: gameMenuRoot.navSection = 1
                     onClicked: {
+                        if (soundManager) soundManager.playNav();
                         gameMenuRoot.deleteCollection(contextCollectionId, contextCollectionName);
                         gameMenuRoot.closeMenu();
                     }
@@ -364,20 +380,20 @@ FocusScope {
 
             Rectangle {
                 id: sep2
-                anchors.top:    deleteBtn.bottom
+                anchors.top: deleteBtn.bottom
                 anchors.topMargin: vpx(12)
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                anchors.left: parent.left
+                anchors.right: parent.right
                 height: vpx(1)
                 color: separatorColor
             }
 
             Item {
                 id: closeBtn
-                anchors.top:    sep2.bottom
+                anchors.top: sep2.bottom
                 anchors.topMargin: vpx(12)
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                anchors.left: parent.left
+                anchors.right: parent.right
                 height: vpx(44)
 
                 readonly property bool padFocus: gameMenuRoot.navSection === 2
@@ -390,16 +406,17 @@ FocusScope {
                     border.width: closeBtn.padFocus ? vpx(2) : vpx(1)
                     scale: closeBtn.padFocus ? 1.03 : 1.0
 
-                    Behavior on scale       { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-                    Behavior on color       { ColorAnimation  { duration: 120 } }
-                    Behavior on border.color{ ColorAnimation  { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     Row {
                         anchors.centerIn: parent
                         spacing: vpx(8)
 
                         Item {
-                            width: vpx(22); height: vpx(22)
+                            width: vpx(22)
+                            height: vpx(22)
                             anchors.verticalCenter: parent.verticalCenter
 
                             Image {
@@ -441,7 +458,10 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: gameMenuRoot.navSection = 2
-                        onClicked: gameMenuRoot.closeMenu()
+                        onClicked: {
+                            if (soundManager) soundManager.playBack();
+                            gameMenuRoot.closeMenu();
+                        }
                     }
                 }
             }
@@ -450,18 +470,19 @@ FocusScope {
         Item {
             id: renameMenuArea
             visible: renameMode
-            anchors.top:         sep1.bottom
-            anchors.left:        parent.left
-            anchors.right:       parent.right
-            anchors.bottom:      parent.bottom
-            anchors.topMargin:   vpx(14)
-            anchors.leftMargin:  vpx(22)
+            anchors.top: sep1.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.topMargin: vpx(14)
+            anchors.leftMargin: vpx(22)
             anchors.rightMargin: vpx(22)
-            anchors.bottomMargin:vpx(20)
+            anchors.bottomMargin: vpx(20)
             focus: renameMode
 
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
+                    if (soundManager) soundManager.playBack();
                     cancelRename();
                     event.accepted = true;
                 }
@@ -479,9 +500,9 @@ FocusScope {
 
             Rectangle {
                 id: renameInputBox
-                anchors.top:       renameSubTxt.bottom
+                anchors.top: renameSubTxt.bottom
                 anchors.topMargin: vpx(8)
-                anchors.left:  parent.left
+                anchors.left: parent.left
                 anchors.right: parent.right
                 height: vpx(44)
                 radius: vpx(8)
@@ -507,35 +528,35 @@ FocusScope {
 
             Rectangle {
                 id: renameSep
-                anchors.top:       renameInputBox.bottom
+                anchors.top: renameInputBox.bottom
                 anchors.topMargin: vpx(14)
-                anchors.left:  parent.left
+                anchors.left: parent.left
                 anchors.right: parent.right
                 height: vpx(1)
                 color: separatorColor
             }
 
             Row {
-                anchors.top:       renameSep.bottom
+                anchors.top: renameSep.bottom
                 anchors.topMargin: vpx(14)
-                anchors.left:  parent.left
+                anchors.left: parent.left
                 anchors.right: parent.right
                 height: vpx(44)
                 spacing: vpx(10)
 
                 Rectangle {
-                    width:  parent.width - cancelRenameBtn.width - vpx(10)
+                    width: parent.width - cancelRenameBtn.width - vpx(10)
                     height: parent.height
-                    color:  saveMouse.containsMouse ? "#e0e0e0" : "#ffffff"
+                    color: saveMouse.containsMouse ? "#e0e0e0" : "#ffffff"
                     radius: vpx(25)
-                    scale:  saveMouse.containsMouse ? 1.02 : 1.0
+                    scale: saveMouse.containsMouse ? 1.02 : 1.0
 
-                    Behavior on color { ColorAnimation  { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: 120 } }
                     Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent
-                        text:  "Save"
+                        text: "Save"
                         color: "#111111"
                         font.pixelSize: vpx(15)
                         font.bold: true
@@ -546,15 +567,18 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: saveRename()
+                        onClicked: {
+                            if (soundManager) soundManager.playNav();
+                            saveRename();
+                        }
                     }
                 }
 
                 Rectangle {
                     id: cancelRenameBtn
-                    width:  vpx(90)
+                    width: vpx(90)
                     height: parent.height
-                    color:  cancelMouse.containsMouse ? "#33ffffff" : "#22000000"
+                    color: cancelMouse.containsMouse ? "#33ffffff" : "#22000000"
                     radius: vpx(10)
                     border.color: isDarkTheme ? "#55ffffff" : "#aaaaaa"
                     border.width: vpx(1)
@@ -563,7 +587,7 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text:  "Cancel"
+                        text: "Cancel"
                         color: isDarkTheme ? "#ffffff" : "#212121"
                         font.pixelSize: vpx(13)
                         font.bold: true

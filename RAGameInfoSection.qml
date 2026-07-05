@@ -14,6 +14,7 @@ FocusScope {
     property var gameData: null
     property var themeColors: ({})
     property bool isDarkTheme: true
+    property var soundManager: null
 
     readonly property var game: gameData
     readonly property bool lightTheme: !isDarkTheme
@@ -743,7 +744,10 @@ FocusScope {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.load()
+            onClicked: {
+                if (soundManager) soundManager.playNav();
+                root.load()
+            }
         }
     }
 
@@ -775,7 +779,10 @@ FocusScope {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.closeRequested()
+            onClicked: {
+                if (soundManager) soundManager.playBack();
+                root.closeRequested()
+            }
         }
     }
 
@@ -847,9 +854,11 @@ FocusScope {
                     Keys.onPressed: function(event) {
                         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
                             event.accepted = true
+                            if (soundManager) soundManager.playNav();
                             root.load()
                         } else if (api.keys.isCancel(event)) {
                             event.accepted = true
+                            if (soundManager) soundManager.playBack();
                             root.closeRequested()
                         }
                     }
@@ -881,7 +890,11 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: { _retryBtn.forceActiveFocus(); root.load() }
+                        onClicked: {
+                            if (soundManager) soundManager.playNav();
+                            _retryBtn.forceActiveFocus();
+                            root.load()
+                        }
                     }
                 }
             }
@@ -1205,8 +1218,14 @@ FocusScope {
                 Keys.onPressed: function(event) {
                     if (api.keys.isCancel(event)) {
                         event.accepted = true
+                        if (soundManager) soundManager.playBack();
                         root.closeRequested()
+                        return
                     }
+                    if (event.key === Qt.Key_Left || event.key === Qt.Key_Right ||
+                        event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        if (soundManager) soundManager.playNav();
+                        }
                 }
 
                 delegate: Item {
@@ -1287,7 +1306,11 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: _achGrid.currentIndex = index
-                        onClicked: { _achGrid.currentIndex = index; _achGrid.forceActiveFocus() }
+                        onClicked: {
+                            if (soundManager) soundManager.playNav();
+                            _achGrid.currentIndex = index
+                            _achGrid.forceActiveFocus()
+                        }
                     }
                 }
             }

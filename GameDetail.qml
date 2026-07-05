@@ -15,6 +15,7 @@ FocusScope {
     property var gameData
     property var detailColors: ({})
     property bool isDarkTheme: true
+    property var soundManager: null
 
     signal close()
     signal launchRequested()
@@ -152,24 +153,27 @@ FocusScope {
             var prev = currentButton - 1
             while (prev > 0 && root.isButtonDisabled(prev)) prev--
             currentButton = Math.max(0, prev)
+            if (root.soundManager) root.soundManager.playNav();
             event.accepted = true
 
         } else if (event.key === Qt.Key_Right) {
             var next = currentButton + 1
             while (next < 5 && root.isButtonDisabled(next)) next++
             currentButton = Math.min(5, next)
+            if (root.soundManager) root.soundManager.playNav();
             event.accepted = true
 
         } else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
-            if      (currentButton === 0) { root.launchRequested() }
+            if      (currentButton === 0) { if (root.soundManager) root.soundManager.playOk(); root.launchRequested() }
             else if (currentButton === 1) { root.favoriteToggled() }
-            else if (currentButton === 2 && root.galleryAvailable) { openGallery() }
-            else if (currentButton === 3 && root.infoAvailable)    { openInfo() }
-            else if (currentButton === 4) { openRaInfo() }
-            else if (currentButton === 5) { root.close() }
+            else if (currentButton === 2 && root.galleryAvailable) { if (root.soundManager) root.soundManager.playOk(); openGallery() }
+            else if (currentButton === 3 && root.infoAvailable)    { if (root.soundManager) root.soundManager.playOk(); openInfo() }
+            else if (currentButton === 4) { if (root.soundManager) root.soundManager.playOk(); openRaInfo() }
+            else if (currentButton === 5) { if (root.soundManager) root.soundManager.playBack(); root.close() }
             event.accepted = true
 
         } else if (api.keys.isCancel(event)) {
+            if (root.soundManager) root.soundManager.playBack();
             root.close()
             event.accepted = true
         }
@@ -415,7 +419,10 @@ FocusScope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onEntered: root.currentButton = 0
-                            onClicked: root.launchRequested()
+                            onClicked: {
+                                if (root.soundManager) root.soundManager.playNav();
+                                root.launchRequested();
+                            }
                         }
                     }
                 }
@@ -502,7 +509,12 @@ FocusScope {
                         hoverEnabled: root.galleryAvailable
                         cursorShape: root.galleryAvailable ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onEntered: if (root.galleryAvailable) root.currentButton = 2
-                        onClicked: if (root.galleryAvailable) root.openGallery()
+                        onClicked: {
+                            if (root.galleryAvailable) {
+                                if (root.soundManager) root.soundManager.playNav();
+                                root.openGallery();
+                            }
+                        }
                     }
                 }
 
@@ -549,7 +561,12 @@ FocusScope {
                         hoverEnabled: root.infoAvailable
                         cursorShape: root.infoAvailable ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onEntered: if (root.infoAvailable) root.currentButton = 3
-                        onClicked: if (root.infoAvailable) root.openInfo()
+                        onClicked: {
+                            if (root.infoAvailable) {
+                                if (root.soundManager) root.soundManager.playNav();
+                                root.openInfo();
+                            }
+                        }
                     }
                 }
 
@@ -593,7 +610,10 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: root.currentButton = 4
-                        onClicked: root.openRaInfo()
+                        onClicked: {
+                            if (root.soundManager) root.soundManager.playNav();
+                            root.openRaInfo();
+                        }
                     }
                 }
 
@@ -636,7 +656,10 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: root.currentButton = 5
-                        onClicked: root.close()
+                        onClicked: {
+                            if (root.soundManager) root.soundManager.playBack();
+                            root.close();
+                        }
                     }
                 }
             }
@@ -656,6 +679,7 @@ FocusScope {
                 startIndex: 0
                 lightTheme: !root.isDarkTheme
                 themeColors: root.detailColors
+                soundManager: root.soundManager
                 onCloseRequested: root.closeGallery()
             }
         }
@@ -681,6 +705,7 @@ FocusScope {
                 anchors.fill: parent
                 gameData: root.gameData
                 themeColors: root.detailColors
+                soundManager: root.soundManager
                 isDarkTheme: root.isDarkTheme
                 onCloseRequested: root.closeInfo()
             }
@@ -707,6 +732,7 @@ FocusScope {
                 anchors.fill: parent
                 gameData: root.gameData
                 themeColors: root.detailColors
+                soundManager: root.soundManager
                 isDarkTheme: root.isDarkTheme
                 onCloseRequested: root.closeRaInfo()
             }

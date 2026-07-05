@@ -1,8 +1,6 @@
-
 # Collection Hub
 
 - A theme for Pegasus Frontend that lets you create and manage custom game collections, with a design inspired by the Cartridges app.
-
 
 ![screen0](https://github.com/ZagonAb/Collection-Hub/blob/93cb2b1ef096ce50add00709e8a9dd7e1e8c9ec2/.meta/screenshots/screen0.png)
 ![screen1](https://github.com/ZagonAb/Collection-Hub/blob/93cb2b1ef096ce50add00709e8a9dd7e1e8c9ec2/.meta/screenshots/screen1.png)
@@ -10,16 +8,20 @@
 ![screen4](https://github.com/ZagonAb/Collection-Hub/blob/93cb2b1ef096ce50add00709e8a9dd7e1e8c9ec2/.meta/screenshots/screen3.png)
 ![screen4](https://github.com/ZagonAb/Collection-Hub/blob/93cb2b1ef096ce50add00709e8a9dd7e1e8c9ec2/.meta/screenshots/screen4.png)
 
-
-## Installation
-
-[Download](https://github.com/ZagonAb/Collection-Hub/archive/refs/heads/main.zip) and extract the theme to your [theme directory](http://pegasus-frontend.org/docs/user-guide/installing-themes). You can then select it from the Pegasus settings menu.
-
 ## 🎨 Icons
 
 - **Additional Icons:**  
   Some icons used in this project are provided by  
   [Iconify](https://icon-sets.iconify.design/).
+
+
+## 🎵 Audio
+- [Click.wav by kwahmah_02](https://freesound.org/s/256116/) | Creative Commons 0 |
+
+- [Mouse 2 Button Fast Click by aphom000](https://freesound.org/s/687107/) | Creative Commons 0 |
+
+- [Button Click / Selection.wav by aphom000](https://freesound.org/s/623175/) | Creative Commons 0 |
+
 
   **License:**  
   Iconify is an open source project.  
@@ -36,6 +38,10 @@
 </a><br />
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"></a>
 
+## Installation
+
+[Download](https://github.com/ZagonAb/Collection-Hub/archive/refs/heads/main.zip) and extract the theme to your [theme directory](http://pegasus-frontend.org/docs/user-guide/installing-themes). You can then select it from the Pegasus settings menu.
+
 ### 💖 DONATE
 
 I'm a programming enthusiast and passionate about free software, with a special love for classic games and the retro community.  
@@ -46,5 +52,4 @@ Every contribution, no matter how small, allows me to continue improving and mai
 
 [![Support on PayPal](https://img.shields.io/badge/PayPal-0070ba?style=for-the-badge)](https://paypal.me/ZagonAb)
 [![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gonzalo/donate)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-29abe0?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/zagonab)
-  
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-29abe0?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/zagonab)  

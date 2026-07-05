@@ -22,6 +22,7 @@ Rectangle {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var focusManager: null
+    property var soundManager: null
     property alias systemCollectionsList: systemCollectionsList
 
     property color scrollbarColor: {
@@ -70,6 +71,7 @@ Rectangle {
                 focus: true
                 keyNavigationWraps: false
                 highlightFollowsCurrentItem: true
+                highlightMoveVelocity: -1
 
                 delegate: Rectangle {
                     width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
@@ -247,6 +249,7 @@ Rectangle {
                                 systemCollectionsContainer.focusManager.lastSystemIndex = index;
                                 systemCollectionsContainer.focusManager.moveFocusRight();
                             }
+                            if (systemCollectionsContainer.soundManager) systemCollectionsContainer.soundManager.playOk();
                         }
                         onEntered: {
                             parent.isHovered = true;
@@ -264,6 +267,10 @@ Rectangle {
                 }
 
                 Keys.onPressed: function(event) {
+                    if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        if (systemCollectionsContainer.soundManager) systemCollectionsContainer.soundManager.playNav();
+                    }
+
                     if (api.keys.isAccept(event)) {
                         if (currentItem) {
                             var modelData = model.get(currentIndex);
@@ -274,10 +281,12 @@ Rectangle {
                                 focusManager.lastSystemIndex = currentIndex;
                                 focusManager.moveFocusRight();
                             }
+                            if (systemCollectionsContainer.soundManager) systemCollectionsContainer.soundManager.playOk();
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Right) {
                         if (focusManager) focusManager.moveFocusRight();
+                        if (systemCollectionsContainer.soundManager) systemCollectionsContainer.soundManager.playOk();
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Down && currentIndex === count - 1) {
                         if (focusManager) focusManager.moveFocusDown();
@@ -285,6 +294,9 @@ Rectangle {
                     } else if (event.key === Qt.Key_Up && currentIndex === 0) {
                         if (focusManager) focusManager.selectAllGames();
                         event.accepted = true;
+                    } else if (api.keys.isCancel(event)) {
+                        if (systemCollectionsContainer.soundManager) systemCollectionsContainer.soundManager.playBack();
+                        event.accepted = false;
                     }
                 }
             }
@@ -297,5 +309,3 @@ Rectangle {
         }
     }
 }
-
-

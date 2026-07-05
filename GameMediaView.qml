@@ -16,6 +16,7 @@ FocusScope {
     property int startIndex: 0
     property bool lightTheme: false
     property var themeColors: null
+    property var soundManager: null
 
     signal closeRequested()
 
@@ -59,8 +60,19 @@ FocusScope {
         return ""
     }
 
-    function _prev() { if (_currentIndex > 0) _currentIndex-- }
-    function _next() { if (_currentIndex < _total - 1) _currentIndex++ }
+    function _prev() {
+        if (_currentIndex > 0) {
+            if (soundManager) soundManager.playNav();
+            _currentIndex--
+        }
+    }
+
+    function _next() {
+        if (_currentIndex < _total - 1) {
+            if (soundManager) soundManager.playNav();
+            _currentIndex++
+        }
+    }
 
     readonly property string _bgImageSource: {
         if (root._current && !root._current.isVideo) return root._current.source
@@ -175,7 +187,10 @@ FocusScope {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.closeRequested()
+                onClicked: {
+                    if (soundManager) soundManager.playBack();
+                    root.closeRequested()
+                }
             }
         }
     }
@@ -326,15 +341,15 @@ FocusScope {
         width: vpx(56); height: vpx(100)
         radius: vpx(10)
         color: navLeftMouse.containsMouse ? _navBtnHover : _navBtnBg
-        border.color: _navBtnBorder; border.width: vpx(1)
+        border.color: "white"; border.width: vpx(2)
         visible: root._currentIndex > 0
         Behavior on color { ColorAnimation { duration: 120 } }
 
         Text {
             anchors.centerIn: parent
             text: "‹"
-            color: _textPrimary
-            font.pixelSize: vpx(32)
+            color: "white"
+            font.pixelSize: vpx(38)
             font.bold: true
         }
         MouseArea {
@@ -350,15 +365,15 @@ FocusScope {
         width: vpx(56); height: vpx(100)
         radius: vpx(10)
         color: navRightMouse.containsMouse ? _navBtnHover : _navBtnBg
-        border.color: _navBtnBorder; border.width: vpx(1)
+        border.color: "white"; border.width: vpx(2)
         visible: root._currentIndex < root._total - 1
         Behavior on color { ColorAnimation { duration: 120 } }
 
         Text {
             anchors.centerIn: parent
             text: "›"
-            color: _textPrimary
-            font.pixelSize: vpx(32)
+            color: "white"
+            font.pixelSize: vpx(38)
             font.bold: true
         }
         MouseArea {
@@ -439,11 +454,24 @@ FocusScope {
                             asynchronous: true; mipmap: true
                             opacity: 0.3
                         }
+                        Image {
+                            id: _playIcon
+                            anchors.centerIn: parent
+                            width: vpx(32); height: vpx(32)
+                            source: "assets/icons/video.svg"
+                            sourceSize.width: vpx(32)
+                            sourceSize.height: vpx(32)
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            visible: status === Image.Ready
+                        }
+
                         Text {
                             anchors.centerIn: parent
                             text: "▶"
-                            color: _textPrimary
+                            color: "white"
                             font.pixelSize: vpx(32)
+                            visible: _playIcon.status !== Image.Ready
                             Behavior on color { ColorAnimation { duration: 300 } }
                         }
                     }
@@ -470,7 +498,10 @@ FocusScope {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root._currentIndex = index
+                    onClicked: {
+                        if (soundManager) soundManager.playNav();
+                        root._currentIndex = index
+                    }
                 }
             }
         }
@@ -479,6 +510,7 @@ FocusScope {
     Keys.onPressed: {
         if (!event.isAutoRepeat && api.keys.isCancel(event)) {
             event.accepted = true
+            if (soundManager) soundManager.playBack();
             root.closeRequested()
             return
         }

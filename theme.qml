@@ -28,7 +28,6 @@ FocusScope {
     property var currentDetailGame: null
     property bool _gameWasLaunched: false
 
-
     Connections {
         target: Qt.application
         function onStateChanged() {
@@ -83,7 +82,22 @@ FocusScope {
     }
 
     onShowSortMenuChanged: {
-        //console.log("[ROOT] showSortMenu cambio a:", showSortMenu);
+        if (sounds) {
+            if (showSortMenu) sounds.playOk();
+            else sounds.playBack();
+        }
+    }
+    onShowRaPopupChanged: {
+        if (sounds) {
+            if (showRaPopup) sounds.playOk();
+            else sounds.playBack();
+        }
+    }
+    onShowCollectionEditorChanged: {
+        if (sounds) {
+            if (showCollectionEditor) sounds.playOk();
+            else sounds.playBack();
+        }
     }
     property var currentGameForMenu: null
     property bool showDeleteConfirm: false
@@ -148,6 +162,10 @@ FocusScope {
         "overlay": "#CC000000"
     })
 
+    Sounds {
+        id: sounds
+    }
+
     FocusManager {
         id: focusManager
 
@@ -194,6 +212,7 @@ FocusScope {
             focusManager.sortBtn = sortBtn;
             focusManager.themeBtn = themeBtnScope;
             focusManager.createBtn = createCollectionTopBtn;
+            focusManager.customJumpBtn = goToCustomBtn;
             focusManager.setInitialFocus();
         });
     }
@@ -326,6 +345,7 @@ FocusScope {
                     themeColors: root.colors
                     isDarkTheme: root.isDarkTheme
                     focusManager: focusManager
+                    soundManager: sounds
 
                     onCollectionSelected: function(collection) {
                         root.selectedSystemCollection = collection;
@@ -348,6 +368,7 @@ FocusScope {
                     themeColors: root.colors
                     isDarkTheme: root.isDarkTheme
                     focusManager: focusManager
+                    soundManager: sounds
 
                     onCollectionSelected: function(collectionId, collectionName, gameFilePaths) {
                         root.selectedCollectionId = collectionId;
@@ -403,6 +424,12 @@ FocusScope {
                         verticalCenter: parent.verticalCenter
                     }
                     spacing: vpx(16)
+                    opacity: searchBar.isExpanded ? 0 : 1
+                    visible: opacity > 0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: 150 }
+                    }
 
                     Component {
                         id: iconOverlay
@@ -414,7 +441,7 @@ FocusScope {
                     Row {
                         spacing: vpx(4)
                         Image {
-                            width: vpx(22); height: vpx(22)
+                            width: vpx(22); height: vpx(32)
                             source: "assets/icons/x.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
@@ -424,7 +451,7 @@ FocusScope {
                         Text {
                             text: "Menu"
                             color: colors.text
-                            font.pixelSize: vpx(12)
+                            font.pixelSize: vpx(18)
                             font.bold: true
                             font.capitalization: Font.AllUppercase
                             anchors.verticalCenter: parent.verticalCenter
@@ -434,7 +461,7 @@ FocusScope {
                     Row {
                         spacing: vpx(4)
                         Image {
-                            width: vpx(22); height: vpx(22)
+                            width: vpx(22); height: vpx(32)
                             source: "assets/icons/a.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
@@ -444,7 +471,7 @@ FocusScope {
                         Text {
                             text: "Details"
                             color: colors.text
-                            font.pixelSize: vpx(12)
+                            font.pixelSize: vpx(18)
                             font.bold: true
                             font.capitalization: Font.AllUppercase
                             anchors.verticalCenter: parent.verticalCenter
@@ -454,7 +481,7 @@ FocusScope {
                     Row {
                         spacing: vpx(4)
                         Image {
-                            width: vpx(24); height: vpx(24)
+                            width: vpx(24); height: vpx(32)
                             source: "assets/icons/lb.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
@@ -464,13 +491,13 @@ FocusScope {
                         Text {
                             text: "Filter by letter"
                             color: colors.text
-                            font.pixelSize: vpx(12)
+                            font.pixelSize: vpx(18)
                             font.bold: true
                             font.capitalization: Font.AllUppercase
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Image {
-                            width: vpx(24); height: vpx(24)
+                            width: vpx(24); height: vpx(32)
                             source: "assets/icons/rb.svg"
                             fillMode: Image.PreserveAspectFit
                             layer.enabled: true
@@ -488,13 +515,16 @@ FocusScope {
                         verticalCenter: parent.verticalCenter
                     }
                     searchColors: root.colors
+                    soundManager: sounds
                     onSearchChanged: function(text) {
                         gamesGrid.searchFilter = text;
                     }
                     onMoveToSortMenu: {
+                        if (sounds) sounds.playNav();
                         focusManager.moveFocusRight();
                     }
                     onMoveToGrid: {
+                        if (sounds) sounds.playNav();
                         focusManager.moveFocusLeft();
                     }
                 }
@@ -571,15 +601,19 @@ FocusScope {
                             raCredentialsPopup.forceActiveFocus();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Right) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusRight();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Left) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusLeft();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusDown();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusUp();
                             event.accepted = true;
                         }
@@ -605,9 +639,6 @@ FocusScope {
                             ? colors.primary
                             : (sortBtnMouse.containsMouse || parent.keyboardFocused
                                ? colors.primary : "transparent")
-                        /*border.color: root.showSortMenu || parent.keyboardFocused
-                            ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {
@@ -659,15 +690,19 @@ FocusScope {
                             sortMenuPopup.forceActiveFocus();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Right) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusRight();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Left) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusLeft();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusDown();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusUp();
                             event.accepted = true;
                         }
@@ -692,8 +727,6 @@ FocusScope {
                         anchors.fill: parent
                         color: themeToggleMouseArea.containsMouse || parent.keyboardFocused
                             ? colors.primary : "transparent"
-                        /*border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {
@@ -738,7 +771,10 @@ FocusScope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.toggleTheme()
+                            onClicked: {
+                                if (sounds) sounds.playOk();
+                                root.toggleTheme();
+                            }
                             onEntered: themeIconRect.scale = 1.05
                             onExited: themeIconRect.scale = 1.0
                         }
@@ -753,18 +789,23 @@ FocusScope {
 
                     Keys.onPressed: function(event) {
                         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            if (sounds) sounds.playOk();
                             root.toggleTheme();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Right) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusRight();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Left) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusLeft();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusDown();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusUp();
                             event.accepted = true;
                         }
@@ -774,8 +815,8 @@ FocusScope {
                 FocusScope {
                     id: createCollectionTopBtn
                     anchors {
-                        right: parent.right
-                        rightMargin: vpx(10)
+                        right: goToCustomBtn.left
+                        rightMargin: vpx(6)
                         verticalCenter: parent.verticalCenter
                     }
                     width: vpx(44)
@@ -788,8 +829,6 @@ FocusScope {
                         anchors.fill: parent
                         color: createBtnMouse.containsMouse || parent.keyboardFocused
                             ? colors.primary : "transparent"
-                        /*border.color: parent.keyboardFocused ? colors.primary : colors.inputBorder
-                        border.width: vpx(2)*/
                         radius: vpx(10)
 
                         Item {
@@ -839,15 +878,104 @@ FocusScope {
                             collectionNameInput.text = "";
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Right) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusRight();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Left) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusLeft();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusDown();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
+                            if (sounds) sounds.playNav();
+                            focusManager.moveFocusUp();
+                            event.accepted = true;
+                        }
+                    }
+                }
+
+                FocusScope {
+                    id: goToCustomBtn
+                    anchors {
+                        right: parent.right
+                        rightMargin: vpx(10)
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: vpx(44)
+                    height: vpx(44)
+
+                    readonly property bool hasCustomCollections: root.customCollections.length > 0
+
+                    property bool keyboardFocused: activeFocus &&
+                        focusManager.currentFocusArea === focusManager.focusCustomJumpBtn
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: (goToCustomMouse.containsMouse || parent.keyboardFocused) && goToCustomBtn.hasCustomCollections
+                            ? colors.primary : "transparent"
+                        radius: vpx(10)
+                        opacity: goToCustomBtn.hasCustomCollections ? 1.0 : 0.4
+
+                        Item {
+                            width: vpx(22)
+                            height: vpx(22)
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: customJumpIcon
+                                anchors.fill: parent
+                                source: "assets/icons/custom.svg"
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                            }
+
+                            ColorOverlay {
+                                anchors.fill: customJumpIcon
+                                source: customJumpIcon
+                                color: root.isDarkTheme ? "#ffffff" : "#212121"
+                            }
+                        }
+
+                        MouseArea {
+                            id: goToCustomMouse
+                            anchors.fill: parent
+                            enabled: goToCustomBtn.hasCustomCollections
+                            hoverEnabled: goToCustomBtn.hasCustomCollections
+                            cursorShape: goToCustomBtn.hasCustomCollections ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: {
+                                if (sounds) sounds.playNav();
+                                focusManager.goToFirstCustomCollection();
+                            }
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
+                        }
+                        Behavior on color {
+                            ColorAnimation { duration: 120 }
+                        }
+                    }
+
+                    Keys.onPressed: function(event) {
+                        if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                            if (goToCustomBtn.hasCustomCollections) {
+                                if (sounds) sounds.playNav();
+                                focusManager.goToFirstCustomCollection();
+                            }
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Left) {
+                            if (sounds) sounds.playNav();
+                            focusManager.moveFocusLeft();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
+                            if (sounds) sounds.playNav();
+                            focusManager.moveFocusDown();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            if (sounds) sounds.playNav();
                             focusManager.moveFocusUp();
                             event.accepted = true;
                         }
@@ -869,6 +997,7 @@ FocusScope {
                 themeColors: root.colors
                 isDarkTheme: root.isDarkTheme
                 focusManager: focusManager
+                soundManager: sounds
                 customCollections: root.customCollections
 
                 onShowGameDetail: function(game) {
@@ -1032,6 +1161,7 @@ FocusScope {
                 verticalAlignment: TextInput.AlignVCenter
 
                 onAccepted: {
+                    if (sounds) sounds.playNav();
                     if (text.trim() !== "") {
                         root.createNewCollection();
                     }
@@ -1087,7 +1217,10 @@ FocusScope {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createNewCollection()
+                    onClicked: {
+                        if (sounds) sounds.playNav();
+                        root.createNewCollection();
+                    }
                 }
             }
 
@@ -1117,13 +1250,17 @@ FocusScope {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.showCollectionEditor = false
+                    onClicked: {
+                        if (sounds) sounds.playBack();
+                        root.showCollectionEditor = false;
+                    }
                 }
             }
         }
 
         Keys.onPressed: function(event) {
             if (api.keys.isCancel(event)) {
+                if (sounds) sounds.playBack();
                 root.showCollectionEditor = false;
                 createCollectionTopBtn.forceActiveFocus();
                 event.accepted = true;
@@ -1138,6 +1275,7 @@ FocusScope {
         themeColors: root.colors
         isDarkTheme: root.isDarkTheme
         focusManager: focusManager
+        soundManager: sounds
 
         onRenameCollection: function(collectionId) {
             root.customCollections = Utils.loadCustomCollections();
@@ -1209,15 +1347,19 @@ FocusScope {
         Keys.onPressed: function(event) {
             if (api.keys.isAccept(event)) {
                 if (deleteConfirmIndex === 0) {
+                    if (sounds) sounds.playBack();
                     mouseDeleteYes.clicked(null);
                 } else {
+                    if (sounds) sounds.playBack();
                     mouseDeleteNo.clicked(null);
                 }
                 event.accepted = true;
             } else if (api.keys.isCancel(event)) {
+                if (sounds) sounds.playBack();
                 mouseDeleteNo.clicked(null);
                 event.accepted = true;
             } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                if (sounds) sounds.playNav();
                 deleteConfirmIndex = deleteConfirmIndex === 0 ? 1 : 0;
                 event.accepted = true;
             }
@@ -1328,6 +1470,7 @@ FocusScope {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        if (sounds) sounds.playBack();
                         var deletedIndex = -1;
                         for (var i = 0; i < root.customCollections.length; i++) {
                             if (root.customCollections[i].id === root.collectionToDelete) {
@@ -1396,6 +1539,7 @@ FocusScope {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
+                        if (sounds) sounds.playBack();
                         root.showDeleteConfirm = false;
                         root.collectionToDelete = -1;
                         root.collectionToDeleteName = "";
@@ -1459,15 +1603,19 @@ FocusScope {
         }
 
         if (event.key === Qt.Key_Left) {
+            if (sounds) sounds.playNav();
             focusManager.moveFocusLeft();
             event.accepted = true;
         } else if (event.key === Qt.Key_Right) {
+            if (sounds) sounds.playNav();
             focusManager.moveFocusRight();
             event.accepted = true;
         } else if (event.key === Qt.Key_Up) {
+            if (sounds) sounds.playNav();
             focusManager.moveFocusUp();
             event.accepted = true;
         } else if (event.key === Qt.Key_Down) {
+            if (sounds) sounds.playNav();
             focusManager.moveFocusDown();
             event.accepted = true;
         }
@@ -1493,6 +1641,7 @@ FocusScope {
         currentSort: root.sortOrder
         visible: root.showSortMenu
         z: 30
+        soundManager: sounds
 
         onSortSelected: function(sortIndex) {
             root.sortOrder = sortIndex;
@@ -1517,6 +1666,7 @@ FocusScope {
         anchors.topMargin: vpx(66)
         themeColors: root.colors
         z: 30
+        soundManager: sounds
 
         onPopupClosed: {
             root.showRaPopup = false;
@@ -1537,6 +1687,7 @@ FocusScope {
             gameData: root.currentDetailGame
             detailColors: root.colors
             isDarkTheme: root.isDarkTheme
+            soundManager: sounds
 
             onClose: root.closeGameDetail()
 
@@ -1561,7 +1712,13 @@ FocusScope {
 
             onFavoriteToggled: {
                 if (root.currentDetailGame) {
-                    root.currentDetailGame.favorite = !root.currentDetailGame.favorite
+                    var addingToFavorites = !root.currentDetailGame.favorite;
+                    root.currentDetailGame.favorite = !root.currentDetailGame.favorite;
+
+                    if (sounds) {
+                        if (addingToFavorites) sounds.playOk();
+                        else sounds.playBack();
+                    }
                 }
             }
         }

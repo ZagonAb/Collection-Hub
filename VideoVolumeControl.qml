@@ -80,7 +80,7 @@ Item {
         height: px(52)
         radius: px(10)
         color: _btnMA.containsMouse ? _btnHoverBg : _btnBg
-        border.color: _btnBorder
+        border.color: "white"
         border.width: px(1)
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on border.color { ColorAnimation { duration: 120 } }
@@ -104,7 +104,7 @@ Item {
                 id: _iconOverlay
                 anchors.fill: parent
                 source: _iconSrc
-                color: _iconColor
+                color: "white"
                 Behavior on color { ColorAnimation { duration: 300 } }
             }
 
@@ -141,7 +141,7 @@ Item {
         Rectangle {
             anchors { top: parent.top; bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
             width: px(8); radius: px(4)
-            color: _barBg
+            color: "#615e5b"
             Behavior on color { ColorAnimation { duration: 200 } }
         }
 
@@ -150,8 +150,8 @@ Item {
             anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
             width: px(8); radius: px(4)
             height: _bar.height * _bar._effVol
-            color: _barFill
             Behavior on height { NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }
+            color: "white"
             Behavior on color { ColorAnimation { duration: 200 } }
         }
 
@@ -160,7 +160,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: _bar.height * (1.0 - _bar._effVol) - px(10)
             width: px(20); height: px(20); radius: px(10)
-            color: _knobColor
+            color: "white"
             Behavior on y { NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }
             Behavior on color { ColorAnimation { duration: 200 } }
             layer.enabled: true

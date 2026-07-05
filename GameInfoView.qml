@@ -14,6 +14,7 @@ FocusScope {
     property var gameData
     property var themeColors: ({})
     property bool isDarkTheme: true
+    property var soundManager: null
 
     signal closeRequested()
 
@@ -23,7 +24,7 @@ FocusScope {
 
     Component.onCompleted: {
         forceActiveFocus()
-        fadeIn.start()
+            fadeIn.start()
     }
 
     NumberAnimation { id: fadeIn; target: root; property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
@@ -38,12 +39,15 @@ FocusScope {
 
     Keys.onPressed: function(event) {
         if (api.keys.isCancel(event) || api.keys.isDetails(event)) {
+            if (soundManager) soundManager.playBack();
             root.dismiss()
             event.accepted = true
         } else if (event.key === Qt.Key_Up) {
+            if (soundManager) soundManager.playNav();
             flick.contentY = Math.max(0, flick.contentY - vpx(100))
             event.accepted = true
         } else if (event.key === Qt.Key_Down) {
+            if (soundManager) soundManager.playNav();
             flick.contentY = Math.min(Math.max(0, flick.contentHeight - flick.height), flick.contentY + vpx(100))
             event.accepted = true
         }
@@ -82,7 +86,10 @@ FocusScope {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.dismiss()
+            onClicked: {
+                if (soundManager) soundManager.playBack();
+                root.dismiss()
+            }
         }
     }
 
@@ -142,7 +149,7 @@ FocusScope {
                     Row {
                         spacing: vpx(20)
                         visible: (root.gameData && root.gameData.genre !== "") ||
-                                 (root.gameData && root.gameData.releaseYear > 0)
+                        (root.gameData && root.gameData.releaseYear > 0)
 
                         Text {
                             visible: root.gameData && root.gameData.genre !== ""
@@ -190,13 +197,13 @@ FocusScope {
                         label: "Release"
                         value: {
                             if (!root.gameData) return "—"
-                            var y = root.gameData.releaseYear
-                            var m = root.gameData.releaseMonth
-                            var d = root.gameData.releaseDay
-                            if (y > 0 && m > 0 && d > 0) return d + "/" + m + "/" + y
-                            if (y > 0 && m > 0)           return m + "/" + y
-                            if (y > 0)                     return y.toString()
-                            return "—"
+                                var y = root.gameData.releaseYear
+                                var m = root.gameData.releaseMonth
+                                var d = root.gameData.releaseDay
+                                if (y > 0 && m > 0 && d > 0) return d + "/" + m + "/" + y
+                                    if (y > 0 && m > 0)           return m + "/" + y
+                                        if (y > 0)                     return y.toString()
+                                            return "—"
                         }
                     }
                     BigRow { label: "Players";     value: root.gameData && root.gameData.players > 0 ? root.gameData.players.toString() : "1" }
@@ -208,16 +215,16 @@ FocusScope {
                         label: "Collection(s)"
                         value: {
                             if (!root.gameData || !root.gameData.collections) return "—"
-                            var names = []
-                            for (var i = 0; i < root.gameData.collections.count; i++)
-                                names.push(root.gameData.collections.get(i).name)
-                            return names.length > 0 ? names.join(", ") : "—"
+                                var names = []
+                                for (var i = 0; i < root.gameData.collections.count; i++)
+                                    names.push(root.gameData.collections.get(i).name)
+                                    return names.length > 0 ? names.join(", ") : "—"
                         }
                     }
                     BigRow {
                         label: "Tags"
                         value: root.gameData && root.gameData.tagList && root.gameData.tagList.length > 0
-                            ? root.gameData.tagList.join(", ") : "—"
+                        ? root.gameData.tagList.join(", ") : "—"
                     }
                 }
 
@@ -238,25 +245,25 @@ FocusScope {
                     BigRow {
                         label: "Play Count"
                         value: root.gameData
-                            ? root.gameData.playCount + (root.gameData.playCount === 1 ? " time" : " times")
-                            : "—"
+                        ? root.gameData.playCount + (root.gameData.playCount === 1 ? " time" : " times")
+                        : "—"
                     }
                     BigRow {
                         label: "Last Played"
                         value: root.gameData && root.gameData.lastPlayed && !isNaN(root.gameData.lastPlayed.getTime())
-                            ? root.gameData.lastPlayed.toLocaleDateString() : "Never"
+                        ? root.gameData.lastPlayed.toLocaleDateString() : "Never"
                     }
                     BigRow {
                         label: "Play Time"
                         value: {
                             if (!root.gameData || root.gameData.playTime <= 0) return "—"
-                            var s = root.gameData.playTime
-                            var h = Math.floor(s / 3600)
-                            var m = Math.floor((s % 3600) / 60)
-                            var sec = s % 60
-                            if (h > 0) return h + "h " + m + "m"
-                            if (m > 0) return m + "m " + sec + "s"
-                            return sec + "s"
+                                var s = root.gameData.playTime
+                                var h = Math.floor(s / 3600)
+                                var m = Math.floor((s % 3600) / 60)
+                                var sec = s % 60
+                                if (h > 0) return h + "h " + m + "m"
+                                    if (m > 0) return m + "m " + sec + "s"
+                                        return sec + "s"
                         }
                     }
                     BigRow {

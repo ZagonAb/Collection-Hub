@@ -18,6 +18,8 @@ FocusScope {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var customCollections: []
+    property var soundManager: null
+    property bool isCollectionContext: false
 
     readonly property color currentItemBorderColor: {
         if (customCollections.length > 0 && listNavIndex >= 0 && listNavIndex < customCollections.length) {
@@ -28,7 +30,6 @@ FocusScope {
         }
         return accentColor;
     }
-
 
     property int selectedCollectionId: -1
     property var selectedSystemCollection: null
@@ -64,6 +65,7 @@ FocusScope {
                 }
             }
         } else if (navSection === 1) {
+            if (soundManager) soundManager.playOk();
             addGameRoot.launchGame();
         } else if (navSection === 2 && removeBtn.visible) {
             var gamePath = Utils.getGamePath(currentGame);
@@ -73,6 +75,7 @@ FocusScope {
                 addGameRoot.closed();
             }
         } else if (navSection === 3 || (!removeBtn.visible && navSection === 2)) {
+            if (soundManager) soundManager.playBack();
             addGameRoot.closed();
         }
     }
@@ -85,17 +88,20 @@ FocusScope {
 
     Keys.onPressed: function(event) {
         if (api.keys.isDetails(event) || api.keys.isCancel(event)) {
+            if (soundManager) soundManager.playBack();
             addGameRoot.closed();
             event.accepted = true;
             return;
         }
         if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+            if (soundManager) soundManager.playNav();
             activateCurrent();
             event.accepted = true;
             return;
         }
 
         if (event.key === Qt.Key_Up) {
+            if (soundManager) soundManager.playNav();
             if (navSection === 0) {
                 if (listNavIndex > 0) {
                     listNavIndex--;
@@ -115,6 +121,7 @@ FocusScope {
         }
 
         if (event.key === Qt.Key_Down) {
+            if (soundManager) soundManager.playNav();
             if (navSection === 0) {
                 if (listNavIndex < customCollections.length - 1) {
                     listNavIndex++;
@@ -132,6 +139,7 @@ FocusScope {
         }
 
         if (event.key === Qt.Key_Left) {
+            if (soundManager) soundManager.playNav();
             if (navSection === 2) {
                 navSection = 1;
             } else if (navSection === 3) {
@@ -142,6 +150,7 @@ FocusScope {
         }
 
         if (event.key === Qt.Key_Right) {
+            if (soundManager) soundManager.playNav();
             if (navSection === 1) {
                 navSection = removeBtn.visible ? 2 : 3;
             } else if (navSection === 2) {
@@ -276,8 +285,8 @@ FocusScope {
                     readonly property bool alreadyAdded: {
                         var _ = addGameRoot.customCollections.length;
                         return addGameRoot.currentGame
-                            ? Utils.isGameInCollection(modelData.id, addGameRoot.currentGame)
-                            : false;
+                        ? Utils.isGameInCollection(modelData.id, addGameRoot.currentGame)
+                        : false;
                     }
                     readonly property bool padHighlight:
                     addGameRoot.navSection === 0 && addGameRoot.listNavIndex === index
@@ -340,6 +349,7 @@ FocusScope {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: {
+                            if (soundManager) soundManager.playNav();
                             addGameRoot.navSection = 0;
                             addGameRoot.listNavIndex = index;
                         }
@@ -423,8 +433,14 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: addGameRoot.navSection = 1
-                        onClicked: addGameRoot.launchGame()
+                        onEntered: {
+                            if (soundManager) soundManager.playNav();
+                            addGameRoot.navSection = 1;
+                        }
+                        onClicked: {
+                            if (soundManager) soundManager.playOk();
+                            addGameRoot.launchGame();
+                        }
                     }
                 }
             }
@@ -479,6 +495,10 @@ FocusScope {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: {
+                        if (soundManager) soundManager.playNav();
+                        addGameRoot.navSection = 2;
+                    }
                     onClicked: {
                         var gamePath = Utils.getGamePath(currentGame);
                         var success = Utils.removeGameFromCollection(
@@ -491,7 +511,6 @@ FocusScope {
                             addGameRoot.closed();
                         }
                     }
-                    onEntered: addGameRoot.navSection = 2
                 }
             }
 
@@ -550,8 +569,14 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: addGameRoot.navSection = 3
-                        onClicked: addGameRoot.closed()
+                        onEntered: {
+                            if (soundManager) soundManager.playNav();
+                            addGameRoot.navSection = 3;
+                        }
+                        onClicked: {
+                            if (soundManager) soundManager.playBack();
+                            addGameRoot.closed();
+                        }
                     }
                 }
             }

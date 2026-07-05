@@ -15,6 +15,7 @@ Item {
     property bool isDarkTheme: true
     property int currentSort: 0
     property int highlightIndex: 0
+    property var soundManager: null
 
     signal sortSelected(int sortIndex)
     signal closeMenu()
@@ -31,12 +32,15 @@ Item {
             sortMenu.closeMenu();
             event.accepted = true;
         } else if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+            if (sortMenu.soundManager) sortMenu.soundManager.playOk();
             sortMenu.sortOrderChangedOnly(highlightIndex);
             event.accepted = true;
         } else if (event.key === Qt.Key_Up) {
+            if (sortMenu.soundManager) sortMenu.soundManager.playNav();
             highlightIndex = Math.max(0, highlightIndex - 1);
             event.accepted = true;
         } else if (event.key === Qt.Key_Down) {
+            if (sortMenu.soundManager) sortMenu.soundManager.playNav();
             highlightIndex = Math.min(4, highlightIndex + 1);
             event.accepted = true;
         }
@@ -47,7 +51,7 @@ Item {
         width: vpx(16)
         height: vpx(10)
         anchors.left: parent.left
-        anchors.leftMargin: vpx(62)
+        anchors.leftMargin: vpx(22)
         anchors.top: parent.top
         z: 100
 
@@ -194,6 +198,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             sortMenu.highlightIndex = index;
+                            if (sortMenu.soundManager) sortMenu.soundManager.playOk();
                             sortMenu.sortSelected(index);
                         }
                     }

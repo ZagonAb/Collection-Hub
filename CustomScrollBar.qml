@@ -16,8 +16,8 @@ Item {
     property alias listView: root.flickable
     property int columns: 1
 
-    anchors.right:  parent ? parent.right  : undefined
-    anchors.top:    parent ? parent.top    : undefined
+    anchors.right: parent ? parent.right : undefined
+    anchors.top: parent ? parent.top : undefined
     anchors.bottom: parent ? parent.bottom : undefined
 
     width: vpx(8)

@@ -294,9 +294,7 @@ Rectangle {
                 }
             }
         }
-
     }
-
 
     MouseArea {
         id: tileMouseArea

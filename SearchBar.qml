@@ -13,6 +13,7 @@ Item {
 
     property string searchText: ""
     property var searchColors: ({})
+    property var soundManager: null
 
     property bool isExpanded: false
     property int collapsedWidth: vpx(52)
@@ -152,10 +153,6 @@ Item {
         ? (searchColors.primary || "#3a6ea5")
         : "transparent"
         radius: vpx(10)
-        /*border.color: isExpanded
-        ? (searchColors.primary || "#3a6ea5")
-        : (searchColors.inputBorder || "#303030")
-        border.width: vpx(2)*/
 
         Behavior on color {
             ColorAnimation { duration: 180 }
@@ -203,8 +200,10 @@ Item {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 if (isExpanded) {
+                    if (searchBar.soundManager) searchBar.soundManager.playBack();
                     searchBar.collapse()
                 } else {
+                    if (searchBar.soundManager) searchBar.soundManager.playOk();
                     searchBar.expand()
                 }
             }

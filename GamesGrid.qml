@@ -24,6 +24,7 @@ Rectangle {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var focusManager: null
+    property var soundManager: null
     property alias gridView: gamesGridView
     property bool scrollbarReady: false
     property var customCollections: []
@@ -162,17 +163,25 @@ Rectangle {
         var sourceGames = [];
         var seenTitles = {};
 
+        function gameIdentity(g) {
+            var gp = Utils.getGamePath(g);
+            if (gp) return "p:" + gp;
+            if (g.extra && g.extra.id) return "e:" + g.extra.id.toString();
+            return "t:" + g.title;
+        }
+
         if (searchFilter.trim() !== "") {
             for (var i = 0; i < api.allGames.count; i++) {
                 var g = api.allGames.get(i);
-                if (g && g.title && !seenTitles[g.title]) {
+                var gid = g ? gameIdentity(g) : null;
+                if (g && g.title && gid && !seenTitles[gid]) {
                     var fl = searchFilter.toLowerCase();
                     if (g.title.toLowerCase().indexOf(fl) !== -1 ||
                         (g.developer && g.developer.toLowerCase().indexOf(fl) !== -1) ||
                         (g.publisher && g.publisher.toLowerCase().indexOf(fl) !== -1) ||
                         (g.genre && g.genre.toLowerCase().indexOf(fl) !== -1)) {
                         sourceGames.push(g);
-                    seenTitles[g.title] = true;
+                    seenTitles[gid] = true;
                         }
                 }
             }
@@ -180,17 +189,19 @@ Rectangle {
             if (systemCollection !== null) {
                 for (var i = 0; i < systemCollection.games.count; i++) {
                     var game = systemCollection.games.get(i);
-                    if (game && game.title && !seenTitles[game.title]) {
+                    var gid = game ? gameIdentity(game) : null;
+                    if (game && game.title && gid && !seenTitles[gid]) {
                         sourceGames.push(game);
-                        seenTitles[game.title] = true;
+                        seenTitles[gid] = true;
                     }
                 }
             } else if (selectedCollectionId === -1) {
                 for (var i = 0; i < api.allGames.count; i++) {
                     var game = api.allGames.get(i);
-                    if (game && game.title && !seenTitles[game.title]) {
+                    var gid = game ? gameIdentity(game) : null;
+                    if (game && game.title && gid && !seenTitles[gid]) {
                         sourceGames.push(game);
-                        seenTitles[game.title] = true;
+                        seenTitles[gid] = true;
                     }
                 }
             } else {
@@ -206,11 +217,12 @@ Rectangle {
                 }
                 for (var i = 0; i < api.allGames.count; i++) {
                     var game = api.allGames.get(i);
-                    if (game && game.title && !seenTitles[game.title]) {
+                    var gid = game ? gameIdentity(game) : null;
+                    if (game && game.title && gid && !seenTitles[gid]) {
                         var gp = Utils.getGamePath(game);
                         if ((gp && foundPaths[gp]) || foundTitles[game.title]) {
                             sourceGames.push(game);
-                            seenTitles[game.title] = true;
+                            seenTitles[gid] = true;
                         }
                     }
                 }
@@ -352,6 +364,7 @@ Rectangle {
                 (gridContainer.selectedCollectionId !== -1 && gridContainer.systemCollection === null)
 
                 onShowDetailRequested: function(game) {
+                    if (gridContainer.soundManager) gridContainer.soundManager.playOk();
                     var realGame = gridContainer.displayRealRefs[index];
                     gridContainer.showGameDetail(realGame || game);
                 }
@@ -380,18 +393,25 @@ Rectangle {
             }
 
             Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Up || event.key === Qt.Key_Down ||
+                    event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                    if (gridContainer.soundManager) gridContainer.soundManager.playNav();
+                }
                 if (api.keys.isNextPage(event)) {
+                    if (gridContainer.soundManager) gridContainer.soundManager.playNav();
                     gridContainer.goNextLetter();
                     event.accepted = true;
                     return;
                 }
                 if (api.keys.isPrevPage(event)) {
+                    if (gridContainer.soundManager) gridContainer.soundManager.playNav();
                     gridContainer.goPrevLetter();
                     event.accepted = true;
                     return;
                 }
                 if (api.keys.isDetails(event)) {
                     if (currentItem && currentItem.gameData) {
+                        if (gridContainer.soundManager) gridContainer.soundManager.playOk();
                         var realGame = gridContainer.displayRealRefs[currentIndex];
                         gridContainer.requestAddGame(realGame || currentItem.gameData);
                         event.accepted = true;
@@ -400,11 +420,13 @@ Rectangle {
                 }
                 if (!event.isAutoRepeat && api.keys.isAccept(event)) {
                     if (currentItem && currentItem.gameData) {
+                        if (gridContainer.soundManager) gridContainer.soundManager.playOk();
                         var realGame = gridContainer.displayRealRefs[currentIndex];
                         gridContainer.showGameDetail(realGame || currentItem.gameData);
                         event.accepted = true;
                     }
                 } else if (api.keys.isCancel(event)) {
+                    gridContainer.soundManager.playBack();
                     if (focusManager) focusManager.moveFocusLeft();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Left && currentIndex === 0) {
@@ -641,6 +663,7 @@ Rectangle {
                     addGameLoader.item.customCollections = gridContainer.customCollections;
                     addGameLoader.item.selectedCollectionId = gridContainer.selectedCollectionId;
                     addGameLoader.item.selectedSystemCollection = gridContainer.systemCollection;
+                    addGameLoader.item.soundManager = gridContainer.soundManager;
 
                     addGameLoader.item.closed.connect(function() {
                         addGameLoader.active = false;

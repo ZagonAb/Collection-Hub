@@ -18,6 +18,7 @@ Rectangle {
     property var themeColors: ({})
     property bool isDarkTheme: true
     property var focusManager: null
+    property var soundManager: null
     property alias customCollectionsList: customCollectionsList
 
     signal createNewCollection()
@@ -59,9 +60,14 @@ Rectangle {
                 focus: true
                 keyNavigationWraps: false
                 highlightFollowsCurrentItem: true
+                highlightMoveVelocity: -1
 
                 Keys.onPressed: function(event) {
                     if (!activeFocus) return;
+
+                    if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                        if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playNav();
+                    }
 
                     if (api.keys.isAccept(event)) {
                         if (currentItem) {
@@ -85,6 +91,7 @@ Rectangle {
                                 focusManager.lastCustomIndex = currentIndex;
                                 focusManager.moveFocusRight();
                             }
+                            if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playOk();
                         }
                         event.accepted = true;
                     } else if (api.keys.isDetails(event)) {
@@ -97,14 +104,19 @@ Rectangle {
                                 globalPos.x,
                                 globalPos.y
                             );
+                            if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playOk();
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Right) {
                         if (focusManager) focusManager.moveFocusRight();
+                        if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playOk();
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Up && currentIndex === 0) {
                         if (focusManager) focusManager.moveFocusUp();
                         event.accepted = true;
+                    } else if (api.keys.isCancel(event)) {
+                        if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playBack();
+                        event.accepted = false;
                     }
                 }
 
@@ -293,6 +305,8 @@ Rectangle {
                                     globalPos.y
                                 );
                             }
+
+                            if (customCollectionsContainer.soundManager) customCollectionsContainer.soundManager.playOk();
                         }
 
                         onPressAndHold: {
@@ -327,6 +341,5 @@ Rectangle {
                 thumbColor: themeColors.primaryHover || "#5a8ec5"
             }
         }
-
     }
 }
