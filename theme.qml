@@ -27,6 +27,8 @@ FocusScope {
     property bool showRaPopup: false
     property var currentDetailGame: null
     property bool _gameWasLaunched: false
+    property bool interfaceReady: false
+    property bool minSplashTimeElapsed: false
 
     Connections {
         target: Qt.application
@@ -203,18 +205,15 @@ FocusScope {
             isDarkTheme = api.memory.get("theme") === "dark";
         }
 
-        Qt.callLater(function() {
-            focusManager.gamesGrid = gamesGrid.gridView;
-            focusManager.systemCollections = systemCollections.systemCollectionsList;
-            focusManager.customCollections = customCollectionsView.customCollectionsList;
-            focusManager.searchBar = searchBar;
-            focusManager.raBtn = raBtnScope;
-            focusManager.sortBtn = sortBtn;
-            focusManager.themeBtn = themeBtnScope;
-            focusManager.createBtn = createCollectionTopBtn;
-            focusManager.customJumpBtn = goToCustomBtn;
-            focusManager.setInitialFocus();
-        });
+        focusManager.gamesGrid = gamesGrid.gridView;
+        focusManager.systemCollections = systemCollections.systemCollectionsList;
+        focusManager.customCollections = customCollectionsView.customCollectionsList;
+        focusManager.searchBar = searchBar;
+        focusManager.raBtn = raBtnScope;
+        focusManager.sortBtn = sortBtn;
+        focusManager.themeBtn = themeBtnScope;
+        focusManager.createBtn = createCollectionTopBtn;
+        focusManager.customJumpBtn = goToCustomBtn;
     }
 
     Rectangle {
@@ -1000,6 +999,13 @@ FocusScope {
                 soundManager: sounds
                 customCollections: root.customCollections
 
+                onFirstModelReady: {
+                    if (!root.interfaceReady) {
+                        focusManager.setInitialFocus();
+                        root.interfaceReady = true;
+                    }
+                }
+
                 onShowGameDetail: function(game) {
                     root.openGameDetail(game);
                 }
@@ -1730,6 +1736,94 @@ FocusScope {
                         gameDetailLoader.item.forceActiveFocus()
                     }
                 })
+            }
+        }
+    }
+
+    Rectangle {
+        id: splashOverlay
+        anchors.fill: parent
+        color: colors.background
+        z: 1000
+        property int minSplashDuration: 1500
+        opacity: (root.interfaceReady && root.minSplashTimeElapsed) ? 0 : 1
+        visible: opacity > 0
+
+        Timer {
+            interval: splashOverlay.minSplashDuration
+            running: true
+            repeat: false
+            onTriggered: root.minSplashTimeElapsed = true
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: splashOverlay.visible
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: vpx(18)
+
+            Text {
+                id: hubTitleText
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "COLLECTION HUB"
+                color: root.colors.text
+                font.pixelSize: vpx(45)
+                font.bold: true
+                font.letterSpacing: vpx(1)
+
+                property real glowPulse: 0.7
+                SequentialAnimation on glowPulse {
+                    loops: Animation.Infinite
+                    running: splashOverlay.visible
+                    NumberAnimation { from: 0.7; to: 1.3; duration: 1400; easing.type: Easing.InOutSine }
+                    NumberAnimation { from: 1.3; to: 0.7; duration: 1400; easing.type: Easing.InOutSine }
+                }
+
+                layer.enabled: true
+                layer.effect: Glow {
+                    radius: vpx(20) * hubTitleText.glowPulse
+                    samples: 32
+                    spread: 0.35
+                    color: "#80FFFFFF"
+                    transparentBorder: true
+                }
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: vpx(10)
+
+                Repeater {
+                    model: 3
+                    Rectangle {
+                        width: vpx(15)
+                        height: vpx(15)
+                        radius: width / 2
+                        color: root.colors.primary
+
+                        SequentialAnimation on opacity {
+                            loops: Animation.Infinite
+                            running: splashOverlay.visible
+                            PauseAnimation { duration: index * 140 }
+                            NumberAnimation { from: 0.25; to: 1.0; duration: 320; easing.type: Easing.InOutQuad }
+                            NumberAnimation { from: 1.0; to: 0.25; duration: 320; easing.type: Easing.InOutQuad }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Loading your library..."
+                color: root.colors.textSecondary
+                font.pixelSize: vpx(24)
             }
         }
     }

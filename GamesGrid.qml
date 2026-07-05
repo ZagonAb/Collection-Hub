@@ -50,14 +50,16 @@ Rectangle {
     signal requestAddGame(var game)
     signal gameAddedToCollection(int collectionId)
     signal gameRemovedFromCollection(int collectionId)
+    signal firstModelReady()
+    property bool _firstModelReadyEmitted: false
 
     onRequestAddGame: function(game) {
         addGameLoader.openForGame(game);
     }
 
-    ListModel { id: filteredModel }
-
-    ListModel { id: displayModel }
+    ListModel { id: displayModelA }
+    ListModel { id: displayModelB }
+    property var activeDisplayModel: displayModelA
 
     ColorMapping { id: colorMapper }
 
@@ -68,8 +70,8 @@ Rectangle {
     function buildLetterIndex() {
         var seen = {};
         var letters = [];
-        for (var i = 0; i < filteredModel.count; i++) {
-            var title = filteredModel.get(i).title || "";
+        for (var i = 0; i < filteredRealRefs.length; i++) {
+            var title = (filteredRealRefs[i] && filteredRealRefs[i].title) || "";
             var ch = title.charAt(0).toUpperCase();
             ch = ch.replace(/[AÁÀÄÂ]/g, "A")
             .replace(/[EÉÈËÊ]/g, "E")
@@ -92,36 +94,50 @@ Rectangle {
     }
 
     function applyLetterFilter() {
-        displayModel.clear();
+        var targetBuffer = (activeDisplayModel === displayModelA) ? displayModelB : displayModelA;
+        var preservedIndex = gamesGridView.currentIndex;
+        var hadFocus = gamesGridView.activeFocus;
+        targetBuffer.clear();
         var newDisplayRefs = [];
 
+        function restoreIndexAndFocus() {
+            if (targetBuffer.count === 0) return;
+            var newIndex = Math.max(0, Math.min(preservedIndex, targetBuffer.count - 1));
+            gamesGridView.currentIndex = newIndex;
+            if (hadFocus) gamesGridView.forceActiveFocus();
+        }
+
         if (!letterFilterActive || activeLetterIdx < 0 || activeLetterIdx >= letterIndex.length) {
-            for (var i = 0; i < filteredModel.count; i++) {
-                displayModel.append(filteredModel.get(i));
+            for (var i = 0; i < filteredRealRefs.length; i++) {
+                targetBuffer.append(filteredRealRefs[i]);
                 newDisplayRefs.push(filteredRealRefs[i]);
             }
             activeLetter = "";
             displayRealRefs = newDisplayRefs;
+            activeDisplayModel = targetBuffer;
+            restoreIndexAndFocus();
             return;
         }
 
         var target = letterIndex[activeLetterIdx];
         activeLetter = target;
 
-        for (var i = 0; i < filteredModel.count; i++) {
-            var item = filteredModel.get(i);
-            var ch = (item.title || "").charAt(0).toUpperCase()
+        for (var i = 0; i < filteredRealRefs.length; i++) {
+            var item = filteredRealRefs[i];
+            var ch = ((item && item.title) || "").charAt(0).toUpperCase()
             .replace(/[AÁÀÄÂ]/g, "A")
             .replace(/[EÉÈËÊ]/g, "E")
             .replace(/[IÍÌÏÎ]/g, "I")
             .replace(/[OÓÒÖÔ]/g, "O")
             .replace(/[UÚÙÜÛ]/g, "U");
             if (ch === target) {
-                displayModel.append(item);
-                newDisplayRefs.push(filteredRealRefs[i]);
+                targetBuffer.append(item);
+                newDisplayRefs.push(item);
             }
         }
         displayRealRefs = newDisplayRefs;
+        activeDisplayModel = targetBuffer;
+        restoreIndexAndFocus();
     }
 
     function goNextLetter() {
@@ -157,9 +173,6 @@ Rectangle {
     }
 
     function updateFilteredModel() {
-        filteredModel.clear();
-        var newFilteredRefs = [];
-
         var sourceGames = [];
         var seenTitles = {};
 
@@ -271,16 +284,17 @@ Rectangle {
             });
         }
 
-        for (var i = 0; i < sourceGames.length; i++) {
-            filteredModel.append(sourceGames[i]);
-            newFilteredRefs.push(sourceGames[i]);
-        }
-        filteredRealRefs = newFilteredRefs;
+        filteredRealRefs = sourceGames;
 
         activeLetterIdx = -1;
         letterFilterActive = false;
         buildLetterIndex();
         applyLetterFilter();
+
+        if (!_firstModelReadyEmitted) {
+            _firstModelReadyEmitted = true;
+            firstModelReady();
+        }
     }
 
     onSystemCollectionChanged: { updateFilteredModel(); }
@@ -314,7 +328,7 @@ Rectangle {
 
             cellWidth: calculatedCellWidth + spacing
             cellHeight: calculatedCellHeight + spacing
-            model: displayModel
+            model: gridContainer.activeDisplayModel
             clip: true
             keyNavigationWraps: false
             highlightFollowsCurrentItem: true
@@ -627,7 +641,7 @@ Rectangle {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: gridContainer.letterFilterActive
-                        ? (displayModel.count + (displayModel.count === 1 ? " game" : " games"))
+                        ? (gridContainer.activeDisplayModel.count + (gridContainer.activeDisplayModel.count === 1 ? " game" : " games"))
                         : "Showing all games"
                         color: gridContainer.themeColors.textSecondary
                         font.pixelSize: vpx(15)
