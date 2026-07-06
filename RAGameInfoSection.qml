@@ -651,12 +651,13 @@ FocusScope {
                          earned: earned,
                          dateEarned: earned ? a.DateEarned : "",
                          numAwarded: parseInt(a.NumAwarded) || 0,
-                         trueRatio: parseInt(a.TrueRatio) || 0
+                         trueRatio: parseInt(a.TrueRatio) || 0,
+                         displayOrder: parseInt(a.DisplayOrder) || parseInt(id) || 0
                 });
             }
             ach.sort(function(a, b) {
                 if (a.earned !== b.earned) return a.earned ? -1 : 1;
-                return b.points - a.points;
+                return a.displayOrder - b.displayOrder;
             });
             _achievements = ach;
             _earnedIdx = 0;
@@ -1208,9 +1209,7 @@ FocusScope {
                 focus: true
                 keyNavigationWraps: false
 
-                model: root._earnedList.length + root._lockedList.length
-
-                readonly property int _totalEarned: root._earnedList.length
+                model: root._achievements.length
 
                 cellWidth: vpx(110)
                 cellHeight: vpx(110)
@@ -1233,10 +1232,8 @@ FocusScope {
                     width: _achGrid.cellWidth
                     height: _achGrid.cellHeight
 
-                    readonly property bool _isEarned: index < _achGrid._totalEarned
-                    readonly property var _ach: _isEarned
-                    ? (root._earnedList[index] || {})
-                    : (root._lockedList[index - _achGrid._totalEarned] || {})
+                    readonly property var _ach: root._achievements[index] || {}
+                    readonly property bool _isEarned: _ach.earned || false
                     readonly property bool _selected: _achGrid.currentIndex === index
 
                     Rectangle {
