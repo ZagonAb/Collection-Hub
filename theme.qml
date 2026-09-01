@@ -30,6 +30,67 @@ FocusScope {
     property bool interfaceReady: false
     property bool minSplashTimeElapsed: false
 
+    readonly property string currentVersion: "1.0.0"
+    readonly property string updateRepo: "TU_USUARIO/TU_REPOSITORIO"
+
+    property string _pendingVersion: ""
+    property string _pendingUrl: ""
+    property string _pendingNotes: ""
+
+    function isNewerVersion(latest, current) {
+        var a = latest.split('.').map(Number);
+        var b = current.split('.').map(Number);
+        for (var i = 0; i < Math.max(a.length, b.length); i++) {
+            if ((a[i] || 0) > (b[i] || 0)) return true;
+            if ((a[i] || 0) < (b[i] || 0)) return false;
+        }
+        return false;
+    }
+
+    function checkForUpdates() {
+        var xhr = new XMLHttpRequest();
+        var url = "https://api.github.com/repos/" + updateRepo + "/releases/latest";
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var latestTag = data.tag_name || "";
+                        var latestVersion = latestTag.replace(/^v/, "");
+                        var releaseUrl = data.html_url || "";
+                        var releaseNotes = data.body || "";
+
+                        if (latestVersion && root.isNewerVersion(latestVersion, root.currentVersion)) {
+                            var lastNotified = api.memory.has('lastUpdateNotified')
+                            ? api.memory.get('lastUpdateNotified')
+                            : "";
+
+                            if (latestVersion !== lastNotified) {
+                                root._pendingVersion = latestVersion;
+                                root._pendingUrl = releaseUrl;
+                                root._pendingNotes = releaseNotes;
+                                api.memory.set('lastUpdateNotified', latestVersion);
+
+                                if (root.interfaceReady && root.minSplashTimeElapsed) {
+                                    postSplashNotifTimer.restart();
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("[theme][checkForUpdates] Error parsing JSON:", e);
+                    }
+                } else {
+                    console.log("[theme][checkForUpdates] HTTP error:", xhr.status);
+                }
+            }
+        };
+        xhr.onerror = function(e) {
+            console.warn("[theme][checkForUpdates] Network error");
+        };
+        xhr.send();
+    }
+
     Connections {
         target: Qt.application
         function onStateChanged() {
@@ -214,6 +275,10 @@ FocusScope {
         focusManager.themeBtn = themeBtnScope;
         focusManager.createBtn = createCollectionTopBtn;
         focusManager.customJumpBtn = goToCustomBtn;
+
+        Qt.callLater(function() {
+            root.checkForUpdates();
+        });
     }
 
     Rectangle {
@@ -1600,6 +1665,7 @@ FocusScope {
 
     Keys.onPressed: function(event) {
         if (gameDetailLoader.active) { return; }
+        if (updateNotification.visible) { return; }
         if (root.showCollectionEditor || root.showGameMenu || root.showDeleteConfirm || root.showSortMenu || root.showRaPopup) {
             return;
         }
@@ -1721,6 +1787,8 @@ FocusScope {
                     var addingToFavorites = !root.currentDetailGame.favorite;
                     root.currentDetailGame.favorite = !root.currentDetailGame.favorite;
 
+                    gamesGrid.syncGameFavorite(root.currentDetailGame);
+
                     if (sounds) {
                         if (addingToFavorites) sounds.playOk();
                         else sounds.playBack();
@@ -1740,14 +1808,44 @@ FocusScope {
         }
     }
 
+    UpdateNotification {
+        id: updateNotification
+        anchors.fill: parent
+        visible: false
+        themeColors: root.colors
+        isDarkTheme: root.isDarkTheme
+        soundManager: sounds
+    }
+
     Rectangle {
         id: splashOverlay
         anchors.fill: parent
         color: colors.background
         z: 1000
         property int minSplashDuration: 1500
-        opacity: (root.interfaceReady && root.minSplashTimeElapsed) ? 0 : 1
+        readonly property bool splashHidden: root.interfaceReady && root.minSplashTimeElapsed
+        opacity: splashHidden ? 0 : 1
         visible: opacity > 0
+
+        onSplashHiddenChanged: {
+            if (splashHidden && root._pendingVersion !== "") {
+                postSplashNotifTimer.restart();
+            }
+        }
+
+        Timer {
+            id: postSplashNotifTimer
+            interval: 800
+            repeat: false
+            onTriggered: {
+                if (root._pendingVersion !== "") {
+                    updateNotification.show(root._pendingVersion, root._pendingUrl, root._pendingNotes);
+                    root._pendingVersion = "";
+                    root._pendingUrl = "";
+                    root._pendingNotes = "";
+                }
+            }
+        }
 
         Timer {
             interval: splashOverlay.minSplashDuration

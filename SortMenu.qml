@@ -53,7 +53,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: vpx(22)
         anchors.top: parent.top
-        z: 100
+        z: 2
 
         onPaint: {
             var ctx = getContext("2d");
@@ -83,16 +83,6 @@ Item {
         color: isDarkTheme ? "#111111" : "#f2f2f4"
         radius: vpx(10)
 
-        layer.enabled: true
-        layer.effect: DropShadow {
-            transparentBorder: true
-            horizontalOffset: 0
-            verticalOffset: vpx(4)
-            radius: vpx(12)
-            samples: 17
-            color: "#88000000"
-        }
-
         Row {
             id: titleRow
             anchors.top: parent.top
@@ -105,7 +95,7 @@ Item {
             Text {
                 text: "Sort by"
                 color: isDarkTheme ? "#ffffff" : "#212121"
-                font.pixelSize: vpx(13)
+                font.pixelSize: vpx(18)
                 font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -160,9 +150,9 @@ Item {
                         spacing: vpx(10)
 
                         Rectangle {
-                            width: vpx(14)
-                            height: vpx(14)
-                            radius: vpx(7)
+                            width: vpx(16)
+                            height: vpx(16)
+                            radius: width / 2
                             anchors.verticalCenter: parent.verticalCenter
                             color: "transparent"
                             border.color: sortMenu.currentSort === index
@@ -185,7 +175,7 @@ Item {
                             color: sortMenu.currentSort === index
                                 ? (isDarkTheme ? "#ffffff" : "#212121")
                                 : (isDarkTheme ? "#c0c0c0" : "#616161")
-                            font.pixelSize: vpx(12)
+                            font.pixelSize: vpx(16)
                             font.bold: sortMenu.currentSort === index
                             anchors.verticalCenter: parent.verticalCenter
                         }

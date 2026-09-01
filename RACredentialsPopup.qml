@@ -232,16 +232,6 @@ FocusScope {
         radius: vpx(10)
         Behavior on color { ColorAnimation { duration: 200 } }
 
-        layer.enabled: true
-        layer.effect: DropShadow {
-            transparentBorder: true
-            horizontalOffset: 0
-            verticalOffset: vpx(4)
-            radius: vpx(16)
-            samples: 17
-            color: "#99000000"
-        }
-
         Column {
             id: _col
             anchors {
@@ -316,7 +306,7 @@ FocusScope {
 
                     Text {
                         text: "USER NAME:"
-                        font.pixelSize: vpx(11); font.family: global.fonts.sans
+                        font.pixelSize: vpx(14); font.family: global.fonts.sans
                         font.letterSpacing: 0.6; color: _labelText
                         Behavior on color { ColorAnimation { duration: 200 } }
                     }
@@ -415,7 +405,7 @@ FocusScope {
 
                     Text {
                         text: "API KEY:"
-                        font.pixelSize: vpx(11); font.family: global.fonts.sans
+                        font.pixelSize: vpx(14); font.family: global.fonts.sans
                         font.letterSpacing: 0.6; color: _labelText
                         Behavior on color { ColorAnimation { duration: 200 } }
                     }

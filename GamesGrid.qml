@@ -172,6 +172,49 @@ Rectangle {
         letterHud.triggerShow();
     }
 
+    function syncGameFavorite(game) {
+        if (!game) return;
+
+        // Si el orden actual es "por favoritos", el cambio altera el orden
+        // relativo de las filas, asi que reconstruimos el modelo completo.
+        if (sortOrder === 4) {
+            updateFilteredModel();
+            return;
+        }
+
+        var gp = Utils.getGamePath(game);
+        var gid = (game.extra && game.extra.id) ? game.extra.id.toString() : null;
+
+        function matches(g) {
+            if (!g) return false;
+            if (gp) {
+                var gp2 = Utils.getGamePath(g);
+                if (gp2 && gp2 === gp) return true;
+            }
+            if (gid && g.extra && g.extra.id && g.extra.id.toString() === gid) return true;
+            return g.title === game.title;
+        }
+
+        // Actualiza la copia "real" usada por el grid (por si se reconstruye
+        // el ListModel mas adelante, ya viene con el valor correcto).
+        for (var i = 0; i < filteredRealRefs.length; i++) {
+            if (matches(filteredRealRefs[i])) {
+                filteredRealRefs[i].favorite = game.favorite;
+                break;
+            }
+        }
+
+        // Parchea unicamente la fila visible correspondiente, sin tocar
+        // el resto del ListModel ni la posicion de scroll/foco.
+        for (var j = 0; j < activeDisplayModel.count; j++) {
+            var row = activeDisplayModel.get(j);
+            if (matches(row)) {
+                activeDisplayModel.setProperty(j, "favorite", game.favorite);
+                break;
+            }
+        }
+    }
+
     function updateFilteredModel() {
         var sourceGames = [];
         var seenTitles = {};
