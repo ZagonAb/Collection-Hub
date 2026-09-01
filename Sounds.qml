@@ -5,6 +5,7 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International.
 //
 // https://creativecommons.org/licenses/by-nc-sa/4.0/
+import QtQuick 2.15
 import QtMultimedia 5.15
 
 Item {
