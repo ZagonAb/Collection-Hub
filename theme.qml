@@ -28,9 +28,8 @@ FocusScope {
     property var currentDetailGame: null
     property bool _gameWasLaunched: false
     property bool interfaceReady: false
-    property bool minSplashTimeElapsed: false
 
-    readonly property string currentVersion: "1.0.0"
+    readonly property string currentVersion: "1.0.1"
     readonly property string updateRepo: "ZagonAb/Collection-Hub"
 
     property string _pendingVersion: ""
@@ -72,7 +71,7 @@ FocusScope {
                                 root._pendingNotes = releaseNotes;
                                 api.memory.set('lastUpdateNotified', latestVersion);
 
-                                if (root.interfaceReady && root.minSplashTimeElapsed) {
+                                if (splashOverlay.hidden) {
                                     postSplashNotifTimer.restart();
                                 }
                             }
@@ -1817,111 +1816,31 @@ FocusScope {
         soundManager: sounds
     }
 
-    Rectangle {
+    SplashScreen {
         id: splashOverlay
-        anchors.fill: parent
-        color: colors.background
-        z: 1000
-        property int minSplashDuration: 1500
-        readonly property bool splashHidden: root.interfaceReady && root.minSplashTimeElapsed
-        opacity: splashHidden ? 0 : 1
-        visible: opacity > 0
+        themeColors: root.colors
+        interfaceReady: root.interfaceReady
+        minSplashDuration: 1500
+        titleText: "COLLECTION HUB"
+        subtitleText: "Loading your library..."
 
-        onSplashHiddenChanged: {
-            if (splashHidden && root._pendingVersion !== "") {
+        onSplashFinished: {
+            if (root._pendingVersion !== "") {
                 postSplashNotifTimer.restart();
             }
         }
+    }
 
-        Timer {
-            id: postSplashNotifTimer
-            interval: 800
-            repeat: false
-            onTriggered: {
-                if (root._pendingVersion !== "") {
-                    updateNotification.show(root._pendingVersion, root._pendingUrl, root._pendingNotes);
-                    root._pendingVersion = "";
-                    root._pendingUrl = "";
-                    root._pendingNotes = "";
-                }
-            }
-        }
-
-        Timer {
-            interval: splashOverlay.minSplashDuration
-            running: true
-            repeat: false
-            onTriggered: root.minSplashTimeElapsed = true
-        }
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: splashOverlay.visible
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: vpx(18)
-
-            Text {
-                id: hubTitleText
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "COLLECTION HUB"
-                color: root.colors.text
-                font.pixelSize: vpx(45)
-                font.bold: true
-                font.letterSpacing: vpx(1)
-
-                property real glowPulse: 0.7
-                SequentialAnimation on glowPulse {
-                    loops: Animation.Infinite
-                    running: splashOverlay.visible
-                    NumberAnimation { from: 0.7; to: 1.3; duration: 1400; easing.type: Easing.InOutSine }
-                    NumberAnimation { from: 1.3; to: 0.7; duration: 1400; easing.type: Easing.InOutSine }
-                }
-
-                layer.enabled: true
-                layer.effect: Glow {
-                    radius: vpx(20) * hubTitleText.glowPulse
-                    samples: 32
-                    spread: 0.35
-                    color: "#80FFFFFF"
-                    transparentBorder: true
-                }
-            }
-
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: vpx(10)
-
-                Repeater {
-                    model: 3
-                    Rectangle {
-                        width: vpx(15)
-                        height: vpx(15)
-                        radius: width / 2
-                        color: root.colors.primary
-
-                        SequentialAnimation on opacity {
-                            loops: Animation.Infinite
-                            running: splashOverlay.visible
-                            PauseAnimation { duration: index * 140 }
-                            NumberAnimation { from: 0.25; to: 1.0; duration: 320; easing.type: Easing.InOutQuad }
-                            NumberAnimation { from: 1.0; to: 0.25; duration: 320; easing.type: Easing.InOutQuad }
-                        }
-                    }
-                }
-            }
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Loading your library..."
-                color: root.colors.textSecondary
-                font.pixelSize: vpx(24)
+    Timer {
+        id: postSplashNotifTimer
+        interval: 800
+        repeat: false
+        onTriggered: {
+            if (root._pendingVersion !== "") {
+                updateNotification.show(root._pendingVersion, root._pendingUrl, root._pendingNotes);
+                root._pendingVersion = "";
+                root._pendingUrl = "";
+                root._pendingNotes = "";
             }
         }
     }

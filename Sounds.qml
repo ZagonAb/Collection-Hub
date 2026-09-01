@@ -1,4 +1,10 @@
-import QtQuick 2.15
+// Collection Hub Theme
+// Copyright (C) 2026 Gonzalo
+//
+// Licensed under Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International.
+//
+// https://creativecommons.org/licenses/by-nc-sa/4.0/
 import QtMultimedia 5.15
 
 Item {
@@ -38,5 +44,16 @@ Item {
     function playBack() {
         if (!enabled) return;
         backSound.play();
+    }
+
+    SoundEffect {
+        id: noticeSound
+        source: "assets/sounds/notice.wav"
+        volume: soundManager.masterVolume
+    }
+
+    function playNotice() {
+        if (!enabled) return;
+        noticeSound.play();
     }
 }

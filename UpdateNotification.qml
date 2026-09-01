@@ -34,7 +34,7 @@ FocusScope {
         currentButton = 0;
         visible = true;
         opacity = 1;
-        if (notification.soundManager) notification.soundManager.playOk();
+        if (notification.soundManager) notification.soundManager.playNotice();
         notification.forceActiveFocus();
     }
 
