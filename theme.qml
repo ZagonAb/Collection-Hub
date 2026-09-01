@@ -31,7 +31,7 @@ FocusScope {
     property bool minSplashTimeElapsed: false
 
     readonly property string currentVersion: "1.0.0"
-    readonly property string updateRepo: "TU_USUARIO/TU_REPOSITORIO"
+    readonly property string updateRepo: "ZagonAb/Collection-Hub"
 
     property string _pendingVersion: ""
     property string _pendingUrl: ""
